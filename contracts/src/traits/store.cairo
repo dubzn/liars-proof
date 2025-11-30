@@ -4,6 +4,7 @@ use starknet::ContractAddress;
 use crate::models::condition::{CONDITION_COUNT_KEY, Condition, ConditionCount};
 use crate::models::game::{GAME_COUNT_KEY, Game, GameCount};
 use crate::models::player_choice::{PlayerChallengeChoice, PlayerConditionChoice};
+use crate::models::proof::{RoundProof, VERIFIER_ADDRESS_KEY, Verifier};
 
 #[derive(Drop)]
 pub struct Store {
@@ -71,5 +72,24 @@ pub impl StoreImpl of StoreTrait {
         ref self: Store, player_challenge_choice: PlayerChallengeChoice,
     ) {
         self.world.write_model(@player_challenge_choice)
+    }
+
+    fn get_player_round_proof(
+        ref self: Store, game_id: u32, round: u32, player: ContractAddress,
+    ) -> RoundProof {
+        self.world.read_model((game_id, round, player))
+    }
+
+    fn set_player_round_proof(ref self: Store, player_round_proof: RoundProof) {
+        self.world.write_model(@player_round_proof)
+    }
+
+    fn get_verifier_address(ref self: Store) -> ContractAddress {
+        let verifier: Verifier = self.world.read_model(VERIFIER_ADDRESS_KEY);
+        verifier.address
+    }
+
+    fn set_verifier_address(ref self: Store, verifier_address: ContractAddress) {
+        self.world.write_model(@Verifier { key: VERIFIER_ADDRESS_KEY, address: verifier_address })
     }
 }

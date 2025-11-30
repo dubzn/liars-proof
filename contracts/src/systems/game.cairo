@@ -5,27 +5,30 @@ pub trait IGameSystem<T> {
     fn submit_hand_commitment(ref self: T, game_id: u32, hand_commitment: felt252);
     fn submit_condition_choice(ref self: T, game_id: u32, player_choice: bool);
     fn submit_challenge_choice(ref self: T, game_id: u32, player_choice: bool);
+    fn submit_round_proof(ref self: T, game_id: u32, full_proof_with_hints: Span<felt252>);
 }
 
 #[dojo::contract]
 pub mod game {
     use core::num::traits::zero::Zero;
     use dojo::event::EventStorage;
-    use starknet::get_caller_address;
-    use crate::models::game::{Game, GameCreated, GameJoined, GameState};
+    use starknet::{ContractAddress, get_caller_address};
+    use crate::models::game::{Game, GameCreated, GameJoined, GameOver, GameState};
     use crate::models::hand::HandCommitmentSubmitted;
     use crate::models::player_choice::{PlayerChallengeChoice, PlayerConditionChoice};
+    use crate::models::proof::{
+        IUltraStarknetZKHonkVerifierDispatcher as VerifierDispatcher,
+        IUltraStarknetZKHonkVerifierDispatcherTrait, RoundProof,
+    };
     use crate::traits::condition::ConditionTrait;
     use crate::traits::store::{Store, StoreTrait};
     use super::IGameSystem;
 
-    fn dojo_init(ref self: ContractState) {
+    fn dojo_init(ref self: ContractState, verifier_address: ContractAddress) {
         let mut store = self.store_default();
+        store.set_verifier_address(verifier_address);
         store.set_game_count(1);
     }
-
-    const CHOICE_TRUE: u32 = 1;
-    const CHOICE_FALSE: u32 = 2;
 
     #[abi(embed_v0)]
     impl GameImpl of IGameSystem<ContractState> {
@@ -136,11 +139,8 @@ pub mod game {
                         game_id: game_id,
                         round: game.round,
                         player: get_caller_address(),
-                        choice: if player_choice {
-                            CHOICE_TRUE
-                        } else {
-                            CHOICE_FALSE
-                        },
+                        submitted: true,
+                        choice: player_choice,
                     },
                 );
 
@@ -149,7 +149,7 @@ pub mod game {
             let player_condition_2 = store
                 .get_player_condition_choice(game_id, game.round, game.player_2);
 
-            if player_condition_1.choice.is_non_zero() && player_condition_2.choice.is_non_zero() {
+            if player_condition_1.submitted && player_condition_2.submitted {
                 game.state = GameState::ChallengePhase;
                 store.set_game(game);
             }
@@ -173,11 +173,8 @@ pub mod game {
                         game_id: game_id,
                         round: game.round,
                         player: get_caller_address(),
-                        choice: if player_choice {
-                            CHOICE_TRUE
-                        } else {
-                            CHOICE_FALSE
-                        },
+                        submitted: true,
+                        choice: player_choice,
                     },
                 );
 
@@ -186,16 +183,65 @@ pub mod game {
             let player_challenge_2 = store
                 .get_player_challenge_choice(game_id, game.round, game.player_2);
 
-            if player_challenge_1.choice.is_non_zero() && player_challenge_2.choice.is_non_zero() {
-                self.resolve_round(game_id);
+            if player_challenge_1.submitted && player_challenge_2.submitted {
+                game.state = GameState::ResultPhase;
+                store.set_game(game);
+            }
+        }
 
-                // Create a new condition
-                let condition = ConditionTrait::create();
-                game.condition_id = condition.id;
-                store.set_condition(condition);
+        fn submit_round_proof(
+            ref self: ContractState, game_id: u32, full_proof_with_hints: Span<felt252>,
+        ) {
+            let mut store = self.store_default();
+            let game = store.get_game(game_id);
+            assert!(
+                game.state == GameState::ResultPhase,
+                "[Game] - The game is not in the result phase",
+            );
 
-                game.round += 1;
-                game.state = GameState::ConditionPhase;
+            let contract_address = store.get_verifier_address();
+            let verifier_dispatcher = VerifierDispatcher { contract_address };
+            store
+                .set_player_round_proof(
+                    RoundProof {
+                        game_id: game.id,
+                        round: game.round,
+                        player: get_caller_address(),
+                        submitted: true,
+                        is_valid: verifier_dispatcher
+                            .verify_ultra_starknet_zk_honk_proof(full_proof_with_hints)
+                            .is_some(),
+                    },
+                );
+            let player_1_proof = store.get_player_round_proof(game.id, game.round, game.player_1);
+            let player_2_proof = store.get_player_round_proof(game.id, game.round, game.player_2);
+
+            if player_1_proof.submitted && player_2_proof.submitted {
+                let mut game = self.resolve_round(game.id, player_1_proof, player_2_proof);
+
+                match game.state {
+                    GameState::GameOver => {
+                        let (winner_name, winner_address, loser_name, loser_address) = self
+                            .resolve_game_over(@game);
+                        store
+                            .world
+                            .emit_event(
+                                @GameOver {
+                                    game_id: game_id,
+                                    winner: *winner_address,
+                                    winner_name: winner_name.clone(),
+                                    loser: *loser_address,
+                                    loser_name: loser_name.clone(),
+                                },
+                            );
+                    },
+                    GameState::ConditionPhase => {
+                        let condition = ConditionTrait::create();
+                        game.condition_id = condition.id;
+                        store.set_condition(condition);
+                    },
+                    _ => {},
+                }
                 store.set_game(game);
             }
         }
@@ -203,8 +249,84 @@ pub mod game {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn resolve_round(ref self: ContractState, game_id: u32) {// let mut store = self.store_default();
-        // let game = store.get_game(game_id);
+        fn resolve_round(
+            ref self: ContractState,
+            game_id: u32,
+            player_1_proof: RoundProof,
+            player_2_proof: RoundProof,
+        ) -> Game {
+            let mut store = self.store_default();
+            let mut game = store.get_game(game_id);
+
+            let player_1_condition = store
+                .get_player_condition_choice(game.id, game.round, game.player_1);
+            let player_2_condition = store
+                .get_player_condition_choice(game.id, game.round, game.player_2);
+
+            let player_1_challenge = store
+                .get_player_challenge_choice(game.id, game.round, game.player_1);
+            let player_2_challenge = store
+                .get_player_challenge_choice(game.id, game.round, game.player_2);
+
+            let player_1_lies = player_1_condition.choice && !player_1_proof.is_valid;
+            let player_2_lies = player_2_condition.choice && !player_2_proof.is_valid;
+
+            // player_x_challenge.choice = false -> PX thinks the other player is lying
+            // player_x_challenge.choice = true  -> PX thinks the other player is telling the truth
+            let player_1_call_lier = !player_1_challenge.choice;
+            let player_2_call_lier = !player_2_challenge.choice;
+
+            // - If Player 1 lies and Player 2 doesn't believe -> Player 2 gets 20 points and
+            // Player 1 loses 1 life - If Player 1 lies and Player 2 believes -> Player 1 gets 10
+            // points (lied successfully)
+            // - If Player 1 doesn't lie and Player 2 doesn't believe -> Player 2 loses 1 life
+            // - If Player 1 doesn't lie and Player 2 believes -> Nothing happens
+            if player_1_lies && player_2_call_lier {
+                game.player_2_score += 20;
+                game.player_1_lives -= 1;
+            } else if player_1_lies && !player_2_call_lier {
+                game.player_1_score += 10;
+            } else if !player_1_lies && player_2_call_lier {
+                game.player_2_lives -= 1;
+            }
+
+            // - If Player 2 lies and Player 1 doesn't believe -> Player 1 gets 20 points and
+            // Player 2 loses 1 life - If Player 2 lies and Player 1 believes -> Player 2 gets 10
+            // points (lied successfully)
+            // - If Player 2 doesn't lie and Player 1 doesn't believe -> Player 1 loses 1 life
+            // - If Player 2 doesn't lie and Player 1 believes -> Nothing happens
+            if player_2_lies && player_1_call_lier {
+                game.player_1_score += 20;
+                game.player_2_lives -= 1;
+            } else if player_2_lies && !player_1_call_lier {
+                game.player_2_score += 10;
+            } else if !player_2_lies && player_1_call_lier {
+                game.player_1_lives -= 1;
+            }
+
+            if game.player_1_lives == 0 || game.player_2_lives == 0 {
+                game.state = GameState::GameOver;
+            } else if game.player_1_score >= 50 || game.player_2_score >= 50 {
+                game.state = GameState::GameOver;
+            } else {
+                game.round += 1;
+                game.state = GameState::ConditionPhase;
+            }
+            game
+        }
+
+        fn resolve_game_over(
+            ref self: ContractState, game: @Game,
+        ) -> (@ByteArray, @ContractAddress, @ByteArray, @ContractAddress) {
+            if game.player_1_lives == @0 {
+                (game.player_2_name, game.player_2, game.player_1_name, game.player_1)
+            } else if game.player_2_lives == @0 {
+                (game.player_1_name, game.player_1, game.player_2_name, game.player_2)
+            } else if game.player_1_score >= @50 {
+                (game.player_1_name, game.player_1, game.player_2_name, game.player_2)
+            } else {
+                (game.player_2_name, game.player_2, game.player_1_name, game.player_1)
+            }
         }
 
         fn store_default(self: @ContractState) -> Store {
@@ -215,4 +337,8 @@ pub mod game {
             self.world(@"liars-proof")
         }
     }
+}
+
+fn proof_is_non_empty(proof: Span<felt252>) -> bool {
+    proof.len() > 0
 }

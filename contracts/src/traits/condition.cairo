@@ -10,7 +10,8 @@ pub impl ConditionTraitImpl of ConditionTrait {
 }
 
 fn condition_list() -> Array<u32> {
-    array![]
+    array![ // CONDITION_COUNT_GE,
+    ]
 }
 
 fn comparator_list(condition_id: u32) -> Array<u32> {

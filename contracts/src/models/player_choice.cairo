@@ -9,7 +9,8 @@ pub struct PlayerConditionChoice {
     pub round: u32,
     #[key]
     pub player: ContractAddress,
-    pub choice: u32,
+    pub submitted: bool,
+    pub choice: bool,
 }
 
 #[derive(Drop, Serde, Debug)]
@@ -21,7 +22,8 @@ pub struct PlayerChallengeChoice {
     pub round: u32,
     #[key]
     pub player: ContractAddress,
-    pub choice: u32,
+    pub submitted: bool,
+    pub choice: bool,
 }
 
 #[derive(Drop, Serde)]

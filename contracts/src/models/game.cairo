@@ -28,6 +28,7 @@ pub enum GameState {
     ConditionPhase,
     ChallengePhase,
     ResultPhase,
+    GameOver,
 }
 
 pub const GAME_COUNT_KEY: felt252 = selector!("GAME_COUNT");
@@ -58,3 +59,13 @@ pub struct GameJoined {
     pub name: ByteArray,
 }
 
+#[derive(Drop, Serde)]
+#[dojo::event]
+pub struct GameOver {
+    #[key]
+    pub game_id: u32,
+    pub winner: ContractAddress,
+    pub winner_name: ByteArray,
+    pub loser: ContractAddress,
+    pub loser_name: ByteArray,
+}
