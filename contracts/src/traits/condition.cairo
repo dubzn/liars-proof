@@ -104,15 +104,19 @@ fn quantity_list(condition_id: u32) -> Array<u32> {
     }
 }
 
+const LESS_THAN: u32 = 1;
+const GREATER_THAN: u32 = 2;
+const EQUAL_TO: u32 = 3;
+
 fn comparator_list(condition_id: u32) -> Array<u32> {
     if condition_id == CONDITION_CARDS_SUM_COMPARATOR_THAN_X {
-        array![1, 2, 3]
+        array![LESS_THAN, GREATER_THAN, EQUAL_TO]
     } else if condition_id == CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE {
-        array![1, 2, 3]
+        array![LESS_THAN, GREATER_THAN, EQUAL_TO]
     } else if condition_id == CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X {
-        array![1, 2, 3]
+        array![LESS_THAN, GREATER_THAN, EQUAL_TO]
     } else if condition_id == CONDITION_LOWEST_CARD_COMPARATOR_THAN_X {
-        array![1, 2, 3]
+        array![LESS_THAN, GREATER_THAN, EQUAL_TO]
     } else {
         array![0]
     }
