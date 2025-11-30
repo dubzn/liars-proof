@@ -20,7 +20,6 @@ pub impl ConditionTraitImpl of ConditionTrait {
 
 // CONDITION_CARDS_SUM_COMPARATOR_THAN_X
 // - Sumo las cartas y veo si es mayor, menor o igual a X
-// - QUANTITY = rango {1, 2, 3}
 // - COMPARATOR = {1, 2, 3} (<, >, =)
 // - VALUE = rango {10, 20}
 const CONDITION_CARDS_SUM_COMPARATOR_THAN_X: u32 = 1;
@@ -51,13 +50,11 @@ const CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE: u32 = 5;
 // CONDITION_EXACTLY_X_DISTINCT_VALUES
 // Cuento QUANTITY cartas distintas
 // - QUANTITY = rango {1, 2, 3}
-// - VALUE = rango {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 const CONDITION_EXACTLY_X_DISTINCT_VALUES: u32 = 6;
 
 // CONDITION_EXACTLY_X_DISTINCT_SUITS
 // Cuento QUANTITY cartas distintas
 // - QUANTITY = rango {1, 2, 3}
-// - SUIT = rango {1, 2, 3, 4}
 const CONDITION_EXACTLY_X_DISTINCT_SUITS: u32 = 7;
 
 // CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X
@@ -81,23 +78,13 @@ fn condition_list() -> Array<u32> {
 }
 
 fn quantity_list(condition_id: u32) -> Array<u32> {
-    if condition_id == CONDITION_CARDS_SUM_COMPARATOR_THAN_X {
-        array![1, 2, 3]
-    } else if condition_id == CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y {
+    if condition_id == CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_PAIRS {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_ODDS {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE {
-        array![1, 2, 3]
-    } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_VALUES {
-        array![1, 2, 3]
-    } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_SUITS {
-        array![1, 2, 3]
-    } else if condition_id == CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X {
-        array![1, 2, 3]
-    } else if condition_id == CONDITION_LOWEST_CARD_COMPARATOR_THAN_X {
         array![1, 2, 3]
     } else {
         array![0]
