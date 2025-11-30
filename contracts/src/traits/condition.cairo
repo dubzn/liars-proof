@@ -30,47 +30,54 @@ const CONDITION_CARDS_SUM_COMPARATOR_THAN_X: u32 = 1;
 // - VALUE = rango {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 const CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y: u32 = 2;
 
+// CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y
+// Cuento QUANTITY cartas de un SUIT
+// - QUANTITY = rango {1, 2, 3}
+// - SUIT = rango {1, 2, 3, 4}
+const CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y: u32 = 3;
+
+
 // CONDITION_EXACTLY_X_PAIRS
 // Cuento QUANTITY cartas pares
 // - QUANTITY = rango {1, 2, 3}
-const CONDITION_EXACTLY_X_PAIRS: u32 = 3;
+const CONDITION_EXACTLY_X_PAIRS: u32 = 4;
 
 // CONDITION_EXACTLY_X_ODDS
 // Cuento QUANTITY cartas impares
 // - QUANTITY = rango {1, 2, 3}
-const CONDITION_EXACTLY_X_ODDS: u32 = 4;
+const CONDITION_EXACTLY_X_ODDS: u32 = 5;
 
 // CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE
 // Si tenes QUANTITY cartas de VALUE menor/mayor/igual que Y
 // - QUANTITY = rango {1, 2, 3}
 // - COMPARATOR = {1, 2, 3} (<, >, =)
 // - VALUE = rango {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-const CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE: u32 = 5;
+const CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE: u32 = 6;
 
 // CONDITION_EXACTLY_X_DISTINCT_VALUES
 // Cuento QUANTITY cartas distintas
 // - QUANTITY = rango {1, 2, 3}
-const CONDITION_EXACTLY_X_DISTINCT_VALUES: u32 = 6;
+const CONDITION_EXACTLY_X_DISTINCT_VALUES: u32 = 7;
 
 // CONDITION_EXACTLY_X_DISTINCT_SUITS
 // Cuento QUANTITY cartas distintas
 // - QUANTITY = rango {1, 2, 3}
-const CONDITION_EXACTLY_X_DISTINCT_SUITS: u32 = 7;
+const CONDITION_EXACTLY_X_DISTINCT_SUITS: u32 = 8;
 
 // CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X
 // - COMPARATOR = {1, 2, 3} (<, >, =)
 // - VALUE = rango {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-const CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X: u32 = 8;
+const CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X: u32 = 9;
 
 // CONDITION_LOWEST_CARD_COMPARATOR_THAN_X
 // - COMPARATOR = {1, 2, 3} (<, >, =)
 // - VALUE = range {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-const CONDITION_LOWEST_CARD_COMPARATOR_THAN_X: u32 = 9;
+const CONDITION_LOWEST_CARD_COMPARATOR_THAN_X: u32 = 10;
 
 fn condition_list() -> Array<u32> {
     array![
         CONDITION_CARDS_SUM_COMPARATOR_THAN_X, CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y,
-        CONDITION_EXACTLY_X_PAIRS, CONDITION_EXACTLY_X_ODDS,
+        CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y, CONDITION_EXACTLY_X_PAIRS, CONDITION_EXACTLY_X_ODDS,
         CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE, CONDITION_EXACTLY_X_DISTINCT_VALUES,
         CONDITION_EXACTLY_X_DISTINCT_SUITS, CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X,
         CONDITION_LOWEST_CARD_COMPARATOR_THAN_X,
@@ -79,6 +86,8 @@ fn condition_list() -> Array<u32> {
 
 fn quantity_list(condition_id: u32) -> Array<u32> {
     if condition_id == CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y {
+        array![1, 2, 3]
+    } else if condition_id == CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_PAIRS {
         array![1, 2, 3]
@@ -135,5 +144,9 @@ const DIAMONDS: u32 = 3;
 const HEARTS: u32 = 4;
 
 fn suit_list(condition_id: u32) -> Array<u32> {
-    array![0]
+    if condition_id == CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y {
+        array![CLUBS, SPADES, DIAMONDS, HEARTS]
+    } else {
+        array![0]
+    }
 }
