@@ -14,6 +14,7 @@ pub mod game {
     use starknet::get_caller_address;
     use crate::models::game::{Game, GameCreated, GameJoined, GameState};
     use crate::models::hand::HandCommitmentSubmitted;
+    use crate::models::player_choice::{PlayerConditionChoice, PlayerChallengeChoice};
     use crate::traits::condition::ConditionTrait;
     use crate::traits::store::{Store, StoreTrait};
     use super::IGameSystem;
@@ -22,6 +23,9 @@ pub mod game {
         let mut store = self.store_default();
         store.set_game_count(1);
     }
+
+    const CHOICE_TRUE: u32 = 1;
+    const CHOICE_FALSE: u32 = 2;
 
     #[abi(embed_v0)]
     impl GameImpl of IGameSystem<ContractState> {
@@ -40,6 +44,10 @@ pub mod game {
                         player_2_name: Default::default(),
                         player_1_hand_commitment: Zero::zero(),
                         player_2_hand_commitment: Zero::zero(),
+                        player_1_score: Zero::zero(),
+                        player_2_score: Zero::zero(),
+                        player_1_lives: 3,
+                        player_2_lives: 3,
                         round: Zero::zero(),
                         state: GameState::WaitingForPlayers,
                         condition_id: Zero::zero(),
@@ -60,7 +68,7 @@ pub mod game {
 
             assert!(
                 game.state == GameState::WaitingForPlayers,
-                "[Game] - Game is not waiting for players",
+                "[Game] - The game is not waiting for players",
             );
             game.player_2 = get_caller_address();
             game.player_2_name = player_name.clone();
@@ -79,7 +87,7 @@ pub mod game {
             let mut game = store.get_game(game_id);
             assert!(
                 game.state == GameState::WaitingForHandCommitments,
-                "[Game] - Submission of hand commitments is over",
+                "[Game] - The game is not waiting for hand commitments",
             );
             assert!(
                 game.player_1 == get_caller_address() || game.player_2 == get_caller_address(),
@@ -92,7 +100,7 @@ pub mod game {
                 game.player_2_hand_commitment = hand_commitment;
             }
 
-            if game.player_1_hand_commitment != 0 && game.player_2_hand_commitment != 0 {
+            if game.player_1_hand_commitment.is_non_zero() && game.player_2_hand_commitment.is_non_zero() {
                 game.state = GameState::ConditionPhase;
                 game.round = 1;
 
@@ -115,10 +123,10 @@ pub mod game {
 
         fn submit_condition_choice(ref self: ContractState, game_id: u32, player_choice: bool) {
             let mut store = self.store_default();
-            let game = store.get_game(game_id);
+            let mut game = store.get_game(game_id);
             assert!(
                 game.state == GameState::ConditionPhase,
-                "[Game] - You cannot submit a condition choice if you are not in the condition phase",
+                "[Game] - The game is not in the condition phase",
             );
 
             store
@@ -128,25 +136,73 @@ pub mod game {
                         round: game.round,
                         player: get_caller_address(),
                         choice: if player_choice {
-                            1
+                            CHOICE_TRUE
                         } else {
-                            2
+                            CHOICE_FALSE
                         },
                     },
                 );
+
+            let player_condition_1 = store.get_player_condition_choice(game_id, game.round, game.player_1);
+            let player_condition_2 = store.get_player_condition_choice(game_id, game.round, game.player_2);
+            
+            if player_condition_1.choice.is_non_zero() && player_condition_2.choice.is_non_zero() {
+                game.state = GameState::ChallengePhase;
+                store.set_game(game);
+            }
         }
 
         fn submit_challenge_choice(
             ref self: ContractState, game_id: u32, player_choice: bool,
-        ) { // let mut store = self.store_default();
-        // let game = store.get_game(game_id);
+        ) { 
+            let mut store = self.store_default();
+            let mut game = store.get_game(game_id);
+            assert!(
+                game.state == GameState::ChallengePhase,
+                "[Game] - The game is not in the challenge phase",
+            );
+            assert!(
+                game.player_1 == get_caller_address() || game.player_2 == get_caller_address(),
+                "[Game] - You cannot submit a challenge choice if you are not part of this game",
+            );
+
+            store
+                .set_player_challenge_choice(
+                    PlayerChallengeChoice {
+                        game_id: game_id,
+                        round: game.round,
+                        player: get_caller_address(),
+                        choice: if player_choice {
+                            CHOICE_TRUE
+                        } else {
+                            CHOICE_FALSE
+                        },
+                    },
+                );
+
+            let player_challenge_1 = store.get_player_challenge_choice(game_id, game.round, game.player_1);
+            let player_challenge_2 = store.get_player_challenge_choice(game_id, game.round, game.player_2);
+            
+            if player_challenge_1.choice.is_non_zero() && player_challenge_2.choice.is_non_zero() {
+                self.resolve_round(game_id);
+
+                // Create a new condition
+                let condition = ConditionTrait::create();
+                game.condition_id = condition.id;
+                store.set_condition(condition);
+
+                game.round += 1;
+                game.state = GameState::ConditionPhase;
+                store.set_game(game);
+            }
         }
     }
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn resolve_round(ref self: ContractState, game_id: u32) {// let mut store = self.store_default();
-        // let game = store.get_game(game_id);
+        fn resolve_round(ref self: ContractState, game_id: u32) {
+            // let mut store = self.store_default();
+            // let game = store.get_game(game_id);
         }
 
         fn store_default(self: @ContractState) -> Store {
