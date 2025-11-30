@@ -1,9 +1,9 @@
-use starknet::ContractAddress;
 use dojo::model::ModelStorage;
 use dojo::world::WorldStorage;
+use starknet::ContractAddress;
 use crate::models::condition::{CONDITION_COUNT_KEY, Condition, ConditionCount};
 use crate::models::game::{GAME_COUNT_KEY, Game, GameCount};
-use crate::models::player_choice::{PlayerConditionChoice, PlayerChallengeChoice};
+use crate::models::player_choice::{PlayerChallengeChoice, PlayerConditionChoice};
 
 #[derive(Drop)]
 pub struct Store {
@@ -49,19 +49,27 @@ pub impl StoreImpl of StoreTrait {
         self.world.write_model(@ConditionCount { key: CONDITION_COUNT_KEY, count: count })
     }
 
-    fn get_player_condition_choice(ref self: Store, game_id: u32, round: u32, player: ContractAddress) -> PlayerConditionChoice {
+    fn get_player_condition_choice(
+        ref self: Store, game_id: u32, round: u32, player: ContractAddress,
+    ) -> PlayerConditionChoice {
         self.world.read_model((game_id, round, player))
     }
 
-    fn set_player_condition_choice(ref self: Store, player_condition_choice: PlayerConditionChoice) {
+    fn set_player_condition_choice(
+        ref self: Store, player_condition_choice: PlayerConditionChoice,
+    ) {
         self.world.write_model(@player_condition_choice)
     }
 
-    fn get_player_challenge_choice(ref self: Store, game_id: u32, round: u32, player: ContractAddress) -> PlayerChallengeChoice {
+    fn get_player_challenge_choice(
+        ref self: Store, game_id: u32, round: u32, player: ContractAddress,
+    ) -> PlayerChallengeChoice {
         self.world.read_model((game_id, round, player))
     }
 
-    fn set_player_challenge_choice(ref self: Store, player_challenge_choice: PlayerChallengeChoice) {
+    fn set_player_challenge_choice(
+        ref self: Store, player_challenge_choice: PlayerChallengeChoice,
+    ) {
         self.world.write_model(@player_challenge_choice)
     }
 }

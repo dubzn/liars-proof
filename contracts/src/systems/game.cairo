@@ -14,7 +14,7 @@ pub mod game {
     use starknet::get_caller_address;
     use crate::models::game::{Game, GameCreated, GameJoined, GameState};
     use crate::models::hand::HandCommitmentSubmitted;
-    use crate::models::player_choice::{PlayerConditionChoice, PlayerChallengeChoice};
+    use crate::models::player_choice::{PlayerChallengeChoice, PlayerConditionChoice};
     use crate::traits::condition::ConditionTrait;
     use crate::traits::store::{Store, StoreTrait};
     use super::IGameSystem;
@@ -100,7 +100,8 @@ pub mod game {
                 game.player_2_hand_commitment = hand_commitment;
             }
 
-            if game.player_1_hand_commitment.is_non_zero() && game.player_2_hand_commitment.is_non_zero() {
+            if game.player_1_hand_commitment.is_non_zero()
+                && game.player_2_hand_commitment.is_non_zero() {
                 game.state = GameState::ConditionPhase;
                 game.round = 1;
 
@@ -143,18 +144,18 @@ pub mod game {
                     },
                 );
 
-            let player_condition_1 = store.get_player_condition_choice(game_id, game.round, game.player_1);
-            let player_condition_2 = store.get_player_condition_choice(game_id, game.round, game.player_2);
-            
+            let player_condition_1 = store
+                .get_player_condition_choice(game_id, game.round, game.player_1);
+            let player_condition_2 = store
+                .get_player_condition_choice(game_id, game.round, game.player_2);
+
             if player_condition_1.choice.is_non_zero() && player_condition_2.choice.is_non_zero() {
                 game.state = GameState::ChallengePhase;
                 store.set_game(game);
             }
         }
 
-        fn submit_challenge_choice(
-            ref self: ContractState, game_id: u32, player_choice: bool,
-        ) { 
+        fn submit_challenge_choice(ref self: ContractState, game_id: u32, player_choice: bool) {
             let mut store = self.store_default();
             let mut game = store.get_game(game_id);
             assert!(
@@ -180,9 +181,11 @@ pub mod game {
                     },
                 );
 
-            let player_challenge_1 = store.get_player_challenge_choice(game_id, game.round, game.player_1);
-            let player_challenge_2 = store.get_player_challenge_choice(game_id, game.round, game.player_2);
-            
+            let player_challenge_1 = store
+                .get_player_challenge_choice(game_id, game.round, game.player_1);
+            let player_challenge_2 = store
+                .get_player_challenge_choice(game_id, game.round, game.player_2);
+
             if player_challenge_1.choice.is_non_zero() && player_challenge_2.choice.is_non_zero() {
                 self.resolve_round(game_id);
 
@@ -200,9 +203,8 @@ pub mod game {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn resolve_round(ref self: ContractState, game_id: u32) {
-            // let mut store = self.store_default();
-            // let game = store.get_game(game_id);
+        fn resolve_round(ref self: ContractState, game_id: u32) {// let mut store = self.store_default();
+        // let game = store.get_game(game_id);
         }
 
         fn store_default(self: @ContractState) -> Store {
