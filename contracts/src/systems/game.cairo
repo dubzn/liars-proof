@@ -108,7 +108,7 @@ pub mod game {
                 game.state = GameState::ConditionPhase;
                 game.round = 1;
 
-                let condition = ConditionTrait::create();
+                let condition = ConditionTrait::create(ref store);
                 game.condition_id = condition.id;
                 store.set_condition(condition);
             }
@@ -236,7 +236,7 @@ pub mod game {
                             );
                     },
                     GameState::ConditionPhase => {
-                        let condition = ConditionTrait::create();
+                        let condition = ConditionTrait::create(ref store);
                         game.condition_id = condition.id;
                         store.set_condition(condition);
                     },

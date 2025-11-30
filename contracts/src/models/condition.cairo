@@ -6,15 +6,10 @@ pub struct Condition {
     #[key]
     pub id: u32,
     pub condition: u32,
+    pub quantity: u32,
     pub comparator: u32,
     pub value: u32,
     pub suit: u32,
-}
-
-impl ConditionDefault of Default<Condition> {
-    fn default() -> Condition {
-        Condition { id: 0, condition: 0, comparator: 0, value: 0, suit: 0 }
-    }
 }
 
 pub const CONDITION_COUNT_KEY: felt252 = selector!("CONDITION_COUNT");
