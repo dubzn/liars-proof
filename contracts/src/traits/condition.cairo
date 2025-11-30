@@ -86,6 +86,10 @@ fn quantity_list(condition_id: u32) -> Array<u32> {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE {
         array![1, 2, 3]
+    } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_VALUES {
+        array![1, 2, 3]
+    } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_SUITS {
+        array![1, 2, 3]
     } else {
         array![0]
     }
@@ -131,9 +135,5 @@ const DIAMONDS: u32 = 3;
 const HEARTS: u32 = 4;
 
 fn suit_list(condition_id: u32) -> Array<u32> {
-    if condition_id == CONDITION_EXACTLY_X_DISTINCT_SUITS {
-        array![CLUBS, SPADES, DIAMONDS, HEARTS]
-    } else {
-        array![0]
-    }
+    array![0]
 }
