@@ -1,4 +1,4 @@
-use std::hash::pedersen_hash;
+use std::hash::poseidon;
 
 // Condition IDs aligned with contract specification
 global CONDITION_CARDS_SUM_COMPARATOR_THAN_X: u8 = 1;
@@ -60,10 +60,8 @@ fn verify_hand_commitment(hand: Hand, commitment: Field) {
     let card2 = pack_card(hand.card2_value, hand.card2_suit);
     let card3 = pack_card(hand.card3_value, hand.card3_suit);
 
-    let temp = pedersen_hash([card1, card2]);
-    let computed_hash = pedersen_hash([temp, card3]);
-    // println("Computed hash:");
-    // println(computed_hash);
+    let temp = poseidon::bn254::hash_2([card1, card2]);
+    let computed_hash = poseidon::bn254::hash_2([temp, card3]);
 
     assert(computed_hash == commitment, "Hand commitment does not match");
 }
@@ -783,8 +781,8 @@ fn test_hand_commitment() {
     let card2 = pack_card(10, 2);
     let card3 = pack_card(13, 3);
 
-    let temp = pedersen_hash([card1, card2]);
-    let commitment = pedersen_hash([temp, card3]);
+    let temp = poseidon::bn254::hash_2([card1, card2]);
+    let commitment = poseidon::bn254::hash_2([temp, card3]);
 
     verify_hand_commitment(hand, commitment);
 }
@@ -805,8 +803,8 @@ fn test_full_circuit_condition_1() {
     let card2 = pack_card(5, 2);
     let card3 = pack_card(8, 3);
 
-    let temp = pedersen_hash([card1, card2]);
-    let commitment = pedersen_hash([temp, card3]);
+    let temp = poseidon::bn254::hash_2([card1, card2]);
+    let commitment = poseidon::bn254::hash_2([temp, card3]);
 
     // Sum is 23, greater than 20
     main(
@@ -835,8 +833,8 @@ fn test_full_circuit_condition_3() {
     let card2 = pack_card(10, HEARTS);
     let card3 = pack_card(3, CLUBS);
 
-    let temp = pedersen_hash([card1, card2]);
-    let commitment = pedersen_hash([temp, card3]);
+    let temp = poseidon::bn254::hash_2([card1, card2]);
+    let commitment = poseidon::bn254::hash_2([temp, card3]);
 
     // 2 cards of HEARTS
     main(

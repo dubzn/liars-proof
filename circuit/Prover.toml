@@ -1,9 +1,9 @@
-_game_id = "1"
-comparator = "1"
-condition_id = "1"
-hand_commitment = "0x19448077f0abaecff9c0a15691a42428c25162aec903c90e55778c8dbf52ec8a"
+_game_id = "16"
+comparator = "0"
+condition_id = "16"
+hand_commitment = "0x1722567aaeb8c868b218fd87d8cc5d15a9823b55501321d4cb0d1b8a3c3d583f"
 suit = "0"
-value = "10"
+value = "0"
 
 [hand]
 card1_suit = "2"

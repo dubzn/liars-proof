@@ -6,5 +6,5 @@ pub struct HandCommitmentSubmitted {
     #[key]
     pub game_id: u32,
     pub player: ContractAddress,
-    pub hand_commitment: felt252,
+    pub hand_commitment: u256,
 }

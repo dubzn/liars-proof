@@ -1,8 +1,8 @@
-game_id = "1"
-comparator = "1"
-condition_id = "1"
+game_id = "16"
+comparator = "0"
+condition_id = "16"
 suit = "0"
-value = "10"
+value = "0"
 
 [player_1]
 name = "Bob"

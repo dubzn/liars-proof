@@ -2,17 +2,18 @@
 pub trait IGameSystem<T> {
     fn create(ref self: T, player_name: ByteArray) -> u32;
     fn join(ref self: T, game_id: u32, player_name: ByteArray);
-    fn submit_hand_commitment(ref self: T, game_id: u32, hand_commitment: felt252);
+    fn submit_hand_commitment(ref self: T, game_id: u32, hand_commitment: u256);
     fn submit_condition_choice(ref self: T, game_id: u32, player_choice: bool);
     fn submit_challenge_choice(ref self: T, game_id: u32, player_choice: bool);
     fn submit_round_proof(ref self: T, game_id: u32, full_proof_with_hints: Span<felt252>);
+    fn get_condition(self: @T, game_id: u32) -> crate::models::condition::Condition;
 }
 
 #[dojo::contract]
 pub mod game_system {
     use core::num::traits::zero::Zero;
     use dojo::event::EventStorage;
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, SyscallResultTrait, get_caller_address};
     use crate::models::game::{Game, GameCreated, GameJoined, GameOver, GameState};
     use crate::models::hand::HandCommitmentSubmitted;
     use crate::models::player_choice::{PlayerChallengeChoice, PlayerConditionChoice};
@@ -85,7 +86,7 @@ pub mod game_system {
                 );
         }
 
-        fn submit_hand_commitment(ref self: ContractState, game_id: u32, hand_commitment: felt252) {
+        fn submit_hand_commitment(ref self: ContractState, game_id: u32, hand_commitment: u256) {
             let mut store = self.store_default();
             let mut game = store.get_game(game_id);
             assert!(
@@ -194,23 +195,86 @@ pub mod game_system {
         ) {
             let mut store = self.store_default();
             let game = store.get_game(game_id);
+            let condition = store.get_condition(game.condition_id);
+            let caller = get_caller_address();
+
             assert!(
                 game.state == GameState::ResultPhase,
                 "[Game] - The game is not in the result phase",
             );
+            assert!(
+                game.player_1 == caller || game.player_2 == caller,
+                "[Game] - You cannot submit a proof if you are not part of this game",
+            );
 
-            let contract_address = store.get_verifier_address();
-            let verifier_dispatcher = VerifierDispatcher { contract_address };
+            // Get the hand commitment for the current player
+            let hand_commitment = if game.player_1 == caller {
+                game.player_1_hand_commitment
+            } else {
+                game.player_2_hand_commitment
+            };
+
+            // Verify the proof using library_call_syscall
+            const VERIFIER_CLASSHASH: felt252 =
+                0x021ca8867f3e5ff0318ccfb8102c1b303f0d74bdedf8c564dba2786b1b52e6c0;
+
+            let mut is_valid = false;
+
+            if full_proof_with_hints.len() > 0 {
+                let mut res = starknet::syscalls::library_call_syscall(
+                    VERIFIER_CLASSHASH.try_into().unwrap(),
+                    selector!("verify_ultra_starknet_zk_honk_proof"),
+                    full_proof_with_hints,
+                )
+                    .unwrap_syscall();
+
+                // Deserialize the public inputs from the result
+                let public_inputs_option = Serde::<Option<Span<u256>>>::deserialize(ref res)
+                    .unwrap();
+
+                if public_inputs_option.is_some() {
+                    let public_inputs = public_inputs_option.unwrap();
+
+                    // Validate that we have the expected 6 public inputs
+                    assert!(public_inputs.len() == 6, "[Game] - Invalid number of public inputs");
+
+                    // Extract and validate public inputs
+                    let pi_game_id: u32 = (*public_inputs[0]).try_into().unwrap();
+                    let pi_hand_commitment = *public_inputs[1];
+                    let pi_condition_id: u32 = (*public_inputs[2]).try_into().unwrap();
+                    let pi_comparator: u32 = (*public_inputs[3]).try_into().unwrap();
+                    let pi_value: u32 = (*public_inputs[4]).try_into().unwrap();
+                    let pi_suit: u32 = (*public_inputs[5]).try_into().unwrap();
+
+                    // Validate all public inputs match the game state
+                    assert!(pi_game_id == game_id, "[Game] - Game ID mismatch in proof");
+                    assert!(
+                        pi_hand_commitment == hand_commitment,
+                        "[Game] - Hand commitment mismatch in proof",
+                    );
+                    assert!(
+                        pi_condition_id == condition.condition,
+                        "[Game] - Condition ID mismatch in proof",
+                    );
+                    assert!(
+                        pi_comparator == condition.comparator,
+                        "[Game] - Comparator mismatch in proof",
+                    );
+                    assert!(pi_value == condition.value, "[Game] - Value mismatch in proof");
+                    assert!(pi_suit == condition.suit, "[Game] - Suit mismatch in proof");
+
+                    is_valid = true;
+                }
+            }
+
             store
                 .set_player_round_proof(
                     RoundProof {
                         game_id: game.id,
                         round: game.round,
-                        player: get_caller_address(),
+                        player: caller,
                         submitted: true,
-                        is_valid: verifier_dispatcher
-                            .verify_ultra_starknet_zk_honk_proof(full_proof_with_hints)
-                            .is_some(),
+                        is_valid,
                     },
                 );
             let player_1_proof = store.get_player_round_proof(game.id, game.round, game.player_1);
@@ -244,6 +308,14 @@ pub mod game_system {
                 }
                 store.set_game(game);
             }
+        }
+
+        fn get_condition(
+            self: @ContractState, game_id: u32,
+        ) -> crate::models::condition::Condition {
+            let mut store = self.store_default();
+            let game = store.get_game(game_id);
+            store.get_condition(game.condition_id)
         }
     }
 
@@ -334,7 +406,7 @@ pub mod game_system {
         }
 
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
-            self.world(@"liars_proof")
+            self.world(@"liars_proof2")
         }
     }
 }

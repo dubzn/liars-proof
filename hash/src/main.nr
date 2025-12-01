@@ -1,4 +1,4 @@
-use std::hash::pedersen_hash;
+use std::hash::poseidon;
 
 struct Hand {
     card1_value: u8,
@@ -14,8 +14,8 @@ fn main(hand: Hand) {
     let card2 = pack_card(hand.card2_value, hand.card2_suit);
     let card3 = pack_card(hand.card3_value, hand.card3_suit);
 
-    let temp = pedersen_hash([card1, card2]);
-    let computed_hash = pedersen_hash([temp, card3]);
+    let temp = poseidon::bn254::hash_2([card1, card2]);
+    let computed_hash = poseidon::bn254::hash_2([temp, card3]);
     println("Computed hash:");
     println(computed_hash);
 }

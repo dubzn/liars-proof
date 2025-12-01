@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -e
+# Note: Don't use 'set -e' here because we want to continue even if proof generation fails
+# We'll handle errors manually and write '0' to calldata files for invalid proofs
 
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -203,16 +204,25 @@ PROVER_TOML
 }
 
 # Generate proof for Player 1 (Bob)
-generate_proof "bob" $P1_CARD1_VALUE $P1_CARD1_SUIT $P1_CARD2_VALUE $P1_CARD2_SUIT $P1_CARD3_VALUE $P1_CARD3_SUIT
+BOB_SUCCESS=0
+if generate_proof "bob" $P1_CARD1_VALUE $P1_CARD1_SUIT $P1_CARD2_VALUE $P1_CARD2_SUIT $P1_CARD3_VALUE $P1_CARD3_SUIT; then
+    BOB_SUCCESS=1
+fi
 
 # Generate proof for Player 2 (Alice)
-generate_proof "alice" $P2_CARD1_VALUE $P2_CARD1_SUIT $P2_CARD2_VALUE $P2_CARD2_SUIT $P2_CARD3_VALUE $P2_CARD3_SUIT
+ALICE_SUCCESS=0
+if generate_proof "alice" $P2_CARD1_VALUE $P2_CARD1_SUIT $P2_CARD2_VALUE $P2_CARD2_SUIT $P2_CARD3_VALUE $P2_CARD3_SUIT; then
+    ALICE_SUCCESS=1
+fi
 
 echo "==================================="
 echo "✨ Proof generation completed!"
 echo "==================================="
 echo ""
 echo "Generated files:"
-echo "  - calldata_bob.txt"
-echo "  - calldata_alice.txt"
+echo "  - calldata_bob.txt $([ $BOB_SUCCESS -eq 1 ] && echo "(valid proof)" || echo "(invalid proof - calldata = 0)")"
+echo "  - calldata_alice.txt $([ $ALICE_SUCCESS -eq 1 ] && echo "(valid proof)" || echo "(invalid proof - calldata = 0)")"
 echo ""
+
+# Always return success (exit code 0) because we handled the errors
+exit 0
