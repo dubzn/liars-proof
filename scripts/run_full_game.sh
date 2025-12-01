@@ -154,7 +154,34 @@ sleep 25
 # Step 2.5: Get the generated condition
 echo "🔍 Step 2.5: Retrieving generated condition"
 echo "Using profile: alice, Game ID: $GAME_ID"
-CONDITION_OUTPUT=$(sozo -P alice model get Condition $GAME_ID)
+
+# First, get the Game to obtain the condition_id
+GAME_OUTPUT=$(sozo -P alice model get Game $GAME_ID)
+
+if [ $? -ne 0 ]; then
+    echo "❌ Error: Failed to retrieve game $GAME_ID"
+    echo "Output: $GAME_OUTPUT"
+    exit 1
+fi
+
+echo "Game model:"
+echo "$GAME_OUTPUT"
+echo ""
+
+# Parse the condition_id from the game output
+CONDITION_ID=$(echo "$GAME_OUTPUT" | grep "condition_id" | grep -oE '[0-9]+')
+
+if [ -z "$CONDITION_ID" ]; then
+    echo "❌ Error: Failed to parse condition_id from game"
+    echo "CONDITION_ID: $CONDITION_ID"
+    exit 1
+fi
+
+echo "Condition ID from game: $CONDITION_ID"
+echo ""
+
+# Now get the Condition model using the condition_id
+CONDITION_OUTPUT=$(sozo -P alice model get Condition $CONDITION_ID)
 
 if [ $? -ne 0 ]; then
     echo "❌ Error: Failed to retrieve condition from game $GAME_ID"
@@ -209,7 +236,7 @@ echo ""
 cat > game_config.toml <<CONFIG_FILE
 game_id = "$GAME_ID"
 comparator = "$COMPARATOR"
-condition_id = "$CONDITION_ID"
+condition_id = "$CONDITION"
 suit = "$SUIT"
 value = "$VALUE"
 

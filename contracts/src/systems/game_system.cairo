@@ -254,7 +254,7 @@ pub mod game_system {
                     );
                     assert!(
                         pi_condition_id == condition.condition,
-                        "[Game] - Condition ID mismatch in proof",
+                        "[Game] - Condition type mismatch in proof",
                     );
                     assert!(
                         pi_comparator == condition.comparator,
