@@ -13,5 +13,5 @@ pub mod traits {
 }
 
 pub mod systems {
-    pub mod game;
+    pub mod game_system;
 }

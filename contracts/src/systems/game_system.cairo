@@ -9,7 +9,7 @@ pub trait IGameSystem<T> {
 }
 
 #[dojo::contract]
-pub mod game {
+pub mod game_system {
     use core::num::traits::zero::Zero;
     use dojo::event::EventStorage;
     use starknet::{ContractAddress, get_caller_address};
@@ -334,7 +334,7 @@ pub mod game {
         }
 
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
-            self.world(@"liars-proof")
+            self.world(@"liars_proof")
         }
     }
 }

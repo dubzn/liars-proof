@@ -1,5 +1,5 @@
 [package]
-name = "dojo_starter"
+name = "liars_proof"
 version = "1.8.0"
 edition = "2024_07"
 
@@ -22,3 +22,5 @@ allow-prebuilt-plugins = ["dojo_cairo_macros"]
 [dev-dependencies]
 cairo_test = "2.13.1"
 dojo_cairo_test = "1.8.0"
+
+[profile.testnet]
