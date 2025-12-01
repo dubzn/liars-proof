@@ -1,0 +1,31 @@
+[world]
+name = "Dojo starter"
+description = "The official Dojo Starter guide, the quickest and most streamlined way to get your Dojo Autonomous World up and running. This guide will assist you with the initial setup, from cloning the repository to deploying your world."
+cover_uri = "file://assets/cover.png"
+icon_uri = "file://assets/icon.png"
+website = "https://github.com/dojoengine/dojo-starter"
+seed = "liars_proof"
+
+[world.socials]
+x = "https://x.com/ohayo_dojo"
+discord = "https://discord.gg/FB2wR6uF"
+github = "https://github.com/dojoengine/dojo-starter"
+telegram = "https://t.me/dojoengine"
+
+[namespace]
+default = "liars_proof"
+
+[env]
+rpc_url = "https://ztarknet-madara.d.karnot.xyz"
+# Default account for katana with seed = 0
+account_address = "0x65fcf2f764250edb35d1028052d609c2cee6bf54103c36270b1877cd2019a5c"
+private_key = "0x75e36ceb6a9de03b491d4a91b9f7ae67b7d34071be6c7c5018ff607c6fcf6c6"
+# world_address = "0x026d5777eccca1861a23303ee0ba48c0e8349e849d0377a21c3801ef1d0f8cef"
+
+[writers]
+"liars_proof" = ["liars_proof-game_system"]
+
+[init_call_args]
+"liars_proof-game_system" = [
+    "0x07efb9a2915d94d90bdf6df392bc3244c0dd1d9beb79c0f9a5d34ae99e888094",
+]

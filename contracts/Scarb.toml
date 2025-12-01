@@ -24,3 +24,5 @@ cairo_test = "2.13.1"
 dojo_cairo_test = "1.8.0"
 
 [profile.testnet]
+[profile.bob]
+[profile.alice]

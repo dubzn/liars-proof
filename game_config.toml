@@ -1,0 +1,27 @@
+game_id = "1"
+comparator = "1"
+condition_id = "1"
+suit = "0"
+value = "10"
+
+[player_1]
+name = "Bob"
+card1_suit = "1"
+card1_value = "1"
+card2_suit = "2"
+card2_value = "2"
+card3_suit = "3"
+card3_value = "3"
+condition_choice = "1"
+challenge_choice = "0"
+
+[player_2]
+name = "Alice"
+card1_suit = "2"
+card1_value = "1"
+card2_suit = "3"
+card2_value = "2"
+card3_suit = "4"
+card3_value = "3"
+condition_choice = "0"
+challenge_choice = "1"
