@@ -1,0 +1,14 @@
+_game_id = "1"
+comparator = "1"
+condition_id = "1"
+hand_commitment = "0x19448077f0abaecff9c0a15691a42428c25162aec903c90e55778c8dbf52ec8a"
+suit = "0"
+value = "10"
+
+[hand]
+card1_suit = "2"
+card1_value = "1"
+card2_suit = "3"
+card2_value = "2"
+card3_suit = "4"
+card3_value = "3"
