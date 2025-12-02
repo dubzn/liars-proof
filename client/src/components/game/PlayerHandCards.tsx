@@ -23,7 +23,7 @@ export const PlayerHandCards = ({
       const progressFromBottom = 1 - e.clientY / height;
       // Clamp 0..1
       const clamped = Math.max(0, Math.min(1, progressFromBottom));
-      const MAX_DOWN = 250; // píxeles hacia abajo cuando el mouse está arriba del todo
+      const MAX_DOWN = 150;
       setOffsetY(clamped * MAX_DOWN);
     };
 

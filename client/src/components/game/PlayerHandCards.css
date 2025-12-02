@@ -10,7 +10,6 @@
   will-change: transform;
   justify-content: center;
   align-items: flex-end;
-  /* Por defecto, las cartas están desplazadas hacia abajo (solo la mitad visible) */
 }
 
 .player-hand-card {
