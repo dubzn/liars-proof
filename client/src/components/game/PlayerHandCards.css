@@ -18,7 +18,7 @@
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.3s cubic-bezier(0.42,0,0.58,1);
-  transform: translateY(100%);
+  transform: translateY(+100%);
   pointer-events: auto;
 }
 

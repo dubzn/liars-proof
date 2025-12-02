@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { getCardImagePath } from "@/utils/cardUtils";
 import "./PlayerHandCards.css";
 
@@ -10,14 +11,32 @@ export const PlayerHandCards = ({
   cards,
   parallaxOffset,
 }: PlayerHandCardsProps) => {
-  // Invertir el parallax Y: cuando mouse está abajo, cartas suben; cuando está en medio, bajan
-  const invertedY = -parallaxOffset.y;
+  // Offset controlado por posición vertical del mouse:
+  // - En la parte inferior de la pantalla -> offsetY ≈ 0 (cartas centradas abajo, visibles)
+  // - A medida que el mouse sube -> offsetY aumenta y las cartas se van hacia abajo (fuera de la pantalla)
+  const [offsetY, setOffsetY] = useState(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const height = window.innerHeight || 1;
+      // 0 en bottom, 1 en top
+      const progressFromBottom = 1 - e.clientY / height;
+      // Clamp 0..1
+      const clamped = Math.max(0, Math.min(1, progressFromBottom));
+      const MAX_DOWN = 250; // píxeles hacia abajo cuando el mouse está arriba del todo
+      setOffsetY(clamped * MAX_DOWN);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   return (
     <div
       className="player-hand-cards"
       style={{
-        transform: `translate(calc(-50% + ${parallaxOffset.x * 0.5}px), ${invertedY * 0.5}px)`,
+        // Centrado horizontal con ligero parallax X, Y controlado por offsetY
+        transform: `translate(calc(-50% + ${parallaxOffset.x * 0.4}px), ${offsetY}px)`,
       }}
     >
       {cards.map((card, index) => (
