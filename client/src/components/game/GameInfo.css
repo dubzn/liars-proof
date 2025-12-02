@@ -1,0 +1,63 @@
+.game-info {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.game-info-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.game-info-players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.game-info-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.game-info-player-name {
+  font-weight: 600;
+  color: #333;
+  min-width: 100px;
+}
+
+.game-info-player-score {
+  color: #666;
+  font-weight: 500;
+}
+
+.game-info-lives {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.game-info-heart {
+  font-size: 16px;
+  transition: opacity 0.2s;
+}
+
+.game-info-heart.active {
+  opacity: 1;
+}
+
+.game-info-heart.inactive {
+  opacity: 0.3;
+}
+

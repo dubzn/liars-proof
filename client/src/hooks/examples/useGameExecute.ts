@@ -68,9 +68,67 @@ export const useGameExecute = () => {
     [sdk, account]
   );
 
+  const executeSubmitConditionChoice = useCallback(
+    async (gameId: number, choice: boolean) => {
+      if (!sdk || !account) {
+        toast.error("Please connect your wallet");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const world = setupWorld(sdk.provider);
+        
+        const result = await world.game.submitConditionChoice(account, gameId, choice);
+        
+        toast.success("Condition choice submitted!");
+        console.log("Transaction result:", result);
+        
+        return result;
+      } catch (error) {
+        console.error("Error executing transaction:", error);
+        toast.error("Failed to submit condition choice");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sdk, account]
+  );
+
+  const executeSubmitChallengeChoice = useCallback(
+    async (gameId: number, choice: boolean) => {
+      if (!sdk || !account) {
+        toast.error("Please connect your wallet");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const world = setupWorld(sdk.provider);
+        
+        const result = await world.game.submitChallengeChoice(account, gameId, choice);
+        
+        toast.success("Challenge choice submitted!");
+        console.log("Transaction result:", result);
+        
+        return result;
+      } catch (error) {
+        console.error("Error executing transaction:", error);
+        toast.error("Failed to submit challenge choice");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sdk, account]
+  );
+
   return {
     executeCreateGame,
     executeJoinGame,
+    executeSubmitConditionChoice,
+    executeSubmitChallengeChoice,
     loading,
   };
 };

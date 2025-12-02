@@ -1,0 +1,34 @@
+.game-cards {
+  position: absolute;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+  z-index: 7;
+  transition: transform 0.15s ease-out;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.game-card {
+  width: 120px;
+  height: 180px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-20px) !important;
+}
+
+.game-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+

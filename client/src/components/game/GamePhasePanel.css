@@ -1,0 +1,121 @@
+.game-phase-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 320px;
+  z-index: 10;
+}
+
+.game-phase {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.game-phase.active {
+  background: rgba(59, 130, 246, 0.15);
+  border: 2px solid #3b82f6;
+}
+
+.game-phase.completed {
+  background: rgba(34, 197, 94, 0.15);
+  border: 2px solid #22c55e;
+}
+
+.game-phase.pending {
+  background: rgba(156, 163, 175, 0.15);
+  border: 2px solid #9ca3af;
+  opacity: 0.6;
+}
+
+.game-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.game-phase-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.game-phase.active .game-phase-icon {
+  color: #3b82f6;
+}
+
+.game-phase.completed .game-phase-icon {
+  color: #22c55e;
+}
+
+.game-phase.pending .game-phase-icon {
+  color: #9ca3af;
+}
+
+.game-phase-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.game-phase-content {
+  margin-top: 12px;
+}
+
+.game-phase-question {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.game-phase-message {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  padding: 12px;
+}
+
+.game-phase-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.game-phase-button {
+  min-width: 100px;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.game-phase-button-yes {
+  background: #3b82f6;
+  color: white;
+  border: 2px solid #2563eb;
+}
+
+.game-phase-button-yes:hover {
+  background: #2563eb;
+}
+
+.game-phase-button-no {
+  background: #ef4444;
+  color: white;
+  border: 2px solid #dc2626;
+}
+
+.game-phase-button-no:hover {
+  background: #dc2626;
+}
+

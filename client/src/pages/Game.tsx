@@ -1,168 +1,149 @@
 import { useParams } from "react-router-dom";
 import { useAccount } from "@starknet-react/core";
-import { Button } from "@/components/ui/button";
-import { useGameQuery } from "@/hooks/examples/useGameQuery";
-import { useGameSubscription } from "@/hooks/examples/useGameSubscription";
-import { useGameCall } from "@/hooks/examples/useGameCall";
-import { useGameExecute } from "@/hooks/examples/useGameExecute";
 import { useGameModels } from "@/hooks/useGameModels";
+import { useParallax } from "@/hooks/useParallax";
+import { GameInfo } from "@/components/game/GameInfo";
+import { GamePhasePanel } from "@/components/game/GamePhasePanel";
+import { PlayerCharacter } from "@/components/game/PlayerCharacter";
+import { OpponentCharacter } from "@/components/game/OpponentCharacter";
+import { GameCards } from "@/components/game/GameCards";
+import { useGameExecute } from "@/hooks/examples/useGameExecute";
 import "./Game.css";
+
+// Mock data for now
+const MOCK_GAME = {
+  id: 45,
+  player_1_name: "dubctio",
+  player_1_score: 20,
+  player_1_lives: 3,
+  player_2_name: "piloso",
+  player_2_score: 30,
+  player_2_lives: 2,
+  state: "ChallengePhase" as const,
+  round: 1,
+};
+
+// Mock cards: value (1-13), suit (1=Clubs, 2=Spades, 3=Diamonds, 4=Hearts)
+// 9 of Hearts, 8 of Hearts, Ace of Spades
+const MOCK_CARDS = [
+  { suit: 4, value: 9 }, // 9 of Hearts
+  { suit: 4, value: 8 }, // 8 of Hearts
+  { suit: 2, value: 1 }, // Ace of Spades
+];
 
 export const Game = () => {
   const { game_id } = useParams<{ game_id: string }>();
   const { account } = useAccount();
   const gameId = game_id ? parseInt(game_id) : 0;
 
-  // Example: Query to Torii
-  const { game: queriedGame, loading: queryLoading } = useGameQuery(gameId);
-
-  // Example: Subscription to Game model
-  const { game: subscribedGame } = useGameSubscription(gameId);
-
-  // Example: Call to contract
-  const { callGame, callLoading } = useGameCall();
-
-  // Example: Execute to contract
-  const { executeCreateGame, executeLoading } = useGameExecute();
+  // Parallax effect
+  const parallaxOffset = useParallax(20);
+  const backgroundOffset = useParallax(10);
 
   // Subscribe to all game models
-  const {
-    game,
-    condition,
-    playerConditionChoice,
-    playerChallengeChoice,
-    roundProof,
-  } = useGameModels(gameId);
+  const { game } = useGameModels(gameId);
+  
+  // TODO: Use these when implementing full game logic
+  // const { condition, playerConditionChoice, playerChallengeChoice, roundProof } = useGameModels(gameId);
 
-  if (!account) {
-    return (
-      <div className="game-wallet-message">
-        <div className="game-wallet-message-text">Please connect your wallet</div>
-      </div>
-    );
-  }
+  // Execute functions
+  const { executeSubmitConditionChoice, executeSubmitChallengeChoice } = useGameExecute();
+
+  // Helper to get game state variant
+  const getGameStateVariant = (state: any): string => {
+    if (!state) return "ChallengePhase";
+    if (typeof state === "string") return state;
+    if (state.variant) return state.variant;
+    // Handle CairoCustomEnum
+    if (state.WaitingForPlayers !== undefined) return "WaitingForPlayers";
+    if (state.WaitingForHandCommitments !== undefined) return "WaitingForHandCommitments";
+    if (state.ConditionPhase !== undefined) return "ConditionPhase";
+    if (state.ChallengePhase !== undefined) return "ChallengePhase";
+    if (state.ResultPhase !== undefined) return "ResultPhase";
+    if (state.GameOver !== undefined) return "GameOver";
+    return "ChallengePhase";
+  };
+
+  // Use mock data for now, fallback to real data when available
+  const currentGame = game || MOCK_GAME;
+  const currentPhase = getGameStateVariant(currentGame.state) as "ConditionPhase" | "ChallengePhase" | "ResultPhase";
+  const gameIdNumber = gameId || Number(currentGame.id) || MOCK_GAME.id;
+  const player1Name = String(currentGame.player_1_name || MOCK_GAME.player_1_name);
+  const player2Name = String(currentGame.player_2_name || MOCK_GAME.player_2_name);
+  const player1Score = Number(currentGame.player_1_score) || MOCK_GAME.player_1_score;
+  const player2Score = Number(currentGame.player_2_score) || MOCK_GAME.player_2_score;
+  const player1Lives = Number(currentGame.player_1_lives) || MOCK_GAME.player_1_lives;
+  const player2Lives = Number(currentGame.player_2_lives) || MOCK_GAME.player_2_lives;
+
+  const handleConditionChoice = async (choice: boolean) => {
+    if (!account) return;
+    await executeSubmitConditionChoice(gameId, choice);
+  };
+
+  const handleChallengeChoice = async (choice: boolean) => {
+    if (!account) return;
+    await executeSubmitChallengeChoice(gameId, choice);
+  };
+
+  // if (!account) {
+  //   return (
+  //     <div className="game-wallet-message">
+  //       <div className="game-wallet-message-text">PLEASE CONNECT YOUR WALLET</div>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="game-container">
-      <div className="game-wrapper">
-        <h1 className="game-title">Game #{gameId}</h1>
-
-        {/* Examples Section */}
-        <div className="game-examples-grid">
-          {/* Example 1: Torii Query */}
-          <div className="game-example-card">
-            <h2 className="game-example-title">Example 1: Torii Query</h2>
-            <Button
-              onClick={() => {}}
-              disabled={queryLoading}
-              className="game-example-button"
-            >
-              {queryLoading ? "Loading..." : "Query Game"}
-            </Button>
-            {queriedGame && (
-              <div className="game-example-result">
-                <pre>{JSON.stringify(queriedGame, null, 2)}</pre>
-              </div>
-            )}
-          </div>
-
-          {/* Example 2: Torii Subscription */}
-          <div className="game-example-card">
-            <h2 className="game-example-title">Example 2: Torii Subscription</h2>
-            <p className="game-example-description">
-              Subscribed to Game model updates
-            </p>
-            {subscribedGame && (
-              <div className="game-example-result">
-                <pre>{JSON.stringify(subscribedGame, null, 2)}</pre>
-              </div>
-            )}
-          </div>
-
-          {/* Example 3: Contract Call */}
-          <div className="game-example-card">
-            <h2 className="game-example-title">Example 3: Contract Call</h2>
-            <Button
-              onClick={() => callGame(gameId)}
-              disabled={callLoading}
-              className="game-example-button"
-            >
-              {callLoading ? "Calling..." : "Call Game (Read)"}
-            </Button>
-            <p className="game-example-description">
-              This is a read-only call to the contract
-            </p>
-          </div>
-
-          {/* Example 4: Contract Execute */}
-          <div className="game-example-card">
-            <h2 className="game-example-title">Example 4: Contract Execute</h2>
-            <Button
-              onClick={() => executeCreateGame("Player1")}
-              disabled={executeLoading}
-              className="game-example-button"
-            >
-              {executeLoading ? "Executing..." : "Create Game (Execute)"}
-            </Button>
-            <p className="game-example-description">
-              This executes a transaction on the contract
-            </p>
-          </div>
-        </div>
-
-        {/* Game State Section */}
-        <div className="game-state-section">
-          <h2 className="game-state-title">
-            Game State (Subscribed to all models)
-          </h2>
-          <div className="game-state-grid">
-            {game && (
-              <div className="game-state-card">
-                <h3 className="game-state-card-title">Game</h3>
-                <pre className="game-state-card-content">
-                  {JSON.stringify(game, null, 2)}
-                </pre>
-              </div>
-            )}
-            {condition && (
-              <div className="game-state-card">
-                <h3 className="game-state-card-title">Condition</h3>
-                <pre className="game-state-card-content">
-                  {JSON.stringify(condition, null, 2)}
-                </pre>
-              </div>
-            )}
-            {playerConditionChoice && (
-              <div className="game-state-card">
-                <h3 className="game-state-card-title">
-                  Player Condition Choice
-                </h3>
-                <pre className="game-state-card-content">
-                  {JSON.stringify(playerConditionChoice, null, 2)}
-                </pre>
-              </div>
-            )}
-            {playerChallengeChoice && (
-              <div className="game-state-card">
-                <h3 className="game-state-card-title">
-                  Player Challenge Choice
-                </h3>
-                <pre className="game-state-card-content">
-                  {JSON.stringify(playerChallengeChoice, null, 2)}
-                </pre>
-              </div>
-            )}
-            {roundProof && (
-              <div className="game-state-card">
-                <h3 className="game-state-card-title">Round Proof</h3>
-                <pre className="game-state-card-content">
-                  {JSON.stringify(roundProof, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="game-screen">
+      {/* Background with parallax */}
+      <div
+        className="game-background"
+        style={{
+          transform: `translate(${backgroundOffset.x}px, ${backgroundOffset.y}px)`,
+        }}
+      >
+        <img
+          src="/images/liars_bg.png"
+          alt="Background"
+          className="game-background-image"
+        />
       </div>
+
+      {/* Game Info Panel */}
+      <GameInfo
+        gameId={gameIdNumber}
+        player1Name={player1Name}
+        player1Score={player1Score}
+        player1Lives={player1Lives}
+        player2Name={player2Name}
+        player2Score={player2Score}
+        player2Lives={player2Lives}
+      />
+
+      {/* Player Character (Badger) */}
+      <PlayerCharacter
+        image="/images/player_cards.png"
+        name={player1Name}
+        parallaxOffset={{ x: parallaxOffset.x * 0.8, y: parallaxOffset.y * 0.8 }}
+      />
+
+      {/* Opponent Character (Jester) */}
+      <OpponentCharacter
+        image="/images/joker.png"
+        name={player2Name}
+        parallaxOffset={parallaxOffset}
+      />
+
+      {/* Game Cards */}
+      <GameCards cards={MOCK_CARDS} parallaxOffset={parallaxOffset} />
+
+      {/* Game Phase Panel */}
+      <GamePhasePanel
+        currentPhase={currentPhase}
+        opponentName={player2Name}
+        onConditionChoice={handleConditionChoice}
+        onChallengeChoice={handleChallengeChoice}
+      />
     </div>
   );
 };
