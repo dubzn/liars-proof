@@ -4,9 +4,8 @@ import { useGameModels } from "@/hooks/useGameModels";
 import { useParallax } from "@/hooks/useParallax";
 import { GameInfo } from "@/components/game/GameInfo";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
-import { PlayerCharacter } from "@/components/game/PlayerCharacter";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
-import { GameCards } from "@/components/game/GameCards";
+import { PlayerHandCards } from "@/components/game/PlayerHandCards";
 import { useGameExecute } from "@/hooks/examples/useGameExecute";
 import "./Game.css";
 
@@ -120,22 +119,15 @@ export const Game = () => {
         player2Lives={player2Lives}
       />
 
-      {/* Player Character (Badger) */}
-      <PlayerCharacter
-        image="/images/player_cards.png"
-        name={player1Name}
-        parallaxOffset={{ x: parallaxOffset.x * 0.8, y: parallaxOffset.y * 0.8 }}
-      />
-
-      {/* Opponent Character (Jester) */}
+      {/* Opponent Character (Jester) - includes cards in the image */}
       <OpponentCharacter
         image="/images/joker.png"
         name={player2Name}
         parallaxOffset={parallaxOffset}
       />
 
-      {/* Game Cards */}
-      <GameCards cards={MOCK_CARDS} parallaxOffset={parallaxOffset} />
+      {/* Player Hand Cards - 3 random cards */}
+      <PlayerHandCards cards={MOCK_CARDS} parallaxOffset={parallaxOffset} />
 
       {/* Game Phase Panel */}
       <GamePhasePanel

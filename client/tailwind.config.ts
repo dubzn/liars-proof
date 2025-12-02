@@ -9,11 +9,11 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        pixel: ["PixelGame", "monospace"],
-        ppneuebit: ["PPNeueBit", "sans-serif"],
-        ekamai: ["Ekamai", "sans-serif"],
-        circular: ["CircularLL", "sans-serif"],
-        dmmono: ["DMMono-Regular", "monospace"],
+        pixel: ["Arial", "sans-serif"],
+        ppneuebit: ["Arial", "sans-serif"],
+        ekamai: ["Arial", "sans-serif"],
+        circular: ["Arial", "sans-serif"],
+        dmmono: ["Arial", "sans-serif"],
       },
       width: {
         desktop: "432px",

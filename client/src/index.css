@@ -1,4 +1,4 @@
-@import "./fonts.css";
+/* @import "./fonts.css"; */ /* Fonts disabled - using Arial instead */
 
 @tailwind base;
 @tailwind components;
@@ -55,7 +55,7 @@
 @layer base {
   body {
     @apply bg-purple-100;
-    font-family: "PixelGame", monospace;
+    font-family: Arial, sans-serif;
     color: white;
   }
 }

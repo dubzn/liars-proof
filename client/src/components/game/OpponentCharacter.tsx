@@ -15,7 +15,7 @@ export const OpponentCharacter = ({
     <div
       className="opponent-character"
       style={{
-        transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+        transform: `translate(calc(-50% + ${parallaxOffset.x}px), ${parallaxOffset.y}px)`,
       }}
     >
       <div className="opponent-character-glow"></div>

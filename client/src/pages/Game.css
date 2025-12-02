@@ -4,7 +4,7 @@
   height: 100vh;
   overflow: hidden;
   background: #1a0f0a;
-  cursor: none;
+  cursor: default;
 }
 
 .game-background {
