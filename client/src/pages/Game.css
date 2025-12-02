@@ -1,0 +1,125 @@
+.game-container {
+  min-height: 100vh;
+  background-color: #111827; /* gray-900 */
+  padding: 2rem;
+}
+
+.game-wrapper {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.game-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.game-examples-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .game-examples-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.game-example-card {
+  background-color: #1f2937; /* gray-800 */
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.game-example-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.game-example-description {
+  color: #9ca3af; /* gray-400 */
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.game-example-button {
+  margin-bottom: 1rem;
+}
+
+.game-example-result {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #374151; /* gray-700 */
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.game-example-result pre {
+  overflow: auto;
+}
+
+.game-state-section {
+  background-color: #1f2937; /* gray-800 */
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.game-state-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.game-state-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .game-state-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.game-state-card {
+  padding: 1rem;
+  background-color: #374151; /* gray-700 */
+  border-radius: 0.25rem;
+}
+
+.game-state-card-title {
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.game-state-card-content {
+  font-size: 0.75rem;
+  color: #d1d5db; /* gray-300 */
+  overflow: auto;
+}
+
+.game-wallet-message {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #111827; /* gray-900 */
+}
+
+.game-wallet-message-text {
+  color: white;
+}
+
