@@ -37,3 +37,40 @@ export const getCardColor = (suit: number): "red" | "black" => {
   return suit === 3 || suit === 4 ? "red" : "black";
 };
 
+export const getCardFullName = (value: number, suit: number): string => {
+  // Get value name
+  let valueName: string;
+  if (value === 1) {
+    valueName = "Ace";
+  } else if (value === 11) {
+    valueName = "Jack";
+  } else if (value === 12) {
+    valueName = "Queen";
+  } else if (value === 13) {
+    valueName = "King";
+  } else {
+    valueName = value.toString();
+  }
+
+  // Get suit name
+  let suitName: string;
+  switch (suit) {
+    case 1: // CLUBS
+      suitName = "Clubs";
+      break;
+    case 2: // SPADES
+      suitName = "Spades";
+      break;
+    case 3: // DIAMONDS
+      suitName = "Diamonds";
+      break;
+    case 4: // HEARTS
+      suitName = "Hearts";
+      break;
+    default:
+      suitName = "Unknown";
+  }
+
+  return `${valueName} of ${suitName}`;
+};
+

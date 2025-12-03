@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCardImagePath } from "@/utils/cardUtils";
+import { getCardImagePath, getCardFullName } from "@/utils/cardUtils";
 import "./PlayerHandCards.css";
 
 interface PlayerHandCardsProps {
@@ -52,6 +52,8 @@ export const PlayerHandCards = ({
         const xOffset = Math.sin(arcAngle) * radius;
         const yOffset = -Math.abs(Math.cos(arcAngle) - 1) * radius * 0.1; // Minimal vertical offset
         
+        const cardName = getCardFullName(card.value, card.suit);
+        
         return (
           <div
             key={index}
@@ -67,6 +69,7 @@ export const PlayerHandCards = ({
               alt={`Card ${index + 1}`}
               className="player-hand-card-image"
             />
+            <div className="player-hand-card-tooltip">{cardName}</div>
           </div>
         );
       })}
