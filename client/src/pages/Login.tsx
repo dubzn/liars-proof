@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
 import { byteArray, num } from "starknet";
-import { getSelectorFromTag } from "@dojoengine/utils";
 import { toast } from "sonner";
 import "./Login.css";
 
-const GAME_CONTRACT_ADDRESS = "0x034388d18757792524581397d4304c89404e0c2615fe31451927f37ee040abe4";
+const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
 export const Login = () => {
   const { account, isConnecting, isAvailable, connect } = useStarknetKit();
