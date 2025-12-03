@@ -1,25 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
+import { CharacterCarousel } from "@/components/login/CharacterCarousel";
+import { useParallax } from "@/hooks/useParallax";
 import "./Login.css";
 
 const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
 export const Login = () => {
-  const { account, isConnecting, isAvailable, connect } = useStarknetKit();
+  const { account, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
-
-  // Create game and redirect when wallet is connected
-  useEffect(() => {
-    if (account && !isCreatingGame) {
-      createGame();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account]);
+  const backgroundParallax = useParallax(15); // Subtle parallax effect for background
 
   const createGame = async () => {
     if (!account) return;
@@ -133,33 +128,90 @@ export const Login = () => {
       try {
         console.log("[Login] Connecting wallet...");
         await connect();
-        // Navigation will happen automatically via useEffect when account changes
       } catch (error) {
         console.error("[Login] Error connecting wallet:", error);
+        toast.error("Failed to connect wallet");
       }
+    }
+  };
+
+  const handleCreateGame = async () => {
+    if (!account) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    await createGame();
+  };
+
+  const handleJoinGame = () => {
+    // Placeholder - no action for now
+    toast.info("Join Game feature coming soon");
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnect();
+      toast.success("Wallet disconnected");
+    } catch (error) {
+      console.error("[Login] Error disconnecting wallet:", error);
+      toast.error("Failed to disconnect wallet");
     }
   };
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <h1 className="login-title">Liar's Proof</h1>
-        <div className="login-content">
+      <div 
+        className="login-background" 
+        style={{
+          transform: `translate(${backgroundParallax.x}px, ${backgroundParallax.y}px)`,
+        }}
+      />
+      <div className="login-content-wrapper">
+        {/* Wallet status - absolute top left */}
+        {account && (
+          <div className="login-wallet-status-container">
+            <div className="login-wallet-status">
+              <span className="login-wallet-status-text">WALLET CONNECTED</span>
+            </div>
+            <button
+              onClick={handleDisconnect}
+              className="login-logout-button"
+              title="Disconnect wallet"
+            >
+              <img src="/images/icons/logout.png" alt="Logout" />
+            </button>
+          </div>
+        )}
+        
+        {/* Logo - absolute bottom left */}
+        <img src="/logo.png" alt="LIARS PROOF" className="login-logo" />
+        
+        <div className="login-left-panel">
           {account ? (
             <div className="login-connected-section">
-              <div className="login-address-container">
-                <p className="login-address-label">Connected Address:</p>
-                <p className="login-address">{account.address}</p>
+              <div className="login-buttons-container">
+                <Button
+                  onClick={handleCreateGame}
+                  className="login-button"
+                  variant="default"
+                  disabled={isCreatingGame}
+                >
+                  {isCreatingGame ? "Creating..." : "CREATE GAME"}
+                </Button>
+                <Button
+                  onClick={handleJoinGame}
+                  className="login-button"
+                  variant="default"
+                >
+                  JOIN GAME
+                </Button>
               </div>
-              <p className="login-redirect-message">
-                {isCreatingGame ? "Creating game..." : "Redirecting to game..."}
-              </p>
             </div>
           ) : (
-            <>
+            <div className="login-disconnected-section">
               <Button
                 onClick={handleConnect}
-                className="login-button-full"
+                className="login-button"
                 variant="default"
                 disabled={!isAvailable || isConnecting}
               >
@@ -167,16 +219,27 @@ export const Login = () => {
                   ? "Connecting..."
                   : !isAvailable
                     ? "Wallet not available"
-                    : "Connect Wallet (Argent/Ready)"}
+                    : "CONNECT WALLET"}
               </Button>
               {!isAvailable && (
                 <p className="login-error-message">
                   Please install Argent X or Ready Wallet
                 </p>
               )}
-            </>
+            </div>
           )}
         </div>
+        
+        <div className="login-right-panel">
+          <CharacterCarousel />
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="login-footer">
+        <p className="login-footer-text">
+          Submission for Zypherpunk Hackathon by @dub_zn and @dpinoness
+        </p>
       </div>
     </div>
   );

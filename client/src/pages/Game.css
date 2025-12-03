@@ -22,11 +22,11 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transition: filter 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .game-background.blurred .game-background-image {
-  filter: blur(8px);
+  filter: blur(6px);
 }
 
 .game-wallet-message {
