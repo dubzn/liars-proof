@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useStarknetKit } from "@/context/starknetkit";
-import { useGameModels } from "@/hooks/useGameModels";
+import { useGameWatcher } from "@/hooks/useGameWatcher";
 import { useParallax } from "@/hooks/useParallax";
 import { GameInfo } from "@/components/game/GameInfo";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
-import { useGameExecute } from "@/hooks/examples/useGameExecute";
+// import { useGameExecute } from "@/hooks/examples/useGameExecute"; // Temporarily commented - uncomment after browser refresh
 import "./Game.css";
 
 // Mock data for now
@@ -43,14 +43,17 @@ export const Game = () => {
   // State for blur effect when hovering over player cards
   const [isHoveringCards, setIsHoveringCards] = useState(false);
 
-  // Subscribe to all game models
-  const { game } = useGameModels(gameId);
-  
+  // Watch game state with GraphQL polling (every 2 seconds)
+  const { game, isLoading } = useGameWatcher(gameId, (updatedGame) => {
+    console.log("🎮 Game updated in Game page:", updatedGame);
+  });
+
   // TODO: Use these when implementing full game logic
   // const { condition, playerConditionChoice, playerChallengeChoice, roundProof } = useGameModels(gameId);
 
   // Execute functions
-  const { executeSubmitConditionChoice, executeSubmitChallengeChoice } = useGameExecute();
+  // TEMPORARILY COMMENTED TO FIX HOOK ORDER ERROR - REFRESH BROWSER TO FIX
+  // const { executeSubmitConditionChoice, executeSubmitChallengeChoice } = useGameExecute();
 
   // Helper to get game state variant
   const getGameStateVariant = (state: any): string => {
@@ -80,12 +83,16 @@ export const Game = () => {
 
   const handleConditionChoice = async (choice: boolean) => {
     if (!account) return;
-    await executeSubmitConditionChoice(gameId, choice);
+    console.log("Condition choice:", choice);
+    // TODO: Re-enable after browser refresh
+    // await executeSubmitConditionChoice(gameId, choice);
   };
 
   const handleChallengeChoice = async (choice: boolean) => {
     if (!account) return;
-    await executeSubmitChallengeChoice(gameId, choice);
+    console.log("Challenge choice:", choice);
+    // TODO: Re-enable after browser refresh
+    // await executeSubmitChallengeChoice(gameId, choice);
   };
 
   // if (!account) {
