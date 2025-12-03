@@ -402,7 +402,7 @@ pub mod game_system {
         }
 
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
-            self.world(@"liars_proof2")
+            self.world(@"liars_proof3")
         }
     }
 }

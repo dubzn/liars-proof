@@ -33,13 +33,13 @@
   },
   "contracts": [
     {
-      "address": "0x3c4154ab9b1b173767100ad84e107e54a62255400a8dd44ed885a1075e4751",
-      "class_hash": "0x7667fd898288adf0313276dfab6f503fbb56c184b882dbb42faf668878ccd1a",
+      "address": "0x61bbad1a75c35f967434893465a43744b935c9bceb9ccf2a894e77e864868d5",
+      "class_hash": "0x1fb9a3267fc0ecc2ac3744e5793b7560770f203cd88b82b28038a60fb6087e2",
       "init_calldata": [
-        "0x07efb9a2915d94d90bdf6df392bc3244c0dd1d9beb79c0f9a5d34ae99e888094"
+        "0x0255aa663e5057a4afa98df5a662d233e489fe264b2f4a2086254327c02daee5"
       ],
-      "tag": "liars_proof-game_system",
-      "selector": "0x4a6dc9c1ba2bd473872e106dda9f680fa26b2bdb81b741443b743c2fa6d4113",
+      "tag": "liars_proof3-game_system",
+      "selector": "0x2fc2136df45f5590da20c9530506fad4619f003e9476986b417052438d6fe3",
       "systems": [
         "dojo_init",
         "create",
@@ -88,8 +88,8 @@
         }
       ],
       "class_hash": "0x5bbaa9c216c8e9c948fb4883ede7f79a7b62556c2cce4f1bd2093d54d9b4559",
-      "tag": "liars_proof-Condition",
-      "selector": "0x1b6a6896dcf3afe22ee71b76945935c2b43fcffc1d52bf7fae67f27f556d263"
+      "tag": "liars_proof3-Condition",
+      "selector": "0x4d994b767f25558671c5f9d333b6ac3302602d35774c5571493e215b4a1a837"
     },
     {
       "members": [
@@ -105,8 +105,8 @@
         }
       ],
       "class_hash": "0x4972c793498e430bb03d604597e95b141f9ea7686c5d7b5b080fa274ca702b5",
-      "tag": "liars_proof-ConditionCount",
-      "selector": "0x723d8c3e8bb35ceef417c10b49c1e5989b02abe795266425465fb1f0859ae7b"
+      "tag": "liars_proof3-ConditionCount",
+      "selector": "0x63853ad927589c2b5bd7b1130ed8b5fc435763926308322b7c43c11a1f1bbd5"
     },
     {
       "members": [
@@ -137,12 +137,12 @@
         },
         {
           "name": "player_1_hand_commitment",
-          "type": "core::felt252",
+          "type": "core::integer::u256",
           "key": false
         },
         {
           "name": "player_2_hand_commitment",
-          "type": "core::felt252",
+          "type": "core::integer::u256",
           "key": false
         },
         {
@@ -179,11 +179,51 @@
           "name": "condition_id",
           "type": "core::integer::u32",
           "key": false
+        },
+        {
+          "name": "player_1_condition_submitted",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_1_condition_choice",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_2_condition_submitted",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_2_condition_choice",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_1_challenge_submitted",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_1_challenge_choice",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_2_challenge_submitted",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "player_2_challenge_choice",
+          "type": "core::bool",
+          "key": false
         }
       ],
-      "class_hash": "0x7c1957b7856971b06e91d9547fe1da4a0f490db78effb6619560d3dcc44225d",
-      "tag": "liars_proof-Game",
-      "selector": "0x4e794cbaf77d7fe7489a13a84870873524ea62b666f1663a889461ad165ac85"
+      "class_hash": "0x17dbe9218772e54d1a2258ffecf33bc38c4aafec93734a05a2af2f611b53507",
+      "tag": "liars_proof3-Game",
+      "selector": "0x725c2e9731a22b1df7d31bedc9a58b092b8aaebd41c9c20c99d6367fabdc070"
     },
     {
       "members": [
@@ -199,72 +239,8 @@
         }
       ],
       "class_hash": "0xf0d6dc1de510514386cf14f1220414f1f656499538fcb3a81c77c92f1d493e",
-      "tag": "liars_proof-GameCount",
-      "selector": "0x1367458986768e88aa84999437deaf9c2051737ac0012c3e187e7f5f9dcae40"
-    },
-    {
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "round",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "key": true
-        },
-        {
-          "name": "submitted",
-          "type": "core::bool",
-          "key": false
-        },
-        {
-          "name": "choice",
-          "type": "core::bool",
-          "key": false
-        }
-      ],
-      "class_hash": "0x67c5b8edd2ff41eda855a97d0ab6612376ae55152cca13814a5b0f457eb6441",
-      "tag": "liars_proof-PlayerChallengeChoice",
-      "selector": "0x2cc56949b57c841551297817b8419d130348ba6097bb3482cba909acec80780"
-    },
-    {
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "round",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "key": true
-        },
-        {
-          "name": "submitted",
-          "type": "core::bool",
-          "key": false
-        },
-        {
-          "name": "choice",
-          "type": "core::bool",
-          "key": false
-        }
-      ],
-      "class_hash": "0x77d6cad10377c4fe2ae4782fa45937f32476e50e98cb37d6fe0138512a2a1e5",
-      "tag": "liars_proof-PlayerConditionChoice",
-      "selector": "0x5de1bb4b3c557f8997aa6a99cd02205a06f0b5e70bd08eee78ce76d9a250021"
+      "tag": "liars_proof3-GameCount",
+      "selector": "0x5a9e678787697db5bd975cca301bcd2fe9f5b3b5a32d6ba6d176df7eab92070"
     },
     {
       "members": [
@@ -280,8 +256,8 @@
         }
       ],
       "class_hash": "0x3c08e1d8def3abe1d5aaf4902cec684455858f7045a1ae562194c8ff8777c25",
-      "tag": "liars_proof-Random",
-      "selector": "0x6367c49c479e37312ea689ed3d17c9cc5b19ed6f8b2fb8ce1b8bb670b65a1f7"
+      "tag": "liars_proof3-Random",
+      "selector": "0x5bdd64198e2234375efa8f42d3044190c02293c420ab6224aef89d2358354ea"
     },
     {
       "members": [
@@ -312,8 +288,8 @@
         }
       ],
       "class_hash": "0x67972b8d2c82caf7088b23188c3d84d8a5b65aa7d02cc33f0a77839b091d8cf",
-      "tag": "liars_proof-RoundProof",
-      "selector": "0x72f95b5a299e89b6f6b3222d080fd55b963bd0ba11221c75b370f6daab11feb"
+      "tag": "liars_proof3-RoundProof",
+      "selector": "0x16d8d781c6ce239e89fbe006e58768f3f9376b4d755dc7c2896529af70fd255"
     },
     {
       "members": [
@@ -329,8 +305,8 @@
         }
       ],
       "class_hash": "0x690cc9c8eb6372caf060fa23f2067642b0458844a9143c685d90214471fc696",
-      "tag": "liars_proof-Salt",
-      "selector": "0x6883f44fc89ff9de982067bffdf20b1fc81d8e3013776aec130120dc492e463"
+      "tag": "liars_proof3-Salt",
+      "selector": "0x79a59f806848bf389dc32e3d43073592a3066d6362012adc1a147cdc52c592c"
     },
     {
       "members": [
@@ -346,8 +322,8 @@
         }
       ],
       "class_hash": "0x5ae7650b6c59c2df029023a66cef3f21b6edeb6ec882d5cd0d516132036eefd",
-      "tag": "liars_proof-Verifier",
-      "selector": "0x1f098985e41bcf62f48dd0c6f0947d0065507d01e18f6abb9f42b2250cda074"
+      "tag": "liars_proof3-Verifier",
+      "selector": "0x403418336d9179989b7f269045ca1b93ed439488af3bc4605a4ce81f66ab099"
     }
   ],
   "events": [
@@ -375,8 +351,8 @@
         }
       ],
       "class_hash": "0x5ff0a419fdc05d04a930995cc0684bd5ceddd44737a0bea46ea1c708e28df48",
-      "tag": "liars_proof-ConditionCreated",
-      "selector": "0x3abfcf9075b94a88652f4c5a7f4525e6fbc4ca04851776ef7faac0eb5fe6fcd"
+      "tag": "liars_proof3-ConditionCreated",
+      "selector": "0x11044d475ff86bcb073dbf07f30717fb456ab0983f4252f6d33853fd239b26b"
     },
     {
       "members": [
@@ -397,8 +373,8 @@
         }
       ],
       "class_hash": "0xe2bab843b5037aa5c2034c7ad880f3be365ebdb2336fe74fa4ac7bf954e037",
-      "tag": "liars_proof-GameCreated",
-      "selector": "0x3e5d4cbb8ac9b89e1c13018746c3dd5214b73b0ced611c9af332457450e5880"
+      "tag": "liars_proof3-GameCreated",
+      "selector": "0x6406ce55b7b8974e4752e54277e6f05a8cb86e85a9886811b604d4485970322"
     },
     {
       "members": [
@@ -419,8 +395,8 @@
         }
       ],
       "class_hash": "0x601f0dda81ad5c58959b2a65fdcdfc806e1b29271cbcef770ba9f8c1744e01f",
-      "tag": "liars_proof-GameJoined",
-      "selector": "0x4d9ca678d90f268540c4248d7ff889b706d3314eeb31054191adbb7273b2e5a"
+      "tag": "liars_proof3-GameJoined",
+      "selector": "0x138b481e19e22583165a71bf05acb0872bcaa4bf0b5a4c711a33ccd96b1d832"
     },
     {
       "members": [
@@ -451,8 +427,8 @@
         }
       ],
       "class_hash": "0x16a042e03e6a79b4efa9ce8b35bf83c5b912a61da1ea1d436285b36ad15d4c4",
-      "tag": "liars_proof-GameOver",
-      "selector": "0x1fe1959cbbc4b19875703b2cb8aad6698901ac75ed720a74f4c7e34a53c0376"
+      "tag": "liars_proof3-GameOver",
+      "selector": "0x402a42c7dd82c3370e617e529b0a06c109fd274f1cdade9d0966fad60ca691e"
     },
     {
       "members": [
@@ -468,67 +444,13 @@
         },
         {
           "name": "hand_commitment",
-          "type": "core::felt252",
+          "type": "core::integer::u256",
           "key": false
         }
       ],
-      "class_hash": "0x190e749658fdb1fa35e501ae514a981ddcab730bf41b4b6b1ee125fb25f596e",
-      "tag": "liars_proof-HandCommitmentSubmitted",
-      "selector": "0x604f82abd030330ab3add03cd78100992f17a0e9e8eb485a9dad137e1a18799"
-    },
-    {
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "key": false
-        },
-        {
-          "name": "name",
-          "type": "core::byte_array::ByteArray",
-          "key": false
-        },
-        {
-          "name": "challenge",
-          "type": "core::bool",
-          "key": false
-        }
-      ],
-      "class_hash": "0x5b6938af682ec7feaa54b54a00a23e5edc3cd03ce20be5f5d11555cf16fb9ae",
-      "tag": "liars_proof-PlayerChallengeSubmitted",
-      "selector": "0x4d37bb0e4f7aaac11b59a1dd24329f15b1cab32b853e128ed9fcbb91987ad43"
-    },
-    {
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "key": false
-        },
-        {
-          "name": "name",
-          "type": "core::byte_array::ByteArray",
-          "key": false
-        },
-        {
-          "name": "choice",
-          "type": "core::bool",
-          "key": false
-        }
-      ],
-      "class_hash": "0x3605af5463d93ca9ff99656f5c5c0ee58dc7e23a93473e49e20b7dc7e536f30",
-      "tag": "liars_proof-PlayerConditionSubmitted",
-      "selector": "0x1d8582008bddb75f95ec46097dd080dcc7bf2e9610e0665ee74ad63f099da59"
+      "class_hash": "0x7d0b61f053b41b62ba5a660528ec010a471fe017d5b215390089ced1f8a1117",
+      "tag": "liars_proof3-HandCommitmentSubmitted",
+      "selector": "0xc168cd83fee77d716e1adc4aba42759549f121b757d97f53963720dffce3c5"
     },
     {
       "members": [
@@ -559,8 +481,8 @@
         }
       ],
       "class_hash": "0xa96cffc846cba8096e896a4aea1ee4ef740b09041f01ff116039dc93897e7b",
-      "tag": "liars_proof-RoundProofSubmitted",
-      "selector": "0x2a10e0751d100a1ecd78c9b25aa7c071b72f375a931366542ab321e1289a4a1"
+      "tag": "liars_proof3-RoundProofSubmitted",
+      "selector": "0x6cc0ad96cf51169ac6e60ba87a2b7ab60bb2a9169bcacdb2ed2bdc166ea178e"
     }
   ],
   "external_contracts": [],
@@ -689,6 +611,20 @@
         {
           "name": "pending_word_len",
           "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "core::integer::u256",
+      "members": [
+        {
+          "name": "low",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "high",
+          "type": "core::integer::u128"
         }
       ]
     },
@@ -2580,11 +2516,11 @@
         },
         {
           "name": "player_1_hand_commitment",
-          "type": "core::felt252"
+          "type": "core::integer::u256"
         },
         {
           "name": "player_2_hand_commitment",
-          "type": "core::felt252"
+          "type": "core::integer::u256"
         },
         {
           "name": "player_1_score",
@@ -2613,6 +2549,38 @@
         {
           "name": "condition_id",
           "type": "core::integer::u32"
+        },
+        {
+          "name": "player_1_condition_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_1_condition_choice",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_condition_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_condition_choice",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_1_challenge_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_1_challenge_choice",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_challenge_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_challenge_choice",
+          "type": "core::bool"
         }
       ]
     },
@@ -2804,11 +2772,11 @@
         },
         {
           "name": "player_1_hand_commitment",
-          "type": "core::felt252"
+          "type": "core::integer::u256"
         },
         {
           "name": "player_2_hand_commitment",
-          "type": "core::felt252"
+          "type": "core::integer::u256"
         },
         {
           "name": "player_1_score",
@@ -2837,6 +2805,38 @@
         {
           "name": "condition_id",
           "type": "core::integer::u32"
+        },
+        {
+          "name": "player_1_condition_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_1_condition_choice",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_condition_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_condition_choice",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_1_challenge_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_1_challenge_choice",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_challenge_submitted",
+          "type": "core::bool"
+        },
+        {
+          "name": "player_2_challenge_choice",
+          "type": "core::bool"
         }
       ]
     },
@@ -2884,7 +2884,7 @@
         },
         {
           "name": "hand_commitment",
-          "type": "core::felt252"
+          "type": "core::integer::u256"
         }
       ]
     },
@@ -2898,197 +2898,13 @@
         },
         {
           "name": "hand_commitment",
-          "type": "core::felt252"
+          "type": "core::integer::u256"
         }
       ]
     },
     {
       "type": "event",
       "name": "liars_proof::models::hand::e_HandCommitmentSubmitted::Event",
-      "kind": "enum",
-      "variants": []
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerChallengeChoice",
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "round",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "submitted",
-          "type": "core::bool"
-        },
-        {
-          "name": "choice",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerChallengeChoiceValue",
-      "members": [
-        {
-          "name": "submitted",
-          "type": "core::bool"
-        },
-        {
-          "name": "choice",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerChallengeSubmitted",
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "name",
-          "type": "core::byte_array::ByteArray"
-        },
-        {
-          "name": "challenge",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerChallengeSubmittedValue",
-      "members": [
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "name",
-          "type": "core::byte_array::ByteArray"
-        },
-        {
-          "name": "challenge",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerConditionChoice",
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "round",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "submitted",
-          "type": "core::bool"
-        },
-        {
-          "name": "choice",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerConditionChoiceValue",
-      "members": [
-        {
-          "name": "submitted",
-          "type": "core::bool"
-        },
-        {
-          "name": "choice",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerConditionSubmitted",
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "name",
-          "type": "core::byte_array::ByteArray"
-        },
-        {
-          "name": "choice",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "liars_proof::models::player_choice::PlayerConditionSubmittedValue",
-      "members": [
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "name",
-          "type": "core::byte_array::ByteArray"
-        },
-        {
-          "name": "choice",
-          "type": "core::bool"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "liars_proof::models::player_choice::e_PlayerChallengeSubmitted::Event",
-      "kind": "enum",
-      "variants": []
-    },
-    {
-      "type": "event",
-      "name": "liars_proof::models::player_choice::e_PlayerConditionSubmitted::Event",
-      "kind": "enum",
-      "variants": []
-    },
-    {
-      "type": "event",
-      "name": "liars_proof::models::player_choice::m_PlayerChallengeChoice::Event",
-      "kind": "enum",
-      "variants": []
-    },
-    {
-      "type": "event",
-      "name": "liars_proof::models::player_choice::m_PlayerConditionChoice::Event",
       "kind": "enum",
       "variants": []
     },
@@ -3260,7 +3076,7 @@
             },
             {
               "name": "hand_commitment",
-              "type": "core::felt252"
+              "type": "core::integer::u256"
             }
           ],
           "outputs": [],
@@ -3313,6 +3129,22 @@
           ],
           "outputs": [],
           "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "get_condition",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "liars_proof::models::condition::Condition"
+            }
+          ],
+          "state_mutability": "view"
         }
       ]
     },

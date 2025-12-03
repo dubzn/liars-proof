@@ -13,7 +13,7 @@ github = "https://github.com/dojoengine/dojo-starter"
 telegram = "https://t.me/dojoengine"
 
 [namespace]
-default = "liars_proof2"
+default = "liars_proof3"
 
 [env]
 rpc_url = "https://ztarknet-madara.d.karnot.xyz"
@@ -23,9 +23,9 @@ private_key = "0x602173531f2954ec7b0d6bde44c8bba9dee84266efe0a61559386f9df88a8b7
 # world_address = "0x026d5777eccca1861a23303ee0ba48c0e8349e849d0377a21c3801ef1d0f8cef"
 
 [writers]
-"liars_proof2" = ["liars_proof2-game_system"]
+"liars_proof3" = ["liars_proof3-game_system"]
 
 [init_call_args]
-"liars_proof2-game_system" = [
+"liars_proof3-game_system" = [
     "0x07efb9a2915d94d90bdf6df392bc3244c0dd1d9beb79c0f9a5d34ae99e888094",
 ]

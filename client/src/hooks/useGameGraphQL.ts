@@ -23,7 +23,7 @@ export const useGameGraphQL = (gameId: number) => {
       try {
         const query = `
           query {
-            liarsProof2GameModels(where: { id: ${gameId} }) {
+            liarsProof3GameModels(where: { id: ${gameId} }) {
               edges {
                 node {
                   id
@@ -40,6 +40,14 @@ export const useGameGraphQL = (gameId: number) => {
                   round
                   state
                   condition_id
+                  player_1_condition_submitted
+                  player_1_condition_choice
+                  player_2_condition_submitted
+                  player_2_condition_choice
+                  player_1_challenge_submitted
+                  player_1_challenge_choice
+                  player_2_challenge_submitted
+                  player_2_challenge_choice
                 }
               }
             }
@@ -64,7 +72,7 @@ export const useGameGraphQL = (gameId: number) => {
           throw new Error(result.errors[0].message);
         }
 
-        const edges = result.data?.liarsProof2GameModels?.edges;
+        const edges = result.data?.liarsProof3GameModels?.edges;
         if (edges && edges.length > 0) {
           const gameData = edges[0].node;
           setGame(gameData as Game);
