@@ -20,6 +20,7 @@
 .game-background-image {
   width: 100%;
   height: 100%;
+  filter: blur(3px);
   object-fit: cover;
   object-position: center;
   transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -43,4 +44,35 @@
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
+}
+
+.game-table {
+  position: absolute;
+  bottom: -1%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: auto;
+  z-index: 7;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.game-table-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: bottom;
+  min-height: 120%;
+  transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-table {
+  transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-table.blurred .game-table-image {
+  filter: blur(2px);
 }

@@ -1,0 +1,163 @@
+.join-game-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.join-game-modal {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.join-game-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.join-game-modal-title {
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "BebasNeue", Arial, sans-serif;
+  margin: 0;
+}
+
+.join-game-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  line-height: 1;
+}
+
+.join-game-modal-close:hover {
+  transform: scale(1.2);
+  color: #ef4444;
+}
+
+.join-game-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.join-game-modal-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.join-game-modal-label {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "BebasNeue", Arial, sans-serif;
+}
+
+.join-game-modal-input {
+  padding: 1rem 1.5rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 1.125rem;
+  font-family: Arial, sans-serif;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.join-game-modal-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+.join-game-modal-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.join-game-modal-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.join-game-modal-error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  text-align: center;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.join-game-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.join-game-modal-button {
+  padding: 0.75rem 1.5rem !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border: none !important;
+  border-radius: 0.5rem !important;
+  color: white !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  font-family: "BebasNeue", Arial, sans-serif !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
+}
+
+.join-game-modal-button:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) !important;
+}
+
+.join-game-modal-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.join-game-modal-button-join {
+  min-width: 120px;
+}
+
+.join-game-modal-button-cancel {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.join-game-modal-button-cancel:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.4) !important;
+}
+

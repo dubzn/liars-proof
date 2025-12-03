@@ -1,27 +1,42 @@
+import { useGameGraphQL } from "@/hooks/useGameGraphQL";
 import "./GameInfo.css";
 
 interface GameInfoProps {
   gameId: number;
-  player1Name: string;
-  player1Score: number;
-  player1Lives: number;
-  player2Name: string;
-  player2Score: number;
-  player2Lives: number;
 }
 
-export const GameInfo = ({
-  gameId,
-  player1Name,
-  player1Score,
-  player1Lives,
-  player2Name,
-  player2Score,
-  player2Lives,
-}: GameInfoProps) => {
+export const GameInfo = ({ gameId }: GameInfoProps) => {
+  const { game, isLoading, error } = useGameGraphQL(gameId);
+
+  if (isLoading) {
+    return (
+      <div className="game-info">
+        <div className="game-info-loading">Loading game data...</div>
+      </div>
+    );
+  }
+
+  if (error || !game) {
+    return (
+      <div className="game-info">
+        <div className="game-info-error">Failed to load game data</div>
+      </div>
+    );
+  }
+
+  const player1Name = String(game.player_1_name || "Player 1");
+  const player1Score = Number(game.player_1_score) || 0;
+  const player1Lives = Number(game.player_1_lives) || 0;
+  
+  // Only show player 2 if they have joined (player_2_name is set)
+  const hasPlayer2 = game.player_2_name && String(game.player_2_name).trim() !== "";
+  const player2Name = hasPlayer2 ? String(game.player_2_name) : "";
+  const player2Score = hasPlayer2 ? (Number(game.player_2_score) || 0) : 0;
+  const player2Lives = hasPlayer2 ? (Number(game.player_2_lives) || 0) : 0;
+
   return (
     <div className="game-info">
-      <div className="game-info-title">Liar's Proof - Game #{gameId}</div>
+      <div className="game-info-title">LIARS PROOF - GAME #{gameId}</div>
       <div className="game-info-players">
         <div className="game-info-player">
           <span className="game-info-player-name">{player1Name}:</span>
@@ -39,22 +54,24 @@ export const GameInfo = ({
             ))}
           </div>
         </div>
-        <div className="game-info-player">
-          <span className="game-info-player-name">{player2Name}:</span>
-          <span className="game-info-player-score">{player2Score} / 50</span>
-          <div className="game-info-lives">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <span
-                key={i}
-                className={`game-info-heart ${
-                  i < player2Lives ? "active" : "inactive"
-                }`}
-              >
-                ❤️
-              </span>
-            ))}
+        {hasPlayer2 && (
+          <div className="game-info-player">
+            <span className="game-info-player-name">{player2Name}:</span>
+            <span className="game-info-player-score">{player2Score} / 50</span>
+            <div className="game-info-lives">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`game-info-heart ${
+                    i < player2Lives ? "active" : "inactive"
+                  }`}
+                >
+                  ❤️
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

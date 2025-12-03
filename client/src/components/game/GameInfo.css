@@ -1,57 +1,65 @@
 .game-info {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
-  padding: 16px 20px;
-  min-width: 280px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  top: 2rem;
+  left: 2rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1.5rem 2rem;
+  min-width: 320px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
   z-index: 10;
 }
 
 .game-info-title {
-  font-size: 200%;
+  font-size: clamp(1rem, 2vw, 2rem);
   font-weight: 700;
   color: white;
-  margin-bottom: 12px;
+  margin-bottom: 1.5rem;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "BebasNeue", Arial, sans-serif;
 }
 
 .game-info-players {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1rem;
 }
 
 .game-info-player {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 0.75rem;
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
 }
 
 .game-info-player-name {
-  font-size: 160%;
+  font-size: clamp(0.875rem, 1.5vw, 1.5rem);
   font-weight: 600;
-  color: #ffffff;
-  min-width: 100px;
+  color: white;
+  min-width: 120px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: "BebasNeue", Arial, sans-serif;
 }
 
 .game-info-player-score {
-  font-size: 160%;
-  color: #666;
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
+  font-family: Arial, sans-serif;
 }
 
 .game-info-lives {
   display: flex;
-  gap: 4px;
+  gap: 0.5rem;
   margin-left: auto;
 }
 
 .game-info-heart {
-  font-size: 16px;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
   transition: opacity 0.2s;
 }
 
@@ -61,5 +69,18 @@
 
 .game-info-heart.inactive {
   opacity: 0.3;
+}
+
+.game-info-loading,
+.game-info-error {
+  color: white;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  text-align: center;
+  font-family: Arial, sans-serif;
+  padding: 1rem;
+}
+
+.game-info-error {
+  color: #ef4444;
 }
 

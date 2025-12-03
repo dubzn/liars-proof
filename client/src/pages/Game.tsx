@@ -14,19 +14,6 @@ import "./Game.css";
 
 const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
-// Mock data for now
-const MOCK_GAME = {
-  id: 45,
-  player_1_name: "dubctio",
-  player_1_score: 20,
-  player_1_lives: 3,
-  player_2_name: "piloso",
-  player_2_score: 30,
-  player_2_lives: 2,
-  state: "ChallengePhase" as const,
-  round: 1,
-};
-
 /**
  * Generate a random hand of 3 cards
  * Values: 1 (Ace) - 13 (King)
@@ -37,12 +24,8 @@ const generateRandomHand = (): Card[] => {
   const usedCards = new Set<string>();
 
   while (hand.length < 3) {
-    // Random value: 1-13 (A, 2-10, J, Q, K)
     const value = Math.floor(Math.random() * 13) + 1;
-    // Random suit: 1-4 (Clubs, Spades, Diamonds, Hearts)
     const suit = Math.floor(Math.random() * 4) + 1;
-
-    // Create unique key to avoid duplicate cards
     const cardKey = `${suit}-${value}`;
 
     if (!usedCards.has(cardKey)) {
@@ -72,7 +55,7 @@ export const Game = () => {
   const [hasSubmittedCommitment, setHasSubmittedCommitment] = useState(false);
 
   // Watch game state with GraphQL polling (every 2 seconds)
-  const { game, isLoading } = useGameWatcher(gameId, (updatedGame) => {
+  const { game } = useGameWatcher(gameId, (updatedGame) => {
     console.log("🎮 Game updated in Game page:", updatedGame);
   });
 
@@ -169,16 +152,12 @@ export const Game = () => {
     return "ChallengePhase";
   };
 
-  // Use mock data for now, fallback to real data when available
-  const currentGame = game || MOCK_GAME;
-  const currentPhase = getGameStateVariant(currentGame.state) as "ConditionPhase" | "ChallengePhase" | "ResultPhase";
-  const gameIdNumber = gameId || Number(currentGame.id) || MOCK_GAME.id;
-  const player1Name = String(currentGame.player_1_name || MOCK_GAME.player_1_name);
-  const player2Name = String(currentGame.player_2_name || MOCK_GAME.player_2_name);
-  const player1Score = Number(currentGame.player_1_score) || MOCK_GAME.player_1_score;
-  const player2Score = Number(currentGame.player_2_score) || MOCK_GAME.player_2_score;
-  const player1Lives = Number(currentGame.player_1_lives) || MOCK_GAME.player_1_lives;
-  const player2Lives = Number(currentGame.player_2_lives) || MOCK_GAME.player_2_lives;
+  // Use real game data
+  const currentPhase = game ? getGameStateVariant(game.state) as "ConditionPhase" | "ChallengePhase" | "ResultPhase" : "ChallengePhase";
+  const gameIdNumber = gameId || (game ? Number(game.id) : 0);
+  // Only show player 2 name if they have joined
+  const hasPlayer2 = game && game.player_2_name && String(game.player_2_name).trim() !== "";
+  const player2Name = hasPlayer2 ? String(game.player_2_name) : "";
 
   // Determine if current player is player_1 or player_2 (only if game data is available)
   const isPlayer1 = game && account?.address === game.player_1;
@@ -272,22 +251,14 @@ export const Game = () => {
         }}
       >
         <img
-          src="/images/liars_bg.png"
+          src="/images/bar_bg.png"
           alt="Background"
           className="game-background-image"
         />
       </div>
 
       {/* Game Info Panel */}
-      <GameInfo
-        gameId={gameIdNumber}
-        player1Name={player1Name}
-        player1Score={player1Score}
-        player1Lives={player1Lives}
-        player2Name={player2Name}
-        player2Score={player2Score}
-        player2Lives={player2Lives}
-      />
+      <GameInfo gameId={gameIdNumber} />
 
       {/* Opponent Character (Jester) - includes cards in the image */}
       <OpponentCharacter
@@ -296,6 +267,15 @@ export const Game = () => {
         parallaxOffset={parallaxOffset}
         isBlurred={isHoveringCards}
       />
+
+      {/* Table */}
+      <div className={`game-table ${isHoveringCards ? "blurred" : ""}`}>
+        <img
+          src="/images/table.png"
+          alt="Table"
+          className="game-table-image"
+        />
+      </div>
 
       {/* Player Hand Cards - 3 random cards */}
       <PlayerHandCards

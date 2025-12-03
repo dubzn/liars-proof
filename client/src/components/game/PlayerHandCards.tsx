@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCardImagePath } from "@/utils/cardUtils";
+import { getCardImagePath, getCardFullName } from "@/utils/cardUtils";
 import "./PlayerHandCards.css";
 
 interface PlayerHandCardsProps {
@@ -43,21 +43,36 @@ export const PlayerHandCards = ({
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
     >
-      {cards.map((card, index) => (
-        <div
-          key={index}
-          className="player-hand-card"
-          style={{
-            transform: `rotate(${(index - 1) * 8}deg) translateY(${index * -5}px)`,
-          }}
-        >
-          <img
-            src={getCardImagePath(card.value, card.suit)}
-            alt={`Card ${index + 1}`}
-            className="player-hand-card-image"
-          />
-        </div>
-      ))}
+      {cards.map((card, index) => {
+        // Create arc effect: left card rotated left, center card straight, right card rotated right
+        // Position them in an arc shape - very close together with significant overlap
+        const angle = (index - 1) * 20; // -20deg, 0deg, 20deg
+        const radius = 15; // Very small radius for tight grouping
+        const arcAngle = (index - 1) * 0.3; // Arc angle in radians
+        const xOffset = Math.sin(arcAngle) * radius;
+        const yOffset = -Math.abs(Math.cos(arcAngle) - 1) * radius * 0.1; // Minimal vertical offset
+        
+        const cardName = getCardFullName(card.value, card.suit);
+        
+        return (
+          <div
+            key={index}
+            className="player-hand-card"
+            data-card-index={index}
+            style={{
+              transform: `rotate(${angle}deg) translate(${xOffset}px, ${yOffset}px)`,
+              zIndex: index + 1, // CARTA_0 (1), CARTA_1 (2), CARTA_2 (3) - carta 2 encima de 1, 1 encima de 0
+            }}
+          >
+            <img
+              src={getCardImagePath(card.value, card.suit)}
+              alt={`Card ${index + 1}`}
+              className="player-hand-card-image"
+            />
+            <div className="player-hand-card-tooltip">{cardName}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
