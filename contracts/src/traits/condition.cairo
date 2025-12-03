@@ -7,10 +7,14 @@ pub impl ConditionTraitImpl of ConditionTrait {
     fn create(ref store: Store) -> Condition {
         let mut random = RandomTrait::create('random');
         let condition = random.get_random_number_zero_indexed(condition_list().len());
-        let quantity = *quantity_list(condition).at(random.get_random_number_zero_indexed(quantity_list(condition).len()));
-        let comparator = *comparator_list(condition).at(random.get_random_number_zero_indexed(comparator_list(condition).len()));
-        let value = *value_list(condition).at(random.get_random_number_zero_indexed(value_list(condition).len()));
-        let suit = *suit_list(condition).at(random.get_random_number_zero_indexed(suit_list(condition).len()));
+        let quantity = *quantity_list(condition)
+            .at(random.get_random_number_zero_indexed(quantity_list(condition).len()));
+        let comparator = *comparator_list(condition)
+            .at(random.get_random_number_zero_indexed(comparator_list(condition).len()));
+        let value = *value_list(condition)
+            .at(random.get_random_number_zero_indexed(value_list(condition).len()));
+        let suit = *suit_list(condition)
+            .at(random.get_random_number_zero_indexed(suit_list(condition).len()));
 
         let mut count = store.get_condition_count().count + 1;
         store.set_condition_count(count);

@@ -2,7 +2,7 @@ import type { SchemaType as ISchemaType } from "@dojoengine/sdk";
 
 import { CairoCustomEnum, BigNumberish } from 'starknet';
 
-// Type definition for `dojo_starter::models::condition::Condition` struct
+// Type definition for `liars_proof::models::condition::Condition` struct
 export interface Condition {
 	id: BigNumberish;
 	condition: BigNumberish;
@@ -12,13 +12,13 @@ export interface Condition {
 	suit: BigNumberish;
 }
 
-// Type definition for `dojo_starter::models::condition::ConditionCount` struct
+// Type definition for `liars_proof::models::condition::ConditionCount` struct
 export interface ConditionCount {
 	key: BigNumberish;
 	count: BigNumberish;
 }
 
-// Type definition for `dojo_starter::models::game::Game` struct
+// Type definition for `liars_proof::models::game::Game` struct
 export interface Game {
 	id: BigNumberish;
 	player_1: string;
@@ -34,33 +34,23 @@ export interface Game {
 	round: BigNumberish;
 	state: GameStateEnum;
 	condition_id: BigNumberish;
+	player_1_condition_submitted: boolean;
+	player_1_condition_choice: boolean;
+	player_2_condition_submitted: boolean;
+	player_2_condition_choice: boolean;
+	player_1_challenge_submitted: boolean;
+	player_1_challenge_choice: boolean;
+	player_2_challenge_submitted: boolean;
+	player_2_challenge_choice: boolean;
 }
 
-// Type definition for `dojo_starter::models::game::GameCount` struct
+// Type definition for `liars_proof::models::game::GameCount` struct
 export interface GameCount {
 	key: BigNumberish;
 	count: BigNumberish;
 }
 
-// Type definition for `dojo_starter::models::player_choice::PlayerChallengeChoice` struct
-export interface PlayerChallengeChoice {
-	game_id: BigNumberish;
-	round: BigNumberish;
-	player: string;
-	submitted: boolean;
-	choice: boolean;
-}
-
-// Type definition for `dojo_starter::models::player_choice::PlayerConditionChoice` struct
-export interface PlayerConditionChoice {
-	game_id: BigNumberish;
-	round: BigNumberish;
-	player: string;
-	submitted: boolean;
-	choice: boolean;
-}
-
-// Type definition for `dojo_starter::models::proof::RoundProof` struct
+// Type definition for `liars_proof::models::proof::RoundProof` struct
 export interface RoundProof {
 	game_id: BigNumberish;
 	round: BigNumberish;
@@ -69,25 +59,25 @@ export interface RoundProof {
 	is_valid: boolean;
 }
 
-// Type definition for `dojo_starter::models::proof::Verifier` struct
+// Type definition for `liars_proof::models::proof::Verifier` struct
 export interface Verifier {
 	key: BigNumberish;
 	address: string;
 }
 
-// Type definition for `dojo_starter::traits::random::Random` struct
+// Type definition for `liars_proof::traits::random::Random` struct
 export interface Random {
 	key: BigNumberish;
 	seed: BigNumberish;
 }
 
-// Type definition for `dojo_starter::traits::random::Salt` struct
+// Type definition for `liars_proof::traits::random::Salt` struct
 export interface Salt {
 	key: BigNumberish;
 	value: BigNumberish;
 }
 
-// Type definition for `dojo_starter::models::condition::ConditionCreated` struct
+// Type definition for `liars_proof::models::condition::ConditionCreated` struct
 export interface ConditionCreated {
 	game_id: BigNumberish;
 	player: string;
@@ -95,21 +85,21 @@ export interface ConditionCreated {
 	choice: boolean;
 }
 
-// Type definition for `dojo_starter::models::game::GameCreated` struct
+// Type definition for `liars_proof::models::game::GameCreated` struct
 export interface GameCreated {
 	id: BigNumberish;
 	owner: string;
 	name: string;
 }
 
-// Type definition for `dojo_starter::models::game::GameJoined` struct
+// Type definition for `liars_proof::models::game::GameJoined` struct
 export interface GameJoined {
 	id: BigNumberish;
 	player: string;
 	name: string;
 }
 
-// Type definition for `dojo_starter::models::game::GameOver` struct
+// Type definition for `liars_proof::models::game::GameOver` struct
 export interface GameOver {
 	game_id: BigNumberish;
 	winner: string;
@@ -118,30 +108,14 @@ export interface GameOver {
 	loser_name: string;
 }
 
-// Type definition for `dojo_starter::models::hand::HandCommitmentSubmitted` struct
+// Type definition for `liars_proof::models::hand::HandCommitmentSubmitted` struct
 export interface HandCommitmentSubmitted {
 	game_id: BigNumberish;
 	player: string;
 	hand_commitment: BigNumberish;
 }
 
-// Type definition for `dojo_starter::models::player_choice::PlayerChallengeSubmitted` struct
-export interface PlayerChallengeSubmitted {
-	game_id: BigNumberish;
-	player: string;
-	name: string;
-	challenge: boolean;
-}
-
-// Type definition for `dojo_starter::models::player_choice::PlayerConditionSubmitted` struct
-export interface PlayerConditionSubmitted {
-	game_id: BigNumberish;
-	player: string;
-	name: string;
-	choice: boolean;
-}
-
-// Type definition for `dojo_starter::models::proof::RoundProofSubmitted` struct
+// Type definition for `liars_proof::models::proof::RoundProofSubmitted` struct
 export interface RoundProofSubmitted {
 	game_id: BigNumberish;
 	round: BigNumberish;
@@ -150,7 +124,7 @@ export interface RoundProofSubmitted {
 	is_valid: boolean;
 }
 
-// Type definition for `dojo_starter::models::game::GameState` enum
+// Type definition for `liars_proof::models::game::GameState` enum
 export const gameState = [
 	'WaitingForPlayers',
 	'WaitingForHandCommitments',
@@ -163,13 +137,11 @@ export type GameState = { [key in typeof gameState[number]]: string };
 export type GameStateEnum = CairoCustomEnum;
 
 export interface SchemaType extends ISchemaType {
-	dojo_starter: {
+	liars_proof: {
 		Condition: Condition,
 		ConditionCount: ConditionCount,
 		Game: Game,
 		GameCount: GameCount,
-		PlayerChallengeChoice: PlayerChallengeChoice,
-		PlayerConditionChoice: PlayerConditionChoice,
 		RoundProof: RoundProof,
 		Verifier: Verifier,
 		Random: Random,
@@ -179,13 +151,11 @@ export interface SchemaType extends ISchemaType {
 		GameJoined: GameJoined,
 		GameOver: GameOver,
 		HandCommitmentSubmitted: HandCommitmentSubmitted,
-		PlayerChallengeSubmitted: PlayerChallengeSubmitted,
-		PlayerConditionSubmitted: PlayerConditionSubmitted,
 		RoundProofSubmitted: RoundProofSubmitted,
 	},
 }
 export const schema: SchemaType = {
-	dojo_starter: {
+	liars_proof: {
 		Condition: {
 			id: 0,
 			condition: 0,
@@ -204,8 +174,8 @@ export const schema: SchemaType = {
 		player_1_name: "",
 			player_2: "",
 		player_2_name: "",
-			player_1_hand_commitment: 0,
-			player_2_hand_commitment: 0,
+		player_1_hand_commitment: 0,
+		player_2_hand_commitment: 0,
 			player_1_score: 0,
 			player_2_score: 0,
 			player_1_lives: 0,
@@ -219,24 +189,18 @@ export const schema: SchemaType = {
 				ResultPhase: undefined,
 				GameOver: undefined, }),
 			condition_id: 0,
+			player_1_condition_submitted: false,
+			player_1_condition_choice: false,
+			player_2_condition_submitted: false,
+			player_2_condition_choice: false,
+			player_1_challenge_submitted: false,
+			player_1_challenge_choice: false,
+			player_2_challenge_submitted: false,
+			player_2_challenge_choice: false,
 		},
 		GameCount: {
 			key: 0,
 			count: 0,
-		},
-		PlayerChallengeChoice: {
-			game_id: 0,
-			round: 0,
-			player: "",
-			submitted: false,
-			choice: false,
-		},
-		PlayerConditionChoice: {
-			game_id: 0,
-			round: 0,
-			player: "",
-			submitted: false,
-			choice: false,
 		},
 		RoundProof: {
 			game_id: 0,
@@ -283,19 +247,7 @@ export const schema: SchemaType = {
 		HandCommitmentSubmitted: {
 			game_id: 0,
 			player: "",
-			hand_commitment: 0,
-		},
-		PlayerChallengeSubmitted: {
-			game_id: 0,
-			player: "",
-		name: "",
-			challenge: false,
-		},
-		PlayerConditionSubmitted: {
-			game_id: 0,
-			player: "",
-		name: "",
-			choice: false,
+		hand_commitment: 0,
 		},
 		RoundProofSubmitted: {
 			game_id: 0,
@@ -307,23 +259,19 @@ export const schema: SchemaType = {
 	},
 };
 export enum ModelsMapping {
-	Condition = 'dojo_starter-Condition',
-	ConditionCount = 'dojo_starter-ConditionCount',
-	Game = 'dojo_starter-Game',
-	GameCount = 'dojo_starter-GameCount',
-	GameState = 'dojo_starter-GameState',
-	PlayerChallengeChoice = 'dojo_starter-PlayerChallengeChoice',
-	PlayerConditionChoice = 'dojo_starter-PlayerConditionChoice',
-	RoundProof = 'dojo_starter-RoundProof',
-	Verifier = 'dojo_starter-Verifier',
-	Random = 'dojo_starter-Random',
-	Salt = 'dojo_starter-Salt',
-	ConditionCreated = 'dojo_starter-ConditionCreated',
-	GameCreated = 'dojo_starter-GameCreated',
-	GameJoined = 'dojo_starter-GameJoined',
-	GameOver = 'dojo_starter-GameOver',
-	HandCommitmentSubmitted = 'dojo_starter-HandCommitmentSubmitted',
-	PlayerChallengeSubmitted = 'dojo_starter-PlayerChallengeSubmitted',
-	PlayerConditionSubmitted = 'dojo_starter-PlayerConditionSubmitted',
-	RoundProofSubmitted = 'dojo_starter-RoundProofSubmitted',
+	Condition = 'liars_proof-Condition',
+	ConditionCount = 'liars_proof-ConditionCount',
+	Game = 'liars_proof-Game',
+	GameCount = 'liars_proof-GameCount',
+	GameState = 'liars_proof-GameState',
+	RoundProof = 'liars_proof-RoundProof',
+	Verifier = 'liars_proof-Verifier',
+	Random = 'liars_proof-Random',
+	Salt = 'liars_proof-Salt',
+	ConditionCreated = 'liars_proof-ConditionCreated',
+	GameCreated = 'liars_proof-GameCreated',
+	GameJoined = 'liars_proof-GameJoined',
+	GameOver = 'liars_proof-GameOver',
+	HandCommitmentSubmitted = 'liars_proof-HandCommitmentSubmitted',
+	RoundProofSubmitted = 'liars_proof-RoundProofSubmitted',
 }

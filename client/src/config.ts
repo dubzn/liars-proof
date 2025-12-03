@@ -4,7 +4,7 @@ import { shortString } from "starknet";
 import manifestSepolia from "../../manifest_sepolia.json";
 
 // Namespace used for contract addresses in the manifest
-export const NAMESPACE = "liars_proof2";
+export const NAMESPACE = "liars_proof3";
 
 // Default chain is ZN_SEPOLIA (custom ZStarknet network)
 export const DEFAULT_CHAIN = import.meta.env.VITE_DEFAULT_CHAIN;
