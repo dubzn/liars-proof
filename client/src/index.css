@@ -1,4 +1,4 @@
-/* @import "./fonts.css"; */ /* Fonts disabled - using Arial instead */
+@import "./fonts.css";
 
 @tailwind base;
 @tailwind components;
