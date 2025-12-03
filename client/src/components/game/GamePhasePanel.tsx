@@ -8,6 +8,8 @@ interface GamePhasePanelProps {
   opponentName: string;
   onChallengeChoice?: (choice: boolean) => void;
   onConditionChoice?: (choice: boolean) => void;
+  hasSubmittedCondition?: boolean;
+  hasSubmittedChallenge?: boolean;
 }
 
 export const GamePhasePanel = ({
@@ -15,6 +17,8 @@ export const GamePhasePanel = ({
   opponentName,
   onChallengeChoice,
   onConditionChoice,
+  hasSubmittedCondition = false,
+  hasSubmittedChallenge = false,
 }: GamePhasePanelProps) => {
   const isConditionPhase = currentPhase === "ConditionPhase";
   const isChallengePhase = currentPhase === "ChallengePhase";
@@ -32,25 +36,33 @@ export const GamePhasePanel = ({
         </div>
         {isConditionPhase && (
           <div className="game-phase-content">
-            <div className="game-phase-question">
-              Do you fulfill the condition?
-            </div>
-            <div className="game-phase-buttons">
-              <Button
-                variant="default"
-                onClick={() => onConditionChoice?.(true)}
-                className="game-phase-button game-phase-button-yes"
-              >
-                YES
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => onConditionChoice?.(false)}
-                className="game-phase-button game-phase-button-no"
-              >
-                NO
-              </Button>
-            </div>
+            {hasSubmittedCondition ? (
+              <div className="game-phase-message">
+                Waiting for opponent's condition choice...
+              </div>
+            ) : (
+              <>
+                <div className="game-phase-question">
+                  Do you fulfill the condition?
+                </div>
+                <div className="game-phase-buttons">
+                  <Button
+                    variant="default"
+                    onClick={() => onConditionChoice?.(true)}
+                    className="game-phase-button game-phase-button-yes"
+                  >
+                    YES
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => onConditionChoice?.(false)}
+                    className="game-phase-button game-phase-button-no"
+                  >
+                    NO
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -65,25 +77,33 @@ export const GamePhasePanel = ({
         </div>
         {isChallengePhase && (
           <div className="game-phase-content">
-            <div className="game-phase-question">
-              Do you trust that {opponentName} is fulfilling the condition?
-            </div>
-            <div className="game-phase-buttons">
-              <Button
-                variant="default"
-                onClick={() => onChallengeChoice?.(true)}
-                className="game-phase-button game-phase-button-yes"
-              >
-                YES
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => onChallengeChoice?.(false)}
-                className="game-phase-button game-phase-button-no"
-              >
-                NO
-              </Button>
-            </div>
+            {hasSubmittedChallenge ? (
+              <div className="game-phase-message">
+                Waiting for opponent's challenge choice...
+              </div>
+            ) : (
+              <>
+                <div className="game-phase-question">
+                  Do you trust that {opponentName} is fulfilling the condition?
+                </div>
+                <div className="game-phase-buttons">
+                  <Button
+                    variant="default"
+                    onClick={() => onChallengeChoice?.(true)}
+                    className="game-phase-button game-phase-button-yes"
+                  >
+                    YES
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => onChallengeChoice?.(false)}
+                    className="game-phase-button game-phase-button-no"
+                  >
+                    NO
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -180,18 +180,78 @@ export const Game = () => {
   const player1Lives = Number(currentGame.player_1_lives) || MOCK_GAME.player_1_lives;
   const player2Lives = Number(currentGame.player_2_lives) || MOCK_GAME.player_2_lives;
 
+  // Determine if current player is player_1 or player_2 (only if game data is available)
+  const isPlayer1 = game && account?.address === game.player_1;
+
+  // Check if current player has submitted their choices (only if game data is available)
+  const hasSubmittedCondition = game && isPlayer1
+    ? Boolean(game.player_1_condition_submitted)
+    : game ? Boolean(game.player_2_condition_submitted) : false;
+
+  const hasSubmittedChallenge = game && isPlayer1
+    ? Boolean(game.player_1_challenge_submitted)
+    : game ? Boolean(game.player_2_challenge_submitted) : false;
+
   const handleConditionChoice = async (choice: boolean) => {
     if (!account) return;
-    console.log("Condition choice:", choice);
-    // TODO: Re-enable after browser refresh
-    // await executeSubmitConditionChoice(gameId, choice);
+
+    try {
+      console.log("[Game] 📤 Submitting condition choice:", { gameId, choice });
+
+      const result = await account.execute({
+        contractAddress: GAME_CONTRACT_ADDRESS,
+        entrypoint: "submit_condition_choice",
+        calldata: [
+          gameId.toString(), // game_id: u32
+          choice ? "1" : "0", // player_choice: bool (1 = true, 0 = false)
+        ],
+      });
+
+      console.log("[Game] Transaction hash:", result.transaction_hash);
+
+      // Wait for transaction
+      const receipt = await account.waitForTransaction(result.transaction_hash, {
+        retryInterval: 100,
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+      });
+
+      console.log("[Game] ✅ Condition choice submitted successfully!", receipt);
+      toast.success(`Condition choice submitted: ${choice ? "YES" : "NO"}`);
+    } catch (error) {
+      console.error("[Game] ❌ Error submitting condition choice:", error);
+      toast.error(`Failed to submit condition choice: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   const handleChallengeChoice = async (choice: boolean) => {
     if (!account) return;
-    console.log("Challenge choice:", choice);
-    // TODO: Re-enable after browser refresh
-    // await executeSubmitChallengeChoice(gameId, choice);
+
+    try {
+      console.log("[Game] 📤 Submitting challenge choice:", { gameId, choice });
+
+      const result = await account.execute({
+        contractAddress: GAME_CONTRACT_ADDRESS,
+        entrypoint: "submit_challenge_choice",
+        calldata: [
+          gameId.toString(), // game_id: u32
+          choice ? "1" : "0", // player_choice: bool (1 = true, 0 = false)
+        ],
+      });
+
+      console.log("[Game] Transaction hash:", result.transaction_hash);
+
+      // Wait for transaction
+      const receipt = await account.waitForTransaction(result.transaction_hash, {
+        retryInterval: 100,
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+      });
+
+      console.log("[Game] ✅ Challenge choice submitted successfully!", receipt);
+      toast.success(`Challenge choice submitted: ${choice ? "YES" : "NO"}`);
+    } catch (error) {
+      console.error("[Game] ❌ Error submitting challenge choice:", error);
+      toast.error(`Failed to submit challenge choice: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   // if (!account) {
@@ -250,6 +310,8 @@ export const Game = () => {
         opponentName={player2Name}
         onConditionChoice={handleConditionChoice}
         onChallengeChoice={handleChallengeChoice}
+        hasSubmittedCondition={hasSubmittedCondition}
+        hasSubmittedChallenge={hasSubmittedChallenge}
       />
     </div>
   );
