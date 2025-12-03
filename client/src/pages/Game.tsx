@@ -7,8 +7,12 @@ import { GameInfo } from "@/components/game/GameInfo";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
+import { calculateHandCommitment, handCommitmentToHex, type Card } from "@/utils/handCommitment";
+import { toast } from "sonner";
 // import { useGameExecute } from "@/hooks/examples/useGameExecute"; // Temporarily commented - uncomment after browser refresh
 import "./Game.css";
+
+const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
 // Mock data for now
 const MOCK_GAME = {
@@ -21,12 +25,6 @@ const MOCK_GAME = {
   player_2_lives: 2,
   state: "ChallengePhase" as const,
   round: 1,
-};
-
-// Card type
-type Card = {
-  suit: number;
-  value: number;
 };
 
 /**
@@ -70,6 +68,8 @@ export const Game = () => {
 
   // State for player's hand - generated randomly when game is created
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
+  const [isSubmittingCommitment, setIsSubmittingCommitment] = useState(false);
+  const [hasSubmittedCommitment, setHasSubmittedCommitment] = useState(false);
 
   // Watch game state with GraphQL polling (every 2 seconds)
   const { game, isLoading } = useGameWatcher(gameId, (updatedGame) => {
@@ -84,6 +84,68 @@ export const Game = () => {
       console.log("[Game] 🃏 Generated random hand:", newHand);
     }
   }, [gameId, playerHand.length]);
+
+  // Submit hand commitment after generating hand
+  useEffect(() => {
+    const submitHandCommitment = async () => {
+      if (!account || !game || hasSubmittedCommitment || isSubmittingCommitment || playerHand.length !== 3) {
+        return;
+      }
+
+      // Only submit if we're in WaitingForHandCommitments state
+      const gameState = getGameStateVariant(game.state);
+      if (gameState !== "WaitingForHandCommitments") {
+        return;
+      }
+
+      setIsSubmittingCommitment(true);
+      try {
+        console.log("[Game] 🔐 Calculating hand commitment...");
+        const commitment = await calculateHandCommitment(playerHand);
+        const commitmentHex = handCommitmentToHex(commitment);
+
+        console.log("[Game] 📤 Submitting hand commitment to contract:", {
+          gameId,
+          commitment: commitment.toString(),
+          commitmentHex,
+          hand: playerHand,
+        });
+
+        // Split the u256 commitment into two u128 values (low, high)
+        const low = commitment & ((BigInt(1) << BigInt(128)) - BigInt(1));
+        const high = commitment >> BigInt(128);
+
+        const result = await account.execute({
+          contractAddress: GAME_CONTRACT_ADDRESS,
+          entrypoint: "submit_hand_commitment",
+          calldata: [
+            gameId.toString(), // game_id: u32
+            low.toString(), // hand_commitment low part
+            high.toString(), // hand_commitment high part
+          ],
+        });
+
+        console.log("[Game] Transaction hash:", result.transaction_hash);
+
+        // Wait for transaction
+        const receipt = await account.waitForTransaction(result.transaction_hash, {
+          retryInterval: 100,
+          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+        });
+
+        console.log("[Game] ✅ Hand commitment submitted successfully!", receipt);
+        toast.success("Hand commitment submitted!");
+        setHasSubmittedCommitment(true);
+      } catch (error) {
+        console.error("[Game] ❌ Error submitting hand commitment:", error);
+        toast.error(`Failed to submit hand commitment: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        setIsSubmittingCommitment(false);
+      }
+    };
+
+    submitHandCommitment();
+  }, [account, game, gameId, playerHand, hasSubmittedCommitment, isSubmittingCommitment]);
 
   // TODO: Use these when implementing full game logic
   // const { condition, playerConditionChoice, playerChallengeChoice, roundProof } = useGameModels(gameId);
