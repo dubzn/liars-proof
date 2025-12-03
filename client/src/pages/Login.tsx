@@ -1,20 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
+import { JoinGameModal } from "@/components/login/JoinGameModal";
 import { useParallax } from "@/hooks/useParallax";
 import "./Login.css";
 
 const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
+const DEFAULT_PLAYER_NAME = "";
+const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
   const { account, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [playerName, setPlayerName] = useState<string>(DEFAULT_PLAYER_NAME);
   const backgroundParallax = useParallax(15); // Subtle parallax effect for background
+
+  // Load player name from localStorage on mount
+  useEffect(() => {
+    const savedName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
+    if (savedName) {
+      setPlayerName(savedName);
+    }
+  }, []);
+
+  // Save player name to localStorage when it changes
+  useEffect(() => {
+    if (playerName && playerName !== DEFAULT_PLAYER_NAME) {
+      localStorage.setItem(PLAYER_NAME_STORAGE_KEY, playerName);
+    }
+  }, [playerName]);
 
   const createGame = async () => {
     if (!account) return;
@@ -23,14 +43,15 @@ export const Login = () => {
     try {
       console.log("[Login] Creating game with contract:", GAME_CONTRACT_ADDRESS);
       
-      // Convert playerName to ByteArray (using "front" as requested, or empty string)
-      const playerName = "front"; // or "" for empty
+      // Convert playerName to ByteArray
+      // If empty, use "ZStarknet" as fallback
+      const nameToUse = playerName.trim() || "ZStarknet";
       
       // Convert string to ByteArray using byteArrayFromString
       // Reference: https://starknetjs.com/docs/API/namespaces/byteArray/#bytearrayfromstring
-      const byteArrayData = byteArray.byteArrayFromString(playerName);
+      const byteArrayData = byteArray.byteArrayFromString(nameToUse);
       
-      console.log("[Login] Player name:", playerName);
+      console.log("[Login] Player name:", nameToUse);
       console.log("[Login] ByteArray data:", byteArrayData);
       
       // Serialize ByteArray for calldata manually
@@ -60,7 +81,6 @@ export const Login = () => {
       console.log("[Login] Transaction receipt:", receipt);
 
       const gameCreatedEventHash = "0x1a2f334228cee715f1f0f54053bb6b5eac54fa336e0bc1aacf7516decb0471d";
-
       const receiptWithEvents = receipt as any;
       if (receiptWithEvents.events && Array.isArray(receiptWithEvents.events) && receiptWithEvents.events.length > 0) {
         for (let i = 0; i < receiptWithEvents.events.length; i++) {
@@ -104,16 +124,9 @@ export const Login = () => {
         
         console.log("[Login] ⚠️ GameCreated event not found in receipt events");
       }
-
-      // If we can't find it in events, try calling the contract to get the latest game
-      // For now, let's show a message and redirect to a default game
       console.log("[Login] Could not extract game_id from events, checking transaction...");
       toast.success("Game creation transaction submitted!");
       
-      // As a fallback, we could query the contract or wait a bit and try to get the game_id
-      // For now, let's redirect to game/1 as a placeholder
-      // In production, you'd want to query the contract or use the event data properly
-      navigate("/game/1");
       
     } catch (error) {
       console.error("[Login] Error creating game:", error);
@@ -144,8 +157,54 @@ export const Login = () => {
   };
 
   const handleJoinGame = () => {
-    // Placeholder - no action for now
-    toast.info("Join Game feature coming soon");
+    setIsJoinModalOpen(true);
+  };
+
+  const handleJoinGameSubmit = async (gameId: number) => {
+    if (!account) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      // If empty, use "ZStarknet" as fallback
+      const nameToUse = playerName.trim() || "ZStarknet";
+      console.log("[Login] Joining game with ID:", gameId, "and name:", nameToUse);
+
+      // Convert playerName to ByteArray
+      const byteArrayData = byteArray.byteArrayFromString(nameToUse);
+
+      // Serialize ByteArray for calldata
+      const serializedByteArray: string[] = [
+        num.toHex(byteArrayData.data.length),
+        ...byteArrayData.data.map((d) => num.toHex(d)),
+        num.toHex(byteArrayData.pending_word),
+        num.toHex(byteArrayData.pending_word_len),
+      ];
+
+      // Execute the join function
+      const result = await account.execute({
+        contractAddress: GAME_CONTRACT_ADDRESS,
+        entrypoint: "join",
+        calldata: [gameId.toString(), ...serializedByteArray],
+      });
+
+      console.log("[Login] Transaction hash:", result.transaction_hash);
+
+      // Wait for transaction to be accepted
+      await account.waitForTransaction(result.transaction_hash, {
+        retryInterval: 100,
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+      });
+
+      console.log("[Login] ✅ Successfully joined game:", gameId);
+      toast.success(`Joined game ${gameId} as ${nameToUse}`);
+      navigate(`/game/${gameId}`);
+    } catch (error) {
+      console.error("[Login] Error joining game:", error);
+      toast.error(`Failed to join game: ${error instanceof Error ? error.message : String(error)}`);
+      throw error; // Re-throw to let modal handle it
+    }
   };
 
   const handleDisconnect = async () => {
@@ -167,12 +226,17 @@ export const Login = () => {
         }}
       />
       <div className="login-content-wrapper">
-        {/* Wallet status - absolute top left */}
+        {/* Player name input - absolute top left */}
         {account && (
           <div className="login-wallet-status-container">
-            <div className="login-wallet-status">
-              <span className="login-wallet-status-text">WALLET CONNECTED</span>
-            </div>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="login-player-name-input"
+              placeholder="ENTER YOUR NAME"
+              maxLength={50}
+            />
             <button
               onClick={handleDisconnect}
               className="login-logout-button"
@@ -241,6 +305,13 @@ export const Login = () => {
           Submission for Zypherpunk Hackathon by @dub_zn and @dpinoness
         </p>
       </div>
+
+      {/* Join Game Modal */}
+      <JoinGameModal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onJoin={handleJoinGameSubmit}
+      />
     </div>
   );
 };

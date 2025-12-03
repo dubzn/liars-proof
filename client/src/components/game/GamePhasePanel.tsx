@@ -84,7 +84,7 @@ export const GamePhasePanel = ({
             ) : (
               <>
                 <div className="game-phase-question">
-                  Do you trust that {opponentName} is fulfilling the condition?
+                  Do you trust that {opponentName || "your opponent"} is fulfilling the condition?
                 </div>
                 <div className="game-phase-buttons">
                   <Button
