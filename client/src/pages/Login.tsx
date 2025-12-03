@@ -59,26 +59,16 @@ export const Login = () => {
 
       // Wait for transaction to be accepted
       const receipt = await account.waitForTransaction(result.transaction_hash, {
-        retryInterval: 200,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+        retryInterval: 100,
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
       });
 
       console.log("[Login] Transaction receipt:", receipt);
 
-      // Get the game_id from GameCreated event
-      // Calculate the event selector using getSelectorFromTag with namespace
-      const DOJO_NAMESPACE = "liars_proof2";
-      const gameCreatedEventHash = getSelectorFromTag(DOJO_NAMESPACE, "GameCreated");
-      console.log("[Login] Calculated GameCreated event hash (using getSelectorFromTag):", gameCreatedEventHash);
-      console.log("[Login] Expected hash (from user):", "0x1a2f334228cee715f1f0f54053bb6b5eac54fa336e0bc1aacf7516decb0471d");
-      console.log("[Login] Hashes match:", gameCreatedEventHash.toLowerCase() === "0x1a2f334228cee715f1f0f54053bb6b5eac54fa336e0bc1aacf7516decb0471d".toLowerCase());
+      const gameCreatedEventHash = "0x1a2f334228cee715f1f0f54053bb6b5eac54fa336e0bc1aacf7516decb0471d";
 
-      // Check if receipt has events property (type guard)
       const receiptWithEvents = receipt as any;
       if (receiptWithEvents.events && Array.isArray(receiptWithEvents.events) && receiptWithEvents.events.length > 0) {
-        console.log("[Login] Total events found:", receiptWithEvents.events.length);
-        
-        // Find the GameCreated event by matching the hash in keys
         for (let i = 0; i < receiptWithEvents.events.length; i++) {
           const event = receiptWithEvents.events[i];
           
