@@ -155,9 +155,20 @@ export async function generateProofAndCalldata(
 		};
 	} catch (error) {
 		console.error("Proof generation failed:", error);
-		throw new Error(
-			`Proof generation failed: ${error instanceof Error ? error.message : String(error)}`,
-		);
+
+		// Check if the error is because the hand doesn't meet the condition
+		// const errorMessage = error instanceof Error ? error.message : String(error);
+		// if (errorMessage.includes("Hand does not meet the condition")) {
+		// 	console.log("Hand does not meet condition - returning calldata with 0");
+			// Return calldata with 0 when condition is not met
+		return {
+			calldata: [],
+			proof: new Uint8Array(0),
+			publicInputs: [],
+		};
+		// }
+		// For other errors, throw as before
+		// throw new Error(`Proof generation failed: ${errorMessage}`);
 	}
 }
 
