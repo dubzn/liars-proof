@@ -5,8 +5,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-width: 320px;
-  max-width: 400px;
+  width: 400px;
   z-index: 10;
 }
 
@@ -18,10 +17,22 @@
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
   transition: all 0.3s ease;
   font-family: "BebasNeue", Arial, sans-serif;
+  width: 100%;
+  min-height: fit-content;
 }
 
 .game-phase.active {
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 1);
+  }
 }
 
 .game-phase.completed {
@@ -83,6 +94,17 @@
   animation: slideDown 0.3s ease;
 }
 
+.game-phase-description {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: Arial, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -94,19 +116,53 @@
   }
 }
 
+.game-phase-condition-container {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-phase-condition-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  z-index: 0;
+}
+
+.game-phase-condition-label {
+  font-size: clamp(0.75rem, 1.5vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: "BebasNeue", Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
 .game-phase-condition {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-size: clamp(1.125rem, 2.5vw, 1.3rem);
   color: white;
   text-align: center;
   font-family: Arial, sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
   text-transform: none;
   letter-spacing: normal;
-  font-weight: 400;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .game-phase-question {
@@ -202,5 +258,40 @@
   color: white;
   width: 1.5rem;
   text-align: center;
+}
+
+.game-phase-condition-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.game-phase-condition-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+}
+
+.game-phase-condition-name {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  color: white;
+  font-family: Arial, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}
+
+.game-phase-condition-message {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: Arial, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  font-style: italic;
 }
 

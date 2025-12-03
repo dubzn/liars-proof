@@ -24,7 +24,7 @@ function App() {
           </DojoSdkProviderInitialized>
         </StarknetKitProvider>
       </QueryClientProvider>
-      <Toaster position="top-right" richColors />
+      <Toaster position="top-center" richColors />
     </>
   );
 }

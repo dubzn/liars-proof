@@ -201,6 +201,26 @@ export const Game = () => {
     ? Boolean(game.player_1_challenge_submitted)
     : game ? Boolean(game.player_2_challenge_submitted) : false;
 
+  // Get condition choices
+  const player1ConditionSubmitted = game ? Boolean(game.player_1_condition_submitted) : false;
+  const player1ConditionChoice = game && game.player_1_condition_submitted
+    ? (game.player_1_condition_choice === true || String(game.player_1_condition_choice) === "true" || Number(game.player_1_condition_choice) === 1 || String(game.player_1_condition_choice) === "1")
+    : null;
+  const player2ConditionSubmitted = game ? Boolean(game.player_2_condition_submitted) : false;
+  const player2ConditionChoice = game && game.player_2_condition_submitted
+    ? (game.player_2_condition_choice === true || String(game.player_2_condition_choice) === "true" || Number(game.player_2_condition_choice) === 1 || String(game.player_2_condition_choice) === "1")
+    : null;
+
+  // Get challenge choices
+  const player1ChallengeSubmitted = game ? Boolean(game.player_1_challenge_submitted) : false;
+  const player1ChallengeChoice = game && game.player_1_challenge_submitted
+    ? (game.player_1_challenge_choice === true || String(game.player_1_challenge_choice) === "true" || Number(game.player_1_challenge_choice) === 1 || String(game.player_1_challenge_choice) === "1")
+    : null;
+  const player2ChallengeSubmitted = game ? Boolean(game.player_2_challenge_submitted) : false;
+  const player2ChallengeChoice = game && game.player_2_challenge_submitted
+    ? (game.player_2_challenge_choice === true || String(game.player_2_challenge_choice) === "true" || Number(game.player_2_challenge_choice) === 1 || String(game.player_2_challenge_choice) === "1")
+    : null;
+
   // Get player names
   const player1Name = game ? String(game.player_1_name || "Player 1") : "Player 1";
 
@@ -315,7 +335,7 @@ export const Game = () => {
       </div>
 
       {/* Game Info Panel */}
-      <GameInfo gameId={gameIdNumber} />
+      <GameInfo gameId={gameIdNumber} isPlayer1={isPlayer1} />
 
       {/* Opponent Character (Jester) - includes cards in the image */}
       <OpponentCharacter
@@ -353,6 +373,14 @@ export const Game = () => {
         player1CommitmentSubmitted={player1CommitmentSubmitted}
         player2CommitmentSubmitted={player2CommitmentSubmitted}
         isPlayer1={isPlayer1}
+        player1ConditionSubmitted={player1ConditionSubmitted}
+        player1ConditionChoice={player1ConditionChoice}
+        player2ConditionSubmitted={player2ConditionSubmitted}
+        player2ConditionChoice={player2ConditionChoice}
+        player1ChallengeSubmitted={player1ChallengeSubmitted}
+        player1ChallengeChoice={player1ChallengeChoice}
+        player2ChallengeSubmitted={player2ChallengeSubmitted}
+        player2ChallengeChoice={player2ChallengeChoice}
         onConditionChoice={handleConditionChoice}
         onChallengeChoice={handleChallengeChoice}
         hasSubmittedCondition={hasSubmittedCondition}
