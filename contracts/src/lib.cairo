@@ -2,7 +2,6 @@ pub mod models {
     pub mod condition;
     pub mod game;
     pub mod hand;
-    pub mod player_choice;
     pub mod proof;
 }
 

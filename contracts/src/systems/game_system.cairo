@@ -16,11 +16,7 @@ pub mod game_system {
     use starknet::{ContractAddress, SyscallResultTrait, get_caller_address};
     use crate::models::game::{Game, GameCreated, GameJoined, GameOver, GameState};
     use crate::models::hand::HandCommitmentSubmitted;
-    use crate::models::player_choice::{PlayerChallengeChoice, PlayerConditionChoice};
-    use crate::models::proof::{
-        IUltraStarknetZKHonkVerifierDispatcher as VerifierDispatcher,
-        IUltraStarknetZKHonkVerifierDispatcherTrait, RoundProof,
-    };
+    use crate::models::proof::RoundProof;
     use crate::traits::condition::ConditionTrait;
     use crate::traits::store::{Store, StoreTrait};
     use super::IGameSystem;
@@ -55,6 +51,14 @@ pub mod game_system {
                         round: Zero::zero(),
                         state: GameState::WaitingForPlayers,
                         condition_id: Zero::zero(),
+                        player_1_condition_submitted: false,
+                        player_1_condition_choice: false,
+                        player_2_condition_submitted: false,
+                        player_2_condition_choice: false,
+                        player_1_challenge_submitted: false,
+                        player_1_challenge_choice: false,
+                        player_2_challenge_submitted: false,
+                        player_2_challenge_choice: false,
                     },
                 );
 
@@ -134,26 +138,21 @@ pub mod game_system {
                 "[Game] - The game is not in the condition phase",
             );
 
-            store
-                .set_player_condition_choice(
-                    PlayerConditionChoice {
-                        game_id: game_id,
-                        round: game.round,
-                        player: get_caller_address(),
-                        submitted: true,
-                        choice: player_choice,
-                    },
-                );
-
-            let player_condition_1 = store
-                .get_player_condition_choice(game_id, game.round, game.player_1);
-            let player_condition_2 = store
-                .get_player_condition_choice(game_id, game.round, game.player_2);
-
-            if player_condition_1.submitted && player_condition_2.submitted {
-                game.state = GameState::ChallengePhase;
-                store.set_game(game);
+            // Update choice directly in the game model
+            if game.player_1 == get_caller_address() {
+                game.player_1_condition_submitted = true;
+                game.player_1_condition_choice = player_choice;
+            } else {
+                game.player_2_condition_submitted = true;
+                game.player_2_condition_choice = player_choice;
             }
+
+            // Check if both players have submitted
+            if game.player_1_condition_submitted && game.player_2_condition_submitted {
+                game.state = GameState::ChallengePhase;
+            }
+
+            store.set_game(game);
         }
 
         fn submit_challenge_choice(ref self: ContractState, game_id: u32, player_choice: bool) {
@@ -168,26 +167,21 @@ pub mod game_system {
                 "[Game] - You cannot submit a challenge choice if you are not part of this game",
             );
 
-            store
-                .set_player_challenge_choice(
-                    PlayerChallengeChoice {
-                        game_id: game_id,
-                        round: game.round,
-                        player: get_caller_address(),
-                        submitted: true,
-                        choice: player_choice,
-                    },
-                );
-
-            let player_challenge_1 = store
-                .get_player_challenge_choice(game_id, game.round, game.player_1);
-            let player_challenge_2 = store
-                .get_player_challenge_choice(game_id, game.round, game.player_2);
-
-            if player_challenge_1.submitted && player_challenge_2.submitted {
-                game.state = GameState::ResultPhase;
-                store.set_game(game);
+            // Update choice directly in the game model
+            if game.player_1 == get_caller_address() {
+                game.player_1_challenge_submitted = true;
+                game.player_1_challenge_choice = player_choice;
+            } else {
+                game.player_2_challenge_submitted = true;
+                game.player_2_challenge_choice = player_choice;
             }
+
+            // Check if both players have submitted
+            if game.player_1_challenge_submitted && game.player_2_challenge_submitted {
+                game.state = GameState::ResultPhase;
+            }
+
+            store.set_game(game);
         }
 
         fn submit_round_proof(
@@ -330,23 +324,14 @@ pub mod game_system {
             let mut store = self.store_default();
             let mut game = store.get_game(game_id);
 
-            let player_1_condition = store
-                .get_player_condition_choice(game.id, game.round, game.player_1);
-            let player_2_condition = store
-                .get_player_condition_choice(game.id, game.round, game.player_2);
+            // Get choices from game model
+            let player_1_lies = game.player_1_condition_choice && !player_1_proof.is_valid;
+            let player_2_lies = game.player_2_condition_choice && !player_2_proof.is_valid;
 
-            let player_1_challenge = store
-                .get_player_challenge_choice(game.id, game.round, game.player_1);
-            let player_2_challenge = store
-                .get_player_challenge_choice(game.id, game.round, game.player_2);
-
-            let player_1_lies = player_1_condition.choice && !player_1_proof.is_valid;
-            let player_2_lies = player_2_condition.choice && !player_2_proof.is_valid;
-
-            // player_x_challenge.choice = false -> PX thinks the other player is lying
-            // player_x_challenge.choice = true  -> PX thinks the other player is telling the truth
-            let player_1_call_lier = !player_1_challenge.choice;
-            let player_2_call_lier = !player_2_challenge.choice;
+            // player_x_challenge_choice = false -> PX thinks the other player is lying
+            // player_x_challenge_choice = true  -> PX thinks the other player is telling the truth
+            let player_1_call_lier = !game.player_1_challenge_choice;
+            let player_2_call_lier = !game.player_2_challenge_choice;
 
             // - If Player 1 lies and Player 2 doesn't believe -> Player 2 gets 20 points and
             // Player 1 loses 1 life - If Player 1 lies and Player 2 believes -> Player 1 gets 10
@@ -381,8 +366,19 @@ pub mod game_system {
             } else if game.player_1_score >= 50 || game.player_2_score >= 50 {
                 game.state = GameState::GameOver;
             } else {
+                // Advance to next round and reset choice fields
                 game.round += 1;
                 game.state = GameState::ConditionPhase;
+
+                // Reset condition and challenge choices for the new round
+                game.player_1_condition_submitted = false;
+                game.player_1_condition_choice = false;
+                game.player_2_condition_submitted = false;
+                game.player_2_condition_choice = false;
+                game.player_1_challenge_submitted = false;
+                game.player_1_challenge_choice = false;
+                game.player_2_challenge_submitted = false;
+                game.player_2_challenge_choice = false;
             }
             game
         }

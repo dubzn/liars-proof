@@ -18,6 +18,14 @@ pub struct Game {
     pub round: u32,
     pub state: GameState,
     pub condition_id: u32,
+    pub player_1_condition_submitted: bool,
+    pub player_1_condition_choice: bool,
+    pub player_2_condition_submitted: bool,
+    pub player_2_condition_choice: bool,
+    pub player_1_challenge_submitted: bool,
+    pub player_1_challenge_choice: bool,
+    pub player_2_challenge_submitted: bool,
+    pub player_2_challenge_choice: bool,
 }
 
 #[derive(Serde, Copy, Drop, Introspect, PartialEq, Debug, DojoStore, Default)]
