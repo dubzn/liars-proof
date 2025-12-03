@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAccount } from "@starknet-react/core";
 import { useGameModels } from "@/hooks/useGameModels";
@@ -38,6 +39,9 @@ export const Game = () => {
   // Parallax effect
   const parallaxOffset = useParallax(20);
   const backgroundOffset = useParallax(10);
+  
+  // State for blur effect when hovering over player cards
+  const [isHoveringCards, setIsHoveringCards] = useState(false);
 
   // Subscribe to all game models
   const { game } = useGameModels(gameId);
@@ -96,7 +100,7 @@ export const Game = () => {
     <div className="game-screen">
       {/* Background with parallax */}
       <div
-        className="game-background"
+        className={`game-background ${isHoveringCards ? "blurred" : ""}`}
         style={{
           transform: `translate(${backgroundOffset.x}px, ${backgroundOffset.y}px)`,
         }}
@@ -124,10 +128,15 @@ export const Game = () => {
         image="/images/joker.png"
         name={player2Name}
         parallaxOffset={parallaxOffset}
+        isBlurred={isHoveringCards}
       />
 
       {/* Player Hand Cards - 3 random cards */}
-      <PlayerHandCards cards={MOCK_CARDS} parallaxOffset={parallaxOffset} />
+      <PlayerHandCards 
+        cards={MOCK_CARDS} 
+        parallaxOffset={parallaxOffset}
+        onHoverChange={setIsHoveringCards}
+      />
 
       {/* Game Phase Panel */}
       <GamePhasePanel

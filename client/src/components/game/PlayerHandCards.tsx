@@ -5,11 +5,13 @@ import "./PlayerHandCards.css";
 interface PlayerHandCardsProps {
   cards: Array<{ suit: number; value: number }>;
   parallaxOffset: { x: number; y: number };
+  onHoverChange?: (isHovering: boolean) => void;
 }
 
 export const PlayerHandCards = ({
   cards,
   parallaxOffset,
+  onHoverChange,
 }: PlayerHandCardsProps) => {
   // Offset controlado por posición vertical del mouse:
   // - En la parte inferior de la pantalla -> offsetY ≈ 0 (cartas centradas abajo, visibles)
@@ -38,6 +40,8 @@ export const PlayerHandCards = ({
         // Centrado horizontal con ligero parallax X, Y controlado por offsetY
         transform: `translate(calc(-50% + ${parallaxOffset.x * 0.4}px), ${offsetY}px)`,
       }}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
     >
       {cards.map((card, index) => (
         <div
