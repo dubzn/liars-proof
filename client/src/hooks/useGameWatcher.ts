@@ -86,6 +86,32 @@ export const useGameWatcher = (
     if (game.condition_id !== previousGame.condition_id) {
       changes.condition_id = { old: previousGame.condition_id, new: game.condition_id };
     }
+    // Condition choice fields
+    if (game.player_1_condition_submitted !== previousGame.player_1_condition_submitted) {
+      changes.player_1_condition_submitted = { old: previousGame.player_1_condition_submitted, new: game.player_1_condition_submitted };
+    }
+    if (game.player_1_condition_choice !== previousGame.player_1_condition_choice) {
+      changes.player_1_condition_choice = { old: previousGame.player_1_condition_choice, new: game.player_1_condition_choice };
+    }
+    if (game.player_2_condition_submitted !== previousGame.player_2_condition_submitted) {
+      changes.player_2_condition_submitted = { old: previousGame.player_2_condition_submitted, new: game.player_2_condition_submitted };
+    }
+    if (game.player_2_condition_choice !== previousGame.player_2_condition_choice) {
+      changes.player_2_condition_choice = { old: previousGame.player_2_condition_choice, new: game.player_2_condition_choice };
+    }
+    // Challenge choice fields
+    if (game.player_1_challenge_submitted !== previousGame.player_1_challenge_submitted) {
+      changes.player_1_challenge_submitted = { old: previousGame.player_1_challenge_submitted, new: game.player_1_challenge_submitted };
+    }
+    if (game.player_1_challenge_choice !== previousGame.player_1_challenge_choice) {
+      changes.player_1_challenge_choice = { old: previousGame.player_1_challenge_choice, new: game.player_1_challenge_choice };
+    }
+    if (game.player_2_challenge_submitted !== previousGame.player_2_challenge_submitted) {
+      changes.player_2_challenge_submitted = { old: previousGame.player_2_challenge_submitted, new: game.player_2_challenge_submitted };
+    }
+    if (game.player_2_challenge_choice !== previousGame.player_2_challenge_choice) {
+      changes.player_2_challenge_choice = { old: previousGame.player_2_challenge_choice, new: game.player_2_challenge_choice };
+    }
 
     // Only log and trigger callback if there are actual changes
     if (Object.keys(changes).length > 0) {
