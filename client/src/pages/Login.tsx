@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
@@ -6,6 +6,7 @@ import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
 import { JoinGameModal } from "@/components/login/JoinGameModal";
+import { ProcessingModal } from "@/components/login/ProcessingModal";
 import { useParallax } from "@/hooks/useParallax";
 import "./Login.css";
 
@@ -17,9 +18,16 @@ export const Login = () => {
   const { account, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [playerName, setPlayerName] = useState<string>(DEFAULT_PLAYER_NAME);
+  const [processingStatus, setProcessingStatus] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const backgroundParallax = useParallax(15); // Subtle parallax effect for background
+  const isCreatingGameRef = useRef(false); // Ref to track creation state synchronously
+  const isJoiningGameRef = useRef(false); // Ref to track join state synchronously
 
   // Load player name from localStorage on mount
   useEffect(() => {
@@ -37,8 +45,14 @@ export const Login = () => {
   }, [playerName]);
 
   const createGame = async () => {
-    if (!account) return;
+    // Double check: prevent multiple simultaneous executions using ref for synchronous check
+    if (!account || isCreatingGame || isCreatingGameRef.current) {
+      console.log("[Login] ⚠️ Cannot create game: account missing or already creating");
+      return;
+    }
 
+    // Set both state and ref to prevent race conditions
+    isCreatingGameRef.current = true;
     setIsCreatingGame(true);
     try {
       console.log("[Login] Creating game with contract:", GAME_CONTRACT_ADDRESS);
@@ -46,6 +60,12 @@ export const Login = () => {
       // Convert playerName to ByteArray
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
+      
+      // Show processing modal - preparing transaction
+      setProcessingStatus({
+        title: "CREATING GAME",
+        message: "Preparing transaction...",
+      });
       
       // Convert string to ByteArray using byteArrayFromString
       // Reference: https://starknetjs.com/docs/API/namespaces/byteArray/#bytearrayfromstring
@@ -64,6 +84,12 @@ export const Login = () => {
         num.toHex(byteArrayData.pending_word_len),
       ];
       
+      // Update modal - waiting for signature
+      setProcessingStatus({
+        title: "CREATING GAME",
+        message: "Please sign the transaction in your wallet",
+      });
+      
       // Execute the create function
       const result = await account.execute({
         contractAddress: GAME_CONTRACT_ADDRESS,
@@ -71,6 +97,12 @@ export const Login = () => {
         calldata: serializedByteArray,
       });
       console.log("[Login] Transaction hash:", result.transaction_hash);
+      
+      // Update modal - waiting for confirmation
+      setProcessingStatus({
+        title: "CREATING GAME",
+        message: "Transaction submitted, waiting for confirmation...",
+      });
 
       // Wait for transaction to be accepted
       const receipt = await account.waitForTransaction(result.transaction_hash, {
@@ -109,6 +141,7 @@ export const Login = () => {
                 
                 if (gameId > 0) {
                   console.log("[Login] 🎮 Game created! Game ID:", gameId);
+                  setProcessingStatus(null); // Close modal
                   toast.success(`Game created! ID: ${gameId}`);
                   navigate(`/game/${gameId}`);
                   return;
@@ -125,13 +158,17 @@ export const Login = () => {
         console.log("[Login] ⚠️ GameCreated event not found in receipt events");
       }
       console.log("[Login] Could not extract game_id from events, checking transaction...");
+      setProcessingStatus(null); // Close modal
       toast.success("Game creation transaction submitted!");
       
       
     } catch (error) {
       console.error("[Login] Error creating game:", error);
+      setProcessingStatus(null); // Close modal on error
       toast.error(`Failed to create game: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
+      // Reset both state and ref
+      isCreatingGameRef.current = false;
       setIsCreatingGame(false);
     }
   };
@@ -149,10 +186,17 @@ export const Login = () => {
   };
 
   const handleCreateGame = async () => {
+    // Prevent multiple clicks
+    if (isCreatingGame) {
+      console.log("[Login] ⚠️ Game creation already in progress, ignoring click");
+      return;
+    }
+    
     if (!account) {
       toast.error("Please connect your wallet first");
       return;
     }
+    
     await createGame();
   };
 
@@ -166,10 +210,26 @@ export const Login = () => {
       return;
     }
 
+    // Prevent multiple simultaneous executions
+    if (isJoiningGame || isJoiningGameRef.current) {
+      console.log("[Login] ⚠️ Already joining a game, ignoring request");
+      return;
+    }
+
+    // Set both state and ref to prevent race conditions
+    isJoiningGameRef.current = true;
+    setIsJoiningGame(true);
+
     try {
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
       console.log("[Login] Joining game with ID:", gameId, "and name:", nameToUse);
+
+      // Show processing modal - preparing transaction
+      setProcessingStatus({
+        title: "JOINING GAME",
+        message: "Preparing transaction...",
+      });
 
       // Convert playerName to ByteArray
       const byteArrayData = byteArray.byteArrayFromString(nameToUse);
@@ -182,6 +242,12 @@ export const Login = () => {
         num.toHex(byteArrayData.pending_word_len),
       ];
 
+      // Update modal - waiting for signature
+      setProcessingStatus({
+        title: "JOINING GAME",
+        message: "Please sign the transaction in your wallet",
+      });
+
       // Execute the join function
       const result = await account.execute({
         contractAddress: GAME_CONTRACT_ADDRESS,
@@ -191,6 +257,12 @@ export const Login = () => {
 
       console.log("[Login] Transaction hash:", result.transaction_hash);
 
+      // Update modal - waiting for confirmation
+      setProcessingStatus({
+        title: "JOINING GAME",
+        message: "Transaction submitted, waiting for confirmation...",
+      });
+
       // Wait for transaction to be accepted
       await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
@@ -198,12 +270,18 @@ export const Login = () => {
       });
 
       console.log("[Login] ✅ Successfully joined game:", gameId);
+      setProcessingStatus(null); // Close modal
       toast.success(`Joined game ${gameId} as ${nameToUse}`);
       navigate(`/game/${gameId}`);
     } catch (error) {
       console.error("[Login] Error joining game:", error);
+      setProcessingStatus(null); // Close modal on error
       toast.error(`Failed to join game: ${error instanceof Error ? error.message : String(error)}`);
       throw error; // Re-throw to let modal handle it
+    } finally {
+      // Reset both state and ref
+      isJoiningGameRef.current = false;
+      setIsJoiningGame(false);
     }
   };
 
@@ -311,6 +389,13 @@ export const Login = () => {
         isOpen={isJoinModalOpen}
         onClose={() => setIsJoinModalOpen(false)}
         onJoin={handleJoinGameSubmit}
+      />
+
+      {/* Processing Modal */}
+      <ProcessingModal
+        isOpen={processingStatus !== null}
+        title={processingStatus?.title || ""}
+        message={processingStatus?.message || ""}
       />
     </div>
   );

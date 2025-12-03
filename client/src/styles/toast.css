@@ -1,0 +1,99 @@
+/* Custom styles for Sonner toasts to match button style */
+
+[data-sonner-toast] {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border: none !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
+  padding: 1rem 1.5rem !important;
+  font-family: "BebasNeue", Arial, sans-serif !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Title/Content text */
+[data-sonner-toast] [data-title],
+[data-sonner-toast] > div {
+  font-family: "BebasNeue", Arial, sans-serif !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-size: clamp(1rem, 2vw, 1.25rem) !important;
+}
+
+[data-sonner-toast] [data-description] {
+  font-family: Arial, sans-serif !important;
+  font-size: clamp(0.875rem, 1.5vw, 1rem) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Success toast - keep green text */
+[data-sonner-toast][data-type="success"] {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-title] {
+  color: #22c55e !important; /* Green for success */
+}
+
+/* Error toast - keep red text */
+[data-sonner-toast][data-type="error"] {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-title] {
+  color: #ef4444 !important; /* Red for error */
+}
+
+/* Info toast */
+[data-sonner-toast][data-type="info"] {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5) !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-title] {
+  color: #3b82f6 !important; /* Blue for info */
+}
+
+/* Warning toast */
+[data-sonner-toast][data-type="warning"] {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.5) !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-title] {
+  color: #eab308 !important; /* Yellow for warning */
+}
+
+/* Default toast */
+[data-sonner-toast]:not([data-type]) {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
+}
+
+[data-sonner-toast]:not([data-type]) [data-title] {
+  color: white !important;
+}
+
+/* Close button */
+[data-sonner-toast] [data-close-button] {
+  background-color: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 0.7 !important;
+  transition: all 0.3s ease !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  opacity: 1 !important;
+  color: white !important;
+  transform: scale(1.1) !important;
+}
+
+/* Icon styling */
+[data-sonner-toast] [data-icon] {
+  color: inherit !important;
+}
+
