@@ -3,7 +3,6 @@
   bottom: 0px;
   left: 50%;
   display: flex;
-  gap: 0.5%;
   z-index: 8;
   transition: transform 0.15s ease-out;
   pointer-events: none;
@@ -13,17 +12,43 @@
 }
 
 .player-hand-card {
-  width: 25%;
+  width: 30%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.3s cubic-bezier(0.42,0,0.58,1);
-  transform: translateY(+100%);
+  transition: transform 0.3s cubic-bezier(0.42, 0, 0.58, 1);
   pointer-events: auto;
+  transform-origin: center bottom;
+  margin-left: -8%; /* Negative margin to create overlap */
+  margin-right: -8%; /* Negative margin to create overlap */
 }
 
-.player-hand-cards:hover .player-hand-card,
-.player-hand-card:hover {
-  transform: translateY(0%);
+/* On hover over cards container, lift all cards while maintaining arc */
+.player-hand-cards:hover .player-hand-card[data-card-index="0"] {
+  transform: rotate(-20deg) translate(-8px, -4px) translateY(-20px);
+}
+
+.player-hand-cards:hover .player-hand-card[data-card-index="1"] {
+  transform: rotate(0deg) translate(0px, -2px) translateY(-20px);
+}
+
+.player-hand-cards:hover .player-hand-card[data-card-index="2"] {
+  transform: rotate(20deg) translate(8px, -4px) translateY(-20px);
+}
+
+/* On hover over individual card, lift it more and scale */
+.player-hand-card[data-card-index="0"]:hover {
+  transform: rotate(-20deg) translate(-8px, -4px) translateY(-30px) scale(1.1) !important;
+  z-index: 10 !important;
+}
+
+.player-hand-card[data-card-index="1"]:hover {
+  transform: rotate(0deg) translate(0px, -2px) translateY(-30px) scale(1.1) !important;
+  z-index: 10 !important;
+}
+
+.player-hand-card[data-card-index="2"]:hover {
+  transform: rotate(20deg) translate(8px, -4px) translateY(-30px) scale(1.1) !important;
+  z-index: 10 !important;
 }
 
 .player-hand-card-image {
