@@ -15,6 +15,14 @@ interface GamePhasePanelProps {
   player1CommitmentSubmitted: boolean;
   player2CommitmentSubmitted: boolean;
   isPlayer1: boolean;
+  player1ConditionSubmitted: boolean;
+  player1ConditionChoice: boolean | null;
+  player2ConditionSubmitted: boolean;
+  player2ConditionChoice: boolean | null;
+  player1ChallengeSubmitted: boolean;
+  player1ChallengeChoice: boolean | null;
+  player2ChallengeSubmitted: boolean;
+  player2ChallengeChoice: boolean | null;
   onChallengeChoice?: (choice: boolean) => void;
   onConditionChoice?: (choice: boolean) => void;
   hasSubmittedCondition?: boolean;
@@ -30,6 +38,14 @@ export const GamePhasePanel = ({
   player1CommitmentSubmitted,
   player2CommitmentSubmitted,
   isPlayer1,
+  player1ConditionSubmitted,
+  player1ConditionChoice,
+  player2ConditionSubmitted,
+  player2ConditionChoice,
+  player1ChallengeSubmitted,
+  player1ChallengeChoice,
+  player2ChallengeSubmitted,
+  player2ChallengeChoice,
   onChallengeChoice,
   onConditionChoice,
   hasSubmittedCondition = false,
@@ -118,6 +134,9 @@ export const GamePhasePanel = ({
         </div>
         {isCommitmentExpanded && (
           <div className="game-phase-content">
+            <div className="game-phase-description">
+              Both players must commit to their hand cards without revealing them.
+            </div>
             <div className="game-phase-commitment-status">
               <div className="game-phase-commitment-player">
                 <span className="game-phase-commitment-name">{player1Name || "Player 1"}</span>
@@ -171,16 +190,50 @@ export const GamePhasePanel = ({
         </div>
         {isConditionExpanded && (
           <div className="game-phase-content">
+            <div className="game-phase-description">
+              A random condition is revealed. Each player must decide if their hand fulfills it.
+            </div>
             {isLoadingCondition ? (
               <div className="game-phase-message">Loading condition...</div>
             ) : conditionText ? (
               <>
-                <div className="game-phase-condition">
-                  {conditionText}
+                <div className="game-phase-condition-container">
+                  <div className="game-phase-condition-label">CONDITION</div>
+                  <div className="game-phase-condition">
+                    {conditionText}
+                  </div>
                 </div>
-                {hasSubmittedCondition ? (
+                <div className="game-phase-condition-status">
+                  <div className="game-phase-condition-player">
+                    <span className="game-phase-condition-name">{player1Name || "Player 1"}</span>
+                    <span className="game-phase-condition-message">
+                      {player1ConditionSubmitted
+                        ? player1ConditionChoice === true
+                          ? "says that fulfills the condition"
+                          : "says that doesn't fulfill the condition"
+                        : "is thinking..."}
+                    </span>
+                  </div>
+                  {player2Name && (
+                    <div className="game-phase-condition-player">
+                      <span className="game-phase-condition-name">{player2Name}</span>
+                      <span className="game-phase-condition-message">
+                        {player2ConditionSubmitted
+                          ? player2ConditionChoice === true
+                            ? "says that fulfills the condition"
+                            : "says that doesn't fulfill the condition"
+                          : "is thinking..."}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {player1ConditionSubmitted && player2ConditionSubmitted ? (
                   <div className="game-phase-message">
-                    Waiting for opponent's condition choice...
+                    Both players have submitted their condition choices!
+                  </div>
+                ) : hasSubmittedCondition ? (
+                  <div className="game-phase-message">
+                    Waiting for opponent to submit condition choice...
                   </div>
                 ) : (
                   <>
@@ -235,14 +288,46 @@ export const GamePhasePanel = ({
         </div>
         {isChallengeExpanded && (
           <div className="game-phase-content">
-            {hasSubmittedChallenge ? (
+            <div className="game-phase-description">
+              Each player decides whether to believe the opponent's claim about fulfilling the condition.
+            </div>
+            {/* Show challenge choices status */}
+            <div className="game-phase-condition-status">
+              <div className="game-phase-condition-player">
+                <span className="game-phase-condition-name">{player1Name || "Player 1"}</span>
+                <span className="game-phase-condition-message">
+                  {player1ChallengeSubmitted
+                    ? player1ChallengeChoice === true
+                      ? "believes the opponent"
+                      : "doesn't believe the opponent"
+                    : "is thinking..."}
+                </span>
+              </div>
+              {player2Name && (
+                <div className="game-phase-condition-player">
+                  <span className="game-phase-condition-name">{player2Name}</span>
+                  <span className="game-phase-condition-message">
+                    {player2ChallengeSubmitted
+                      ? player2ChallengeChoice === true
+                        ? "believes the opponent"
+                        : "doesn't believe the opponent"
+                      : "is thinking..."}
+                  </span>
+                </div>
+              )}
+            </div>
+            {player1ChallengeSubmitted && player2ChallengeSubmitted ? (
               <div className="game-phase-message">
-                Waiting for opponent's challenge choice...
+                Both players have submitted their challenge choices!
+              </div>
+            ) : hasSubmittedChallenge ? (
+              <div className="game-phase-message">
+                Waiting for opponent to submit challenge choice...
               </div>
             ) : (
               <>
                 <div className="game-phase-question">
-                  Do you trust that {opponentName || "your opponent"} is fulfilling the condition?
+                  Do you believe {isPlayer1 ? (player2Name || "Player 2") : (player1Name || "Player 1")}?
                 </div>
                 <div className="game-phase-buttons">
                   <Button
@@ -288,6 +373,9 @@ export const GamePhasePanel = ({
         </div>
         {isResultExpanded && (
           <div className="game-phase-content">
+            <div className="game-phase-description">
+              Players submit proofs to verify their claims. The round winner is determined.
+            </div>
             <div className="game-phase-message">
               Waiting for proofs to be submitted...
             </div>

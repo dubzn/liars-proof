@@ -1,11 +1,14 @@
 import { useGameGraphQL } from "@/hooks/useGameGraphQL";
+import { useStarknetKit } from "@/context/starknetkit";
 import "./GameInfo.css";
 
 interface GameInfoProps {
   gameId: number;
+  isPlayer1: boolean;
 }
 
-export const GameInfo = ({ gameId }: GameInfoProps) => {
+export const GameInfo = ({ gameId, isPlayer1 }: GameInfoProps) => {
+  const { account } = useStarknetKit();
   const { game, isLoading, error } = useGameGraphQL(gameId);
 
   if (isLoading) {
@@ -38,7 +41,7 @@ export const GameInfo = ({ gameId }: GameInfoProps) => {
     <div className="game-info">
       <div className="game-info-title">LIARS PROOF - GAME #{gameId}</div>
       <div className="game-info-players">
-        <div className="game-info-player">
+        <div className={`game-info-player ${isPlayer1 ? "game-info-player-current" : ""}`}>
           <span className="game-info-player-name">{player1Name}:</span>
           <span className="game-info-player-score">{player1Score} / 50</span>
           <div className="game-info-lives">
@@ -55,7 +58,7 @@ export const GameInfo = ({ gameId }: GameInfoProps) => {
           </div>
         </div>
         {hasPlayer2 && (
-          <div className="game-info-player">
+          <div className={`game-info-player ${!isPlayer1 ? "game-info-player-current" : ""}`}>
             <span className="game-info-player-name">{player2Name}:</span>
             <span className="game-info-player-score">{player2Score} / 50</span>
             <div className="game-info-lives">
