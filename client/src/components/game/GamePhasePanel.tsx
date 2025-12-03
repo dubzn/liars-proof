@@ -4,7 +4,7 @@ import { useConditionGraphQL } from "@/hooks/useConditionGraphQL";
 import { generateConditionText } from "@/utils/conditionText";
 import "./GamePhasePanel.css";
 
-type GamePhase = "CommitmentPhase" | "ConditionPhase" | "ChallengePhase" | "ResultPhase";
+type GamePhase = "WaitingForHandCommitments" | "ConditionPhase" | "ChallengePhase" | "ResultPhase";
 
 interface GamePhasePanelProps {
   currentPhase: GamePhase;
@@ -51,13 +51,13 @@ export const GamePhasePanel = ({
   hasSubmittedCondition = false,
   hasSubmittedChallenge = false,
 }: GamePhasePanelProps) => {
-  const isCommitmentPhase = currentPhase === "CommitmentPhase";
+  const isCommitmentPhase = currentPhase === "WaitingForHandCommitments";
   const isConditionPhase = currentPhase === "ConditionPhase";
   const isChallengePhase = currentPhase === "ChallengePhase";
   const isResultPhase = currentPhase === "ResultPhase";
 
   // Determine phase status
-  // CommitmentPhase is completed if we're past it
+  // WaitingForHandCommitments is completed if we're past it
   const isCommitmentCompleted = isConditionPhase || isChallengePhase || isResultPhase;
   // ConditionPhase is completed if we're in ChallengePhase or ResultPhase
   const isConditionCompleted = isChallengePhase || isResultPhase;
@@ -101,7 +101,7 @@ export const GamePhasePanel = ({
     setExpandedPhase(currentPhase);
   }, [currentPhase]);
 
-  const isCommitmentExpanded = expandedPhase === "CommitmentPhase";
+  const isCommitmentExpanded = expandedPhase === "WaitingForHandCommitments";
   const isConditionExpanded = expandedPhase === "ConditionPhase";
   const isChallengeExpanded = expandedPhase === "ChallengePhase";
   const isResultExpanded = expandedPhase === "ResultPhase";
@@ -118,7 +118,7 @@ export const GamePhasePanel = ({
           className={`game-phase-header ${canExpandCommitment ? "clickable" : ""}`}
           onClick={() => {
             if (canExpandCommitment) {
-              setExpandedPhase(isCommitmentExpanded ? null : "CommitmentPhase");
+              setExpandedPhase(isCommitmentExpanded ? null : "WaitingForHandCommitments");
             }
           }}
         >
