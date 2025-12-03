@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useStarknetKit } from "@/context/starknetkit";
 import { useGameWatcher } from "@/hooks/useGameWatcher";
@@ -23,13 +23,38 @@ const MOCK_GAME = {
   round: 1,
 };
 
-// Mock cards: value (1-13), suit (1=Clubs, 2=Spades, 3=Diamonds, 4=Hearts)
-// 9 of Hearts, 8 of Hearts, Ace of Spades
-const MOCK_CARDS = [
-  { suit: 4, value: 9 }, // 9 of Hearts
-  { suit: 4, value: 8 }, // 8 of Hearts
-  { suit: 2, value: 1 }, // Ace of Spades
-];
+// Card type
+type Card = {
+  suit: number;
+  value: number;
+};
+
+/**
+ * Generate a random hand of 3 cards
+ * Values: 1 (Ace) - 13 (King)
+ * Suits: 1 (Clubs), 2 (Spades), 3 (Diamonds), 4 (Hearts)
+ */
+const generateRandomHand = (): Card[] => {
+  const hand: Card[] = [];
+  const usedCards = new Set<string>();
+
+  while (hand.length < 3) {
+    // Random value: 1-13 (A, 2-10, J, Q, K)
+    const value = Math.floor(Math.random() * 13) + 1;
+    // Random suit: 1-4 (Clubs, Spades, Diamonds, Hearts)
+    const suit = Math.floor(Math.random() * 4) + 1;
+
+    // Create unique key to avoid duplicate cards
+    const cardKey = `${suit}-${value}`;
+
+    if (!usedCards.has(cardKey)) {
+      usedCards.add(cardKey);
+      hand.push({ suit, value });
+    }
+  }
+
+  return hand;
+};
 
 export const Game = () => {
   const { game_id } = useParams<{ game_id: string }>();
@@ -39,14 +64,26 @@ export const Game = () => {
   // Parallax effect
   const parallaxOffset = useParallax(20);
   const backgroundOffset = useParallax(10);
-  
+
   // State for blur effect when hovering over player cards
   const [isHoveringCards, setIsHoveringCards] = useState(false);
+
+  // State for player's hand - generated randomly when game is created
+  const [playerHand, setPlayerHand] = useState<Card[]>([]);
 
   // Watch game state with GraphQL polling (every 2 seconds)
   const { game, isLoading } = useGameWatcher(gameId, (updatedGame) => {
     console.log("🎮 Game updated in Game page:", updatedGame);
   });
+
+  // Generate random hand when game is loaded for the first time
+  useEffect(() => {
+    if (gameId > 0 && playerHand.length === 0) {
+      const newHand = generateRandomHand();
+      setPlayerHand(newHand);
+      console.log("[Game] 🃏 Generated random hand:", newHand);
+    }
+  }, [gameId, playerHand.length]);
 
   // TODO: Use these when implementing full game logic
   // const { condition, playerConditionChoice, playerChallengeChoice, roundProof } = useGameModels(gameId);
@@ -139,8 +176,8 @@ export const Game = () => {
       />
 
       {/* Player Hand Cards - 3 random cards */}
-      <PlayerHandCards 
-        cards={MOCK_CARDS} 
+      <PlayerHandCards
+        cards={playerHand}
         parallaxOffset={parallaxOffset}
         onHoverChange={setIsHoveringCards}
       />
