@@ -64,21 +64,19 @@ export const Game = () => {
     console.log("🎮 Game updated in Game page:", updatedGame);
   });
 
-  console.log("game", game);
-
   // Helper to get game state variant (needed before useEffect)
   const getGameStateVariant = (state: any): string => {
-    if (!state) return "CommitmentPhase";
+    if (!state) return "WaitingForHandCommitments";
     if (typeof state === "string") return state;
     if (state.variant) return state.variant;
     // Handle CairoCustomEnum
     if (state.WaitingForPlayers !== undefined) return "WaitingForPlayers";
-    if (state.WaitingForHandCommitments !== undefined) return "CommitmentPhase";
+    if (state.WaitingForHandCommitments !== undefined) return "WaitingForHandCommitments";
     if (state.ConditionPhase !== undefined) return "ConditionPhase";
     if (state.ChallengePhase !== undefined) return "ChallengePhase";
     if (state.ResultPhase !== undefined) return "ResultPhase";
     if (state.GameOver !== undefined) return "GameOver";
-    return "CommitmentPhase";
+    return "WaitingForHandCommitments";
   };
 
   // Determine if current player is player_1 or player_2 (needed before useEffect)
@@ -100,22 +98,40 @@ export const Game = () => {
   // Submit hand commitment after generating hand
   useEffect(() => {
     const submitHandCommitment = async () => {
+      console.log("[Game] 🔍 Checking hand commitment conditions:", {
+        hasAccount: !!account,
+        hasGame: !!game,
+        hasSubmittedCommitment,
+        isSubmittingCommitment,
+        playerHandLength: playerHand.length,
+        gameState: game ? getGameStateVariant(game.state) : "no game",
+        isPlayer1,
+        player1CommitmentSubmitted,
+        player2CommitmentSubmitted,
+      });
+
       if (!account || !game || hasSubmittedCommitment || isSubmittingCommitment || playerHand.length !== 3) {
+        console.log("[Game] ⚠️ Skipping commitment - missing prerequisites");
         return;
       }
 
       // Check if current player already submitted commitment
       const currentPlayerCommitmentSubmitted = isPlayer1 ? player1CommitmentSubmitted : player2CommitmentSubmitted;
       if (currentPlayerCommitmentSubmitted) {
+        console.log("[Game] ✓ Current player already submitted commitment");
         setHasSubmittedCommitment(true);
         return;
       }
 
-      // Only submit if we're in CommitmentPhase state
+      // Only submit if we're in WaitingForHandCommitments state
       const gameState = getGameStateVariant(game.state);
-      if (gameState !== "CommitmentPhase") {
+      console.log("[Game] 🎯 Game state:", gameState);
+      if (gameState !== "WaitingForHandCommitments") {
+        console.log("[Game] ⚠️ Not in WaitingForHandCommitments, current state:", gameState);
         return;
       }
+
+      console.log("[Game] ✅ All conditions met, submitting hand commitment...");
 
       setIsSubmittingCommitment(true);
       try {
@@ -176,7 +192,20 @@ export const Game = () => {
     };
 
     submitHandCommitment();
-  }, [account, game, gameId, playerHand, hasSubmittedCommitment, isSubmittingCommitment, isPlayer1, player1CommitmentSubmitted, player2CommitmentSubmitted]);
+  }, [
+    account,
+    game,
+    gameId,
+    playerHand,
+    hasSubmittedCommitment,
+    isSubmittingCommitment,
+    isPlayer1,
+    player1CommitmentSubmitted,
+    player2CommitmentSubmitted,
+    getGameStateVariant,
+    // Include game.state in dependencies to trigger when state changes
+    game?.state,
+  ]);
 
   // TODO: Use these when implementing full game logic
   // const { condition, playerConditionChoice, playerChallengeChoice, roundProof } = useGameModels(gameId);
@@ -186,7 +215,7 @@ export const Game = () => {
   // const { executeSubmitConditionChoice, executeSubmitChallengeChoice } = useGameExecute();
 
   // Use real game data
-  const currentPhase = game ? getGameStateVariant(game.state) as "CommitmentPhase" | "ConditionPhase" | "ChallengePhase" | "ResultPhase" : "CommitmentPhase";
+  const currentPhase = game ? getGameStateVariant(game.state) as "WaitingForHandCommitments" | "ConditionPhase" | "ChallengePhase" | "ResultPhase" : "WaitingForHandCommitments";
   const gameIdNumber = gameId || (game ? Number(game.id) : 0);
   // Only show player 2 name if they have joined
   const hasPlayer2 = game && game.player_2_name && String(game.player_2_name).trim() !== "";
