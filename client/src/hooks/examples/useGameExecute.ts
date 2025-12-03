@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useAccount } from "@starknet-react/core";
+import { useStarknetKit } from "@/context/starknetkit";
 import { useDojoSdk } from "../dojo";
 import { setupWorld } from "@/bindings/typescript/contracts.gen";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
  * Example hook: Execute a contract transaction
  */
 export const useGameExecute = () => {
-  const { account } = useAccount();
+  const { account } = useStarknetKit();
   const { sdk } = useDojoSdk();
   const [loading, setLoading] = useState(false);
 
