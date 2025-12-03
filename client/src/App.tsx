@@ -14,6 +14,7 @@ import { chains, DEFAULT_CHAIN_ID, getNumsAddress } from "@/config";
 import { DojoSdkProviderInitialized } from "./context/dojo";
 import { Login } from "./pages/Login";
 import { Game } from "./pages/Game";
+import ProofPage from "./pages/Proof";
 import { queryClient } from "./queries";
 
 const provider = jsonRpcProvider({
@@ -81,6 +82,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/game/:game_id" element={<Game />} />
+                <Route path="/proof" element={<ProofPage />} />
               </Routes>
             </Router>
           </DojoSdkProviderInitialized>
