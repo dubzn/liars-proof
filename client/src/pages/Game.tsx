@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAccount } from "@starknet-react/core";
 import { useGameModels } from "@/hooks/useGameModels";
@@ -42,6 +42,38 @@ export const Game = () => {
   
   // State for blur effect when hovering over player cards
   const [isHoveringCards, setIsHoveringCards] = useState(false);
+
+  // Simple RPC call to ZStarknet to verify connection (get latest block hash and number)
+  useEffect(() => {
+    const fetchBlockInfo = async () => {
+      try {
+        const rpcUrl = import.meta.env.VITE_ZN_SEPOLIA_RPC_URL;
+        const payload = {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "starknet_blockHashAndNumber",
+          params: [],
+        };
+
+        console.log("[Game] Calling ZN_SEPOLIA RPC", { rpcUrl, payload });
+
+        const response = await fetch(rpcUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const json = await response.json();
+        console.log("[Game] ZN_SEPOLIA RPC response (starknet_blockHashAndNumber):", json);
+      } catch (error) {
+        console.error("[Game] Error calling ZN_SEPOLIA RPC:", error);
+      }
+    };
+
+    fetchBlockInfo();
+  }, []);
 
   // Subscribe to all game models
   const { game } = useGameModels(gameId);
