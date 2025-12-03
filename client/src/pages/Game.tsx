@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useStarknetKit } from "@/context/starknetkit";
 import { useGameWatcher } from "@/hooks/useGameWatcher";
@@ -9,6 +9,8 @@ import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
 import { calculateHandCommitment, handCommitmentToHex, type Card } from "@/utils/handCommitment";
+import { generateProofAndCalldata, initializeProofSystem } from "@/utils/proofGenerator";
+import type { ProofInput } from "@/types/proof";
 import { toast } from "sonner";
 // import { useGameExecute } from "@/hooks/examples/useGameExecute"; // Temporarily commented - uncomment after browser refresh
 import "./Game.css";
@@ -58,6 +60,8 @@ export const Game = () => {
     title: string;
     message: string;
   } | null>(null);
+  const [isSubmittingProof, setIsSubmittingProof] = useState(false);
+  const hasSubmittedProofRef = useRef(false);
 
   // Watch game state with GraphQL polling (every 2 seconds)
   const { game } = useGameWatcher(gameId, (updatedGame) => {
@@ -87,6 +91,23 @@ export const Game = () => {
   // Check commitment status (needed before useEffect)
   const player1CommitmentSubmitted = game ? Boolean(game.player_1_hand_commitment && game.player_1_hand_commitment !== "0x0" && game.player_1_hand_commitment !== "0") : false;
   const player2CommitmentSubmitted = game ? Boolean(game.player_2_hand_commitment && game.player_2_hand_commitment !== "0x0" && game.player_2_hand_commitment !== "0") : false;
+
+
+  // Initialize proof system on mount
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        console.log("[Game] 🔧 Initializing proof system...");
+        await initializeProofSystem();
+        console.log("[Game] ✅ Proof system initialized successfully");
+      } catch (error) {
+        console.error("[Game] ❌ Failed to initialize proof system:", error);
+        toast.error("Failed to initialize proof system");
+      }
+    };
+
+    initialize();
+  }, []);
 
   // Generate random hand when game is loaded for the first time
   useEffect(() => {
@@ -177,6 +198,132 @@ export const Game = () => {
 
     submitHandCommitment();
   }, [account, game, gameId, playerHand, hasSubmittedCommitment, isSubmittingCommitment, isPlayer1, player1CommitmentSubmitted, player2CommitmentSubmitted]);
+
+
+  // Generate and submit proof when entering ResultPhase
+  useEffect(() => {
+    const generateAndSubmitProof = async () => {
+      if (!account || !game || isSubmittingProof || hasSubmittedProofRef.current || playerHand.length !== 3) {
+        return;
+      }
+
+      const gameState = getGameStateVariant(game.state);
+      if (gameState !== "ResultPhase") {
+        return;
+      }
+
+      // Check if we're player 1 or player 2
+      const isPlayer1 = account.address === game.player_1;
+      const handCommitment = isPlayer1 ? game.player_1_hand_commitment : game.player_2_hand_commitment;
+
+      if (!handCommitment) {
+        console.error("[Game] No hand commitment found");
+        return;
+      }
+
+      setIsSubmittingProof(true);
+      hasSubmittedProofRef.current = true;
+
+      try {
+        console.log("[Game] 🔐 Generating ZK proof for ResultPhase...");
+
+        // Prepare proof input - HARDCODED condition for now
+        const proofInput: ProofInput = {
+          _game_id: gameId.toString(),
+          hand_commitment: `0x${BigInt(handCommitment).toString(16)}`,
+          condition_id: "1",
+          // HARDCODED: comparator = 2 (GREATER_THAN), value = 3, suit = 0
+          comparator: "3",
+          value: "3",
+          suit: "0",
+          hand: {
+            card1_suit: playerHand[0].suit.toString(),
+            card1_value: playerHand[0].value.toString(),
+            card2_suit: playerHand[1].suit.toString(),
+            card2_value: playerHand[1].value.toString(),
+            card3_suit: playerHand[2].suit.toString(),
+            card3_value: playerHand[2].value.toString(),
+          },
+        };
+          // condition_id: game.condition_id?.toString() || "1", TODO:
+
+        // card1_suit: playerHand[0].suit.toString(),
+        //     card1_value: playerHand[0].value.toString(),
+        //     card2_suit: playerHand[1].suit.toString(),
+        //     card2_value: playerHand[1].value.toString(),
+        //     card3_suit: playerHand[2].suit.toString(),
+        //     card3_value: playerHand[2].value.toString(),
+
+        console.log("[Game] Proof input:", proofInput);
+
+        // Generate proof
+        const result = await generateProofAndCalldata(proofInput);
+        console.log("[Game] ✅ Proof generated! Calldata length:", result.calldata.length);
+        console.log("[Game] Proof generated! Calldata:", result.calldata);
+
+        // Submit proof to contract
+        console.log("[Game] 📤 Submitting proof to contract...");
+
+
+        if (result.calldata.length === 0) {
+          console.log("[Game] No calldata generated");
+          const txResult = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "submit_round_proof",
+            calldata: [
+              gameId.toString(), // game_id: u32
+              0, // proof calldata
+            ],
+          });
+
+          console.log("[Game] Transaction hash:", txResult.transaction_hash);
+
+          // Wait for transaction
+          const receipt = await account.waitForTransaction(txResult.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+          });
+
+          console.log("[Game] ✅ Proof submitted successfully!", receipt);
+          toast.success("Proof submitted successfully!");
+        } else {
+          // Convert calldata to strings (remove first element as per documentation)
+          const proofCalldata = result.calldata.slice(1).map(item =>
+            typeof item === 'bigint' ? item.toString() : String(item)
+          );
+
+          const txResult = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "submit_round_proof",
+            calldata: [
+              gameId.toString(), // game_id: u32
+              ...proofCalldata, // proof calldata
+            ],
+          });
+
+          console.log("[Game] Transaction hash:", txResult.transaction_hash);
+
+          // Wait for transaction
+          const receipt = await account.waitForTransaction(txResult.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+          });
+
+          console.log("[Game] ✅ Proof submitted successfully!", receipt);
+          toast.success("Proof submitted successfully!");
+        }
+
+      } catch (error) {
+        console.error("[Game] ❌ Error generating/submitting proof:", error);
+        toast.error(`Failed to submit proof: ${error instanceof Error ? error.message : String(error)}`);
+        hasSubmittedProofRef.current = false; // Allow retry on error
+      } finally {
+        setIsSubmittingProof(false);
+      }
+    };
+
+    generateAndSubmitProof();
+  }, [account, game, gameId, playerHand, isSubmittingProof]);
 
   // TODO: Use these when implementing full game logic
   // const { condition, playerConditionChoice, playerChallengeChoice, roundProof } = useGameModels(gameId);
