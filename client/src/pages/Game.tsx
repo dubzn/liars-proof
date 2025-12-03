@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useAccount } from "@starknet-react/core";
+import { useStarknetKit } from "@/context/starknetkit";
 import { useGameModels } from "@/hooks/useGameModels";
 import { useParallax } from "@/hooks/useParallax";
 import { GameInfo } from "@/components/game/GameInfo";
@@ -33,7 +33,7 @@ const MOCK_CARDS = [
 
 export const Game = () => {
   const { game_id } = useParams<{ game_id: string }>();
-  const { account } = useAccount();
+  const { account } = useStarknetKit();
   const gameId = game_id ? parseInt(game_id) : 0;
 
   // Parallax effect
@@ -99,9 +99,9 @@ export const Game = () => {
   return (
     <div className="game-screen">
       {/* Background with parallax */}
-      <div
+    <div
         className={`game-background ${isHoveringCards ? "blurred" : ""}`}
-        style={{
+      style={{
           transform: `translate(${backgroundOffset.x}px, ${backgroundOffset.y}px)`,
         }}
       >
