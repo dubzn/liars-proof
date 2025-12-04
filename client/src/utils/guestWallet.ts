@@ -1,7 +1,16 @@
-import { Account, RpcProvider, ec, stark, type AccountInterface, CallData, hash } from "starknet";
+import { Account, RpcProvider, ec, stark, type AccountInterface, CallData, hash, cairo } from "starknet";
 
 const GUEST_WALLET_STORAGE_KEY = "liars_proof_guest_wallet";
-const FUNDING_API_URL = "http://daleloco/api";
+
+// Owner wallet configuration for funding guest wallets
+const OWNER_WALLET_ADDRESS = import.meta.env.VITE_OWNER_WALLET_ADDRESS || "";
+const OWNER_WALLET_PRIVATE_KEY = import.meta.env.VITE_OWNER_WALLET_PRIVATE_KEY || "";
+
+// ETH contract address on Starknet
+const ETH_TOKEN_ADDRESS = import.meta.env.VITE_ZN_FEE_TOKEN_ADDRESS || "";
+
+// Amount to fund guest wallets (0.0001 ETH in wei)
+const FUNDING_AMOUNT = import.meta.env.VITE_FUNDING_AMOUNT || "100000000000000";
 
 // OpenZeppelin Account contract class hash
 // IMPORTANT: This class hash must exist on your network (ZStarknet)
@@ -102,31 +111,51 @@ export function deleteGuestWallet(): void {
 }
 
 /**
- * Request funding for the guest wallet from the API
+ * Fund guest wallet by transferring ETH from owner wallet
  */
-export async function fundGuestWallet(contractAddress: string): Promise<boolean> {
+export async function fundGuestWallet(
+  guestWalletAddress: string,
+  provider: RpcProvider,
+): Promise<{ transaction_hash: string }> {
   try {
-    console.log("[GuestWallet] Requesting funds for:", contractAddress);
+    console.log("[GuestWallet] Funding wallet:", guestWalletAddress);
+    console.log("[GuestWallet] Amount:", FUNDING_AMOUNT, "wei (0.0001 ETH)");
 
-    const response = await fetch(FUNDING_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        address: contractAddress,
-      }),
+    // Create owner account instance
+    const ownerAccount = new Account({
+      provider: provider,
+      address: OWNER_WALLET_ADDRESS,
+      signer: OWNER_WALLET_PRIVATE_KEY,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[GuestWallet] Funding failed:", errorText);
-      throw new Error(`Funding API returned ${response.status}: ${errorText}`);
-    }
+    console.log("[GuestWallet] Owner account:", ownerAccount.address);
 
-    const result = await response.json();
-    console.log("[GuestWallet] Funding successful:", result);
-    return true;
+    // Prepare transfer call
+    const transferCall = {
+      contractAddress: ETH_TOKEN_ADDRESS,
+      entrypoint: "transfer",
+      calldata: CallData.compile({
+        recipient: guestWalletAddress,
+        amount: cairo.uint256(FUNDING_AMOUNT),
+      }),
+    };
+
+    console.log("[GuestWallet] Executing transfer...");
+
+    // Execute transfer
+    const result = await ownerAccount.execute(transferCall);
+
+    console.log("[GuestWallet] Transfer tx hash:", result.transaction_hash);
+
+    // Wait for transaction confirmation
+    await ownerAccount.waitForTransaction(result.transaction_hash, {
+      retryInterval: 1000,
+      successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+    });
+
+    console.log("[GuestWallet] Funding completed successfully!");
+
+    return { transaction_hash: result.transaction_hash };
   } catch (error) {
     console.error("[GuestWallet] Error funding wallet:", error);
     throw error;
@@ -183,7 +212,7 @@ export async function setupGuestWallet(
 
     // Fund the wallet with the computed address
     console.log("[GuestWallet] Funding wallet at address:", account.address);
-    // await fundGuestWallet(account.address);
+    await fundGuestWallet(account.address, provider);
 
     // Save wallet data with the address
     saveGuestWallet(walletData);
