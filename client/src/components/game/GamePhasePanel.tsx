@@ -23,6 +23,10 @@ interface GamePhasePanelProps {
   player1ChallengeChoice: boolean | null;
   player2ChallengeSubmitted: boolean;
   player2ChallengeChoice: boolean | null;
+  player1ProofSubmitted: boolean;
+  player1ProofValid: boolean;
+  player2ProofSubmitted: boolean;
+  player2ProofValid: boolean;
   onChallengeChoice?: (choice: boolean) => void;
   onConditionChoice?: (choice: boolean) => void;
   hasSubmittedCondition?: boolean;
@@ -46,6 +50,10 @@ export const GamePhasePanel = ({
   player1ChallengeChoice,
   player2ChallengeSubmitted,
   player2ChallengeChoice,
+  player1ProofSubmitted,
+  player1ProofValid,
+  player2ProofSubmitted,
+  player2ProofValid,
   onChallengeChoice,
   onConditionChoice,
   hasSubmittedCondition = false,
@@ -376,9 +384,40 @@ export const GamePhasePanel = ({
             <div className="game-phase-description">
               Players submit proofs to verify their claims. The round winner is determined.
             </div>
-            <div className="game-phase-message">
-              Waiting for proofs to be submitted...
+            {/* Show proof submission status */}
+            <div className="game-phase-condition-status">
+              <div className="game-phase-condition-player">
+                <span className="game-phase-condition-name">{player1Name || "Player 1"}</span>
+                <span className="game-phase-condition-message">
+                  {player1ProofSubmitted
+                    ? player1ProofValid
+                      ? "✓ Proof verified (valid)"
+                      : "✗ Proof verified (invalid)"
+                    : "Submitting proof..."}
+                </span>
+              </div>
+              {player2Name && (
+                <div className="game-phase-condition-player">
+                  <span className="game-phase-condition-name">{player2Name}</span>
+                  <span className="game-phase-condition-message">
+                    {player2ProofSubmitted
+                      ? player2ProofValid
+                        ? "✓ Proof verified (valid)"
+                        : "✗ Proof verified (invalid)"
+                      : "Submitting proof..."}
+                  </span>
+                </div>
+              )}
             </div>
+            {player1ProofSubmitted && player2ProofSubmitted ? (
+              <div className="game-phase-message">
+                Both players have submitted their proofs! Determining winner...
+              </div>
+            ) : (
+              <div className="game-phase-message">
+                Waiting for proofs to be submitted and verified...
+              </div>
+            )}
           </div>
         )}
       </div>

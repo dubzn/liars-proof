@@ -4,6 +4,7 @@ import { useStarknetKit } from "@/context/starknetkit";
 import { useGameWatcher } from "@/hooks/useGameWatcher";
 import { useParallax } from "@/hooks/useParallax";
 import { useConditionGraphQL } from "@/hooks/useConditionGraphQL";
+import { useRoundProofGraphQL } from "@/hooks/useRoundProofGraphQL";
 import { GameInfo } from "@/components/game/GameInfo";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
@@ -73,14 +74,6 @@ export const Game = () => {
   const conditionId = game ? Number(game.condition_id) : 0;
   const { condition, isLoading: isLoadingCondition, error: conditionError } = useConditionGraphQL(conditionId);
 
-  // Debug logs for condition
-  useEffect(() => {
-    console.log("[Game] conditionId:", conditionId);
-    console.log("[Game] condition:", condition);
-    console.log("[Game] isLoadingCondition:", isLoadingCondition);
-    console.log("[Game] conditionError:", conditionError);
-  }, [conditionId, condition, isLoadingCondition, conditionError]);
-
   // Helper to get game state variant (needed before useEffect)
   const getGameStateVariant = (state: any): string => {
     if (!state) return "WaitingForHandCommitments";
@@ -95,6 +88,50 @@ export const Game = () => {
     if (state.GameOver !== undefined) return "GameOver";
     return "WaitingForHandCommitments";
   };
+
+  // Get current game state
+  const currentGameState = game ? getGameStateVariant(game.state) : "WaitingForHandCommitments";
+  const isResultPhase = currentGameState === "ResultPhase";
+
+  // Fetch round proofs - only poll when in ResultPhase
+  const currentRound = game ? Number(game.round) : 0;
+  const player1Address = game?.player_1;
+  const player2Address = game?.player_2;
+
+  const {
+    proofs,
+    player1ProofSubmitted,
+    player1ProofValid,
+    player2ProofSubmitted,
+    player2ProofValid,
+    isLoading: isLoadingProofs,
+    error: proofsError,
+  } = useRoundProofGraphQL(
+    gameId,
+    currentRound,
+    player1Address,
+    player2Address,
+    isResultPhase // Only poll when in ResultPhase
+  );
+
+  // Debug logs for condition
+  useEffect(() => {
+    console.log("[Game] conditionId:", conditionId);
+    console.log("[Game] condition:", condition);
+    console.log("[Game] isLoadingCondition:", isLoadingCondition);
+    console.log("[Game] conditionError:", conditionError);
+  }, [conditionId, condition, isLoadingCondition, conditionError]);
+
+  // Debug logs for proofs
+  useEffect(() => {
+    if (isResultPhase) {
+      console.log("[Game] Round proofs:", proofs);
+      console.log("[Game] Player 1 proof submitted:", player1ProofSubmitted, "valid:", player1ProofValid);
+      console.log("[Game] Player 2 proof submitted:", player2ProofSubmitted, "valid:", player2ProofValid);
+      console.log("[Game] isLoadingProofs:", isLoadingProofs);
+      console.log("[Game] proofsError:", proofsError);
+    }
+  }, [isResultPhase, proofs, player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid, isLoadingProofs, proofsError]);
 
   // Determine if current player is player_1 or player_2 (needed before useEffect)
   const isPlayer1 = game && account?.address === game.player_1 ? true : false;
@@ -572,6 +609,10 @@ export const Game = () => {
         player1ChallengeChoice={player1ChallengeChoice}
         player2ChallengeSubmitted={player2ChallengeSubmitted}
         player2ChallengeChoice={player2ChallengeChoice}
+        player1ProofSubmitted={player1ProofSubmitted}
+        player1ProofValid={player1ProofValid}
+        player2ProofSubmitted={player2ProofSubmitted}
+        player2ProofValid={player2ProofValid}
         onConditionChoice={handleConditionChoice}
         onChallengeChoice={handleChallengeChoice}
         hasSubmittedCondition={hasSubmittedCondition}
