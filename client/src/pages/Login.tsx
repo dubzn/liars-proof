@@ -15,7 +15,7 @@ const DEFAULT_PLAYER_NAME = "";
 const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
-  const { account, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
+  const { account, connector, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
@@ -28,6 +28,7 @@ export const Login = () => {
   const backgroundParallax = useParallax(15); // Subtle parallax effect for background
   const isCreatingGameRef = useRef(false); // Ref to track creation state synchronously
   const isJoiningGameRef = useRef(false); // Ref to track join state synchronously
+  const audioRef = useRef<HTMLAudioElement | null>(null); // Ref for background music
 
   // Load player name from localStorage on mount
   useEffect(() => {
@@ -43,6 +44,83 @@ export const Login = () => {
       localStorage.setItem(PLAYER_NAME_STORAGE_KEY, playerName);
     }
   }, [playerName]);
+
+  // Initialize background music (will start after user interaction)
+  useEffect(() => {
+    const audio = new Audio("/sounds/login.mp3");
+    audio.loop = true;
+    audio.volume = 0; // Start at 0 for fade in
+    audioRef.current = audio;
+
+    // Function to start audio with fade in
+    const startAudio = () => {
+      if (!audioRef.current) return;
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Fade in over 2 seconds
+            const fadeInInterval = setInterval(() => {
+              if (audioRef.current && audioRef.current.volume < 0.3) {
+                audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, 0.3);
+              } else {
+                clearInterval(fadeInInterval);
+              }
+            }, 100);
+          })
+          .catch(() => {
+            // Silently handle play errors
+          });
+      }
+    };
+
+    // Try to start audio on first user interaction
+    const handleFirstInteraction = () => {
+      startAudio();
+      // Remove listeners after first interaction
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+    };
+
+    // Listen for first user interaction
+    document.addEventListener("click", handleFirstInteraction, { once: true });
+    document.addEventListener("keydown", handleFirstInteraction, { once: true });
+    document.addEventListener("touchstart", handleFirstInteraction, { once: true });
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+    };
+  }, []);
+
+  // Fade out music before navigation
+  const fadeOutAndNavigate = async (path: string) => {
+    if (!audioRef.current) {
+      navigate(path);
+      return;
+    }
+
+    const audio = audioRef.current;
+
+    // Fade out over 1 second
+    const fadeOutInterval = setInterval(() => {
+      if (audio.volume > 0) {
+        audio.volume = Math.max(audio.volume - 0.1, 0);
+      } else {
+        clearInterval(fadeOutInterval);
+        audio.pause();
+        audio.src = "";
+        navigate(path);
+      }
+    }, 100);
+  };
 
   const createGame = async () => {
     // Double check: prevent multiple simultaneous executions using ref for synchronous check
@@ -143,7 +221,7 @@ export const Login = () => {
                   console.log("[Login] 🎮 Game created! Game ID:", gameId);
                   setProcessingStatus(null); // Close modal
                   toast.success(`Game created! ID: ${gameId}`);
-                  navigate(`/game/${gameId}`);
+                  fadeOutAndNavigate(`/game/${gameId}`);
                   return;
                 } else {
                   console.log("[Login] ⚠️ Invalid game_id extracted from data[3]:", gameId);
@@ -272,7 +350,7 @@ export const Login = () => {
       console.log("[Login] ✅ Successfully joined game:", gameId);
       setProcessingStatus(null); // Close modal
       toast.success(`Joined game ${gameId} as ${nameToUse}`);
-      navigate(`/game/${gameId}`);
+      fadeOutAndNavigate(`/game/${gameId}`);
     } catch (error) {
       console.error("[Login] Error joining game:", error);
       setProcessingStatus(null); // Close modal on error
@@ -304,17 +382,20 @@ export const Login = () => {
         }}
       />
       <div className="login-content-wrapper">
-        {/* Player name input - absolute top left */}
+        {/* Connected status and logout button - absolute top left */}
         {account && (
           <div className="login-wallet-status-container">
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="login-player-name-input"
-              placeholder="ENTER YOUR NAME"
-              maxLength={50}
-            />
+            
+            <span className="login-connected-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {connector?.icon
+                ? typeof connector.icon === "string"
+                  ? <img src={connector.icon} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
+                  : typeof connector.icon === "object" && connector.icon.light
+                    ? <img src={connector.icon.light} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
+                    : null
+                : null}
+              {connector?.id} CONNECTED
+            </span>
             <button
               onClick={handleDisconnect}
               className="login-logout-button"
@@ -331,7 +412,17 @@ export const Login = () => {
         <div className="login-left-panel">
           {account ? (
             <div className="login-connected-section">
+              
               <div className="login-buttons-container">
+                {/* Player name input - above buttons */}
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className="login-player-name-input"
+                placeholder="ENTER PLAYER NAME"
+                maxLength={50}
+              />
                 <Button
                   onClick={handleCreateGame}
                   className="login-button"
@@ -363,9 +454,12 @@ export const Login = () => {
                     ? "Wallet not available"
                     : "CONNECT WALLET"}
               </Button>
+              <p className="login-wallet-support-text">
+                Ready wallets on the ZStarknet network are supported
+              </p>
               {!isAvailable && (
                 <p className="login-error-message">
-                  Please install Argent X or Ready Wallet
+                  Please install Ready or Braavos Wallet
                 </p>
               )}
             </div>

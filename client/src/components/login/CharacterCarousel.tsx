@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import "./CharacterCarousel.css";
 
 const CHARACTER_IMAGES = [
+  "/images/joker_pose_3.png",
   "/images/joker_pose_1.png",
   "/images/joker_pose_2.png",
-  "/images/joker_pose_3.png",
 ];
 
 const ANIMATION_DURATION = 8000; // 8 seconds total per image - constant movement
