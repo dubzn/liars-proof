@@ -10,16 +10,14 @@ The key logic: **A player lies when their claim doesn't match the proof result**
 
 ## Game Flow (Single Player View)
 
+### Phase 1: Hand Commitment
+
 ```mermaid
 sequenceDiagram
     participant P as Player
     participant FE as Frontend
     participant Poseidon as Poseidon Hash (Garaga)
-    participant Noir as Noir Circuit
-    participant BB as Barretenberg
     participant BC as Contract (ZStarknet)
-
-    Note over P,BC: PHASE 1: Hand Commitment
 
     P->>FE: Game starts
     FE->>FE: Generate random 5-card hand
@@ -31,8 +29,15 @@ sequenceDiagram
     FE->>BC: submit_hand_commitment(game_id, hand_commitment)
     BC-->>FE: ✓ Commitment stored
     Note over BC: Waiting for opponent...
+```
 
-    Note over P,BC: PHASE 2: Condition Choice
+### Phase 2: Condition Choice
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant BC as Contract (ZStarknet)
 
     BC->>BC: Generate random condition
     BC-->>FE: Condition revealed
@@ -44,8 +49,15 @@ sequenceDiagram
     FE->>BC: submit_condition_choice(game_id, boolean)
     BC-->>FE: ✓ Choice stored
     Note over BC: Waiting for opponent...
+```
 
-    Note over P,BC: PHASE 3: Challenge Phase
+### Phase 3: Challenge Phase
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant BC as Contract (ZStarknet)
 
     BC-->>FE: Opponent's choice revealed
     Note over FE: Opponent says: YES/NO
@@ -56,15 +68,23 @@ sequenceDiagram
     FE->>BC: submit_challenge_choice(game_id, boolean)
     BC-->>FE: ✓ Challenge stored
     Note over BC: Waiting for opponent...
+```
 
-    Note over P,BC: PHASE 4: Proof Generation & Submission
+### Phase 4: Proof Generation & Submission
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant Noir as Noir Circuit
+    participant BB as Barretenberg
+    participant BC as Contract (ZStarknet)
 
     FE->>Noir: Generate ZK proof for hand
     Note over Noir: Proves:<br/>1. Hand matches commitment<br/>2. Card satisfies/doesn't satisfy condition
     Noir-->>FE: witness.gz
 
     FE->>BB: Generate UltraHonk proof
-    Note over BB: ~2-3 seconds
     BB-->>FE: proof + calldata
 
     FE->>BC: submit_round_proof(game_id, proof)
@@ -76,11 +96,19 @@ sequenceDiagram
 
     BC-->>FE: Round results (score, lives)
     FE-->>P: Show round outcome
+```
 
-    Note over P,BC: Next Round or Game Over
+### Next Round or Game Over
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant BC as Contract (ZStarknet)
+    participant P as Player
 
     alt Lives > 0 and Score < 50
         BC-->>FE: GameState::ConditionPhase
+        FE-->>P: New round starts!
         Note over P,BC: Loop back to Phase 2
     else Lives = 0 or Score ≥ 50
         BC-->>FE: GameState::GameOver
