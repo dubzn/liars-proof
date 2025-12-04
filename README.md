@@ -1,11 +1,22 @@
 # Liar's Proof - Privacy-Preserving Card Game on ZStarknet
+<img width="1920" height="936" alt="image" align="center" src="https://github.com/user-attachments/assets/02671bf0-725f-4705-88c2-57eb7f2fc7b9" />
 
-> A fully on-chain card game leveraging Zero-Knowledge Proofs for private hand commitments, built for the [Zypherpunk Hackathon](https://zypherpunk.xyz/)
+> Onchain card game leveraging Zero-Knowledge Proofs for private hand commitments, built for the [Zypherpunk Hackathon](https://zypherpunk.xyz/)
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![ZStarknet](https://img.shields.io/badge/ZStarknet-Deployed-success.svg)
 ![Noir](https://img.shields.io/badge/Noir-1.0.0--beta.5-purple.svg)
 ![Dojo](https://img.shields.io/badge/Dojo-1.8.0-orange.svg)
+
+## 🏗️ Architecture
+
+### Technology Stack
+
+- *ZK Circuit*: Noir 1.0.0-beta.5 for hand verification logic
+- *Proof System*: Barretenberg UltraHonk with Starknet ZK mode
+- *Verifier Generation*: Garaga 0.18.0 (Noir → Cairo contract)
+- *Smart Contracts*: Cairo 2.13.1 with Dojo 1.8.0 ECS framework
+- *Frontend*: React 18 + TypeScript + Vite
+- *Blockchain*: Deployed on ZStarknet (Madara-based testnet)
 
 ## 🎯 The Problem Liar's Proof Solves
 
@@ -43,25 +54,25 @@ Using **Zero-Knowledge Proofs**, players can:
 
 #### Problems Solved
 
-✅ **No Cheating**: Cryptographic proofs prevent players from lying about their cards
-✅ **No Information Leakage**: Opponents learn nothing beyond what you claim
-✅ **Verifiable Fairness**: All game logic is on-chain and auditable
-✅ **Trustless**: No need for trusted intermediaries or servers
+- ✅ **No Cheating**: Cryptographic proofs prevent players from lying about their cards
+- ✅ **No Information Leakage**: Opponents learn nothing beyond what you claim
+- ✅ **Verifiable Fairness**: All game logic is on-chain and auditable
+- ✅ **Trustless**: No need for trusted intermediaries or servers
 
 ### Making On-Chain Games Practical
 
 **Before Liars Proof:**
 
-❌ All game state visible → No strategy possible
-❌ No hidden information → Can't implement classic game mechanics
+- ❌ All game state visible → No strategy possible
+- ❌ No hidden information → Can't implement classic game mechanics
 
 **With Liars Proof:**
 
-✅ Private game state → Strategic gameplay possible
-✅ Verifiable claims → Fair and secure with ZK
-✅ Hidden information → Classic game mechanics work on-chain
+- ✅ Private game state → Strategic gameplay possible
+- ✅ Verifiable claims → Fair and secure with ZK
+- ✅ Hidden information → Classic game mechanics work on-chain
 
-## 🚧 Challenges I Ran Into
+## 🚧 Challenges
 
 ### Network Instability & Transaction Failures
 
@@ -78,10 +89,9 @@ We implemented robust retry logic and transaction verification:
 
 **Key improvements:**
 
-✅ **Automatic retry** with up to 20 attempts
-✅ **Transaction verification** before moving to next phase
-✅ **Better error handling** and user feedback
-✅ **Exponential backoff** to avoid overwhelming the network
+- ✅ **Transaction verification** before moving to next phase
+- ✅ **Better error handling** and user feedback
+- ✅ **Exponential backoff** to avoid overwhelming the network
 
 ### Wallet Integration Challenges
 
@@ -99,11 +109,11 @@ We built a **Guest Wallet** that eliminates the need for manual wallet setup:
 
 **Features:**
 
-✅ **Auto-generated wallets**: Create a Ready wallet with one click
-✅ **Automatic funding**: Wallet is funded from an owner account (0.0001 Ztf)
-✅ **Auto-deployment**: Account contract deployed automatically on first use
-✅ **Persistent storage**: Wallet saved in localStorage for returning players
-✅ **Seamless experience**: Users can start playing immediately
+- ✅ **Auto-generated wallets**: Create a Ready wallet with one click
+- ✅ **Automatic funding**: Wallet is funded from an owner account (0.1 Ztf)
+- ✅ **Auto-deployment**: Account contract deployed automatically on first use
+- ✅ **Persistent storage**: Wallet saved in localStorage for returning players
+- ✅ **Seamless experience**: Users can start playing immediately
 
 **Impact:**
 
