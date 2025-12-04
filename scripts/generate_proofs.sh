@@ -111,7 +111,7 @@ generate_proof() {
     local card3_suit=$7
 
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "👤 Generating proof for $player_name"
+    echo "Generating proof for $player_name"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     # Calculate hand commitment

@@ -2,12 +2,15 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { AccountInterface } from "starknet";
 import { InjectedConnector } from "starknetkit/injected";
 import { RpcProvider } from "starknet";
+import { setupGuestWallet, loadGuestWallet, hasGuestWallet } from "@/utils/guestWallet";
 
 interface StarknetKitContextType {
   account: AccountInterface | null;
   connector: InjectedConnector | null;
   isConnecting: boolean;
+  isGuestMode: boolean;
   connect: () => Promise<void>;
+  connectAsGuest: () => Promise<void>;
   disconnect: () => Promise<void>;
   isAvailable: boolean;
 }
@@ -31,6 +34,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
   const [connector, setConnector] = useState<InjectedConnector | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
 
   // Initialize connector for Argent/Ready
   useEffect(() => {
@@ -47,7 +51,27 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
         setIsAvailable(available);
         setConnector(argentConnector);
 
-        // Try to restore connection if available
+        // Try to restore guest wallet first
+        if (hasGuestWallet()) {
+          try {
+            console.log("[StarknetKit] Restoring guest wallet...");
+            const provider = new RpcProvider({
+              nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
+            });
+            const walletData = loadGuestWallet();
+            if (walletData) {
+              const { account: guestAccount } = await setupGuestWallet(provider);
+              setAccount(guestAccount);
+              setIsGuestMode(true);
+              console.log("[StarknetKit] Guest wallet restored");
+              return;
+            }
+          } catch (error) {
+            console.log("[StarknetKit] No guest wallet to restore:", error);
+          }
+        }
+
+        // Try to restore wallet connection if available
         if (available) {
           try {
             const provider = new RpcProvider({
@@ -58,6 +82,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
               const connectedAccount = await argentConnector.account(provider);
               if (connectedAccount) {
                 setAccount(connectedAccount);
+                setIsGuestMode(false);
               }
             }
           } catch (error) {
@@ -81,9 +106,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
     setIsConnecting(true);
     try {
       console.log("[StarknetKit] Connecting...");
-      const connectorData = await connector.connect({
-        silent_mode: false,
-      });
+      const connectorData = await connector.connect();
 
       console.log("[StarknetKit] Connected:", connectorData);
 
@@ -103,12 +126,41 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
     }
   };
 
-  const disconnect = async () => {
-    if (!connector) return;
+  const connectAsGuest = async () => {
+    setIsConnecting(true);
+    try {
+      console.log("[StarknetKit] Connecting as guest...");
 
+      const provider = new RpcProvider({
+        nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
+      });
+
+      const { account: guestAccount, walletData } = await setupGuestWallet(provider);
+
+      setAccount(guestAccount);
+      setIsGuestMode(true);
+      console.log("[StarknetKit] Guest account connected:", walletData.address);
+    } catch (error) {
+      console.error("[StarknetKit] Error connecting as guest:", error);
+      throw error;
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const disconnect = async () => {
     try {
       console.log("[StarknetKit] Disconnecting...");
-      await connector.disconnect();
+
+      if (isGuestMode) {
+        // For guest mode, just clear the state but keep wallet in localStorage
+        // This allows users to reconnect to the same guest wallet later
+        setIsGuestMode(false);
+      } else if (connector) {
+        // For wallet connections, disconnect the connector
+        await connector.disconnect();
+      }
+
       setAccount(null);
       console.log("[StarknetKit] Disconnected");
     } catch (error) {
@@ -122,7 +174,9 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
         account,
         connector,
         isConnecting,
+        isGuestMode,
         connect,
+        connectAsGuest,
         disconnect,
         isAvailable,
       }}
