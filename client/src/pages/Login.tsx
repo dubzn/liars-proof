@@ -454,9 +454,12 @@ export const Login = () => {
                     ? "Wallet not available"
                     : "CONNECT WALLET"}
               </Button>
+              <p className="login-wallet-support-text">
+                Ready wallets on the ZStarknet network are supported
+              </p>
               {!isAvailable && (
                 <p className="login-error-message">
-                  Please install Argent X or Ready Wallet
+                  Please install Ready or Braavos Wallet
                 </p>
               )}
             </div>

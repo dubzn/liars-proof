@@ -221,17 +221,27 @@
   text-transform: uppercase !important;
   letter-spacing: 0.15em !important;
   cursor: pointer !important;
-  transition: all 0.3s ease !important;
+  transition: background-color 0.3s ease, transform 0.3s ease !important;
   font-family: "BebasNeue", Arial, sans-serif !important;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
   line-height: 1.5 !important;
+  animation: glowPulse 2s ease-in-out infinite !important;
+  will-change: box-shadow !important;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.9) !important;
+  }
 }
 
 .login-button:hover:not(:disabled) {
   background-color: rgba(0, 0, 0, 0.7) !important;
   color: white !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
+  animation: glowPulse 2s ease-in-out infinite !important;
 }
 
 .login-button:disabled {
@@ -267,6 +277,15 @@
 
 .login-footer-text {
   color: white;
+  font-size: clamp(0.75rem, 1vw, 0.875rem);
+  text-align: center;
+  font-family: Arial, sans-serif;
+  opacity: 0.8;
+}
+
+.login-wallet-support-text {
+  margin-top: -3%;
+  color: gray;
   font-size: clamp(0.75rem, 1vw, 0.875rem);
   text-align: center;
   font-family: Arial, sans-serif;
