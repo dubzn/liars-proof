@@ -193,7 +193,7 @@ export const Login = () => {
       // Update modal - waiting for signature
       setProcessingStatus({
         title: "CREATING GAME",
-        message: "Submitting transaction (with automatic retry)...",
+        message: "Submitting transaction ...",
       });
 
       // Execute the create function with retry logic
@@ -451,7 +451,7 @@ export const Login = () => {
       // Update modal - waiting for confirmation
       setProcessingStatus({
         title: "JOINING GAME",
-        message: "Submitting transaction (with automatic retry)...",
+        message: "Submitting transaction ...",
       });
 
       // Execute the join function with retry logic

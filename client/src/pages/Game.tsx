@@ -238,7 +238,7 @@ export const Game = () => {
       setProcessingStatus({
         title: "SUBMITTING HAND COMMITMENT",
         explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
-        message: "Transaction sent, waiting for confirmation (with automatic retry)...",
+        message: "Transaction sent, waiting for confirmation ...",
       });
 
       // Execute with automatic retry logic
@@ -400,7 +400,7 @@ export const Game = () => {
       setProcessingStatus({
         title: "SUBMITTING PROOF",
         explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
-        message: "Transaction sent, waiting for confirmation (with automatic retry)...",
+        message: "Transaction sent, waiting for confirmation ...",
       });
 
       // Execute with automatic retry logic
@@ -693,7 +693,7 @@ export const Game = () => {
         explanation: choice
           ? "You are submitting that your hand fulfills the condition. This will be verified later with a zero-knowledge proof."
           : "You are submitting that your hand does not fulfill the condition. The game will proceed to the challenge phase.",
-        message: "Preparing transaction (with automatic retry)...",
+        message: "Preparing transaction ...",
       });
 
       // Execute with automatic retry logic
@@ -741,7 +741,7 @@ export const Game = () => {
         explanation: choice
           ? "You are choosing to believe the opponent's claim. If the opponent is telling the truth, the round continues. If the opponent is lying, you may gain an advantage."
           : "You are choosing to challenge the opponent's claim. If the opponent cannot prove the claim with a valid zero-knowledge proof, you will win the round.",
-        message: "Preparing transaction (with automatic retry)...",
+        message: "Preparing transaction ...",
       });
 
       // Execute with automatic retry logic
