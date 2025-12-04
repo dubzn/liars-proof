@@ -7,6 +7,7 @@ import { useGameWatcher } from "@/hooks/useGameWatcher";
 import { useParallax } from "@/hooks/useParallax";
 import { useConditionGraphQL } from "@/hooks/useConditionGraphQL";
 import { useRoundProofGraphQL } from "@/hooks/useRoundProofGraphQL";
+import { retryTransaction, checkTransactionSuccess } from "@/utils/retryTransaction";
 import { GameInfo } from "@/components/game/GameInfo";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
@@ -234,18 +235,30 @@ export const Game = () => {
         calldata: CallData.compile([gameId, cairo.uint256(commitment)]),
       };
 
-      const result = await account.execute(submitHandCommitmentCall);
-
       setProcessingStatus({
         title: "SUBMITTING HAND COMMITMENT",
         explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
-        message: "Transaction sent, waiting for confirmation",
+        message: "Transaction sent, waiting for confirmation (with automatic retry)...",
       });
 
-      await account.waitForTransaction(result.transaction_hash, {
-        retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-      });
+      // Execute with automatic retry logic
+      await retryTransaction(
+        async () => {
+          const result = await account.execute(submitHandCommitmentCall);
+          console.log("[Game] Hand commitment tx hash:", result.transaction_hash);
+
+          const receipt = await account.waitForTransaction(result.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          });
+
+          // Verify transaction actually succeeded
+          checkTransactionSuccess(receipt);
+        },
+        {
+          maxAttempts: 20,
+        }
+      );
 
       setProcessingStatus(null);
       toast.success("Hand commitment submitted!");
@@ -380,26 +393,39 @@ export const Game = () => {
 
       const result = await generateProofAndCalldata(proofInput);
 
-      const proofCalldata = result.calldata.length === 0 
+      const proofCalldata = result.calldata.length === 0
         ? [gameId.toString(), 0]
         : [gameId.toString(), ...result.calldata.map(item => typeof item === 'bigint' ? item.toString() : String(item))];
-
-      const txResult = await account.execute({
-        contractAddress: GAME_CONTRACT_ADDRESS,
-        entrypoint: "submit_round_proof",
-        calldata: proofCalldata,
-      });
 
       setProcessingStatus({
         title: "SUBMITTING PROOF",
         explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
-        message: "Transaction sent, waiting for confirmation",
+        message: "Transaction sent, waiting for confirmation (with automatic retry)...",
       });
 
-      await account.waitForTransaction(txResult.transaction_hash, {
-        retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-      });
+      // Execute with automatic retry logic
+      await retryTransaction(
+        async () => {
+          const txResult = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "submit_round_proof",
+            calldata: proofCalldata,
+          });
+
+          console.log("[Game] Proof tx hash:", txResult.transaction_hash);
+
+          const receipt = await account.waitForTransaction(txResult.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          });
+
+          // Verify transaction actually succeeded
+          checkTransactionSuccess(receipt);
+        },
+        {
+          maxAttempts: 20,
+        }
+      );
 
       setProcessingStatus(null);
       toast.success("Proof submitted successfully!");
@@ -661,33 +687,38 @@ export const Game = () => {
     try {
       setProcessingStatus({
         title: "SUBMITTING CONDITION CHOICE",
-        explanation: choice 
+        explanation: choice
           ? "You are submitting that your hand fulfills the condition. This will be verified later with a zero-knowledge proof."
           : "You are submitting that your hand does not fulfill the condition. The game will proceed to the challenge phase.",
-        message: "Preparing transaction...",
+        message: "Preparing transaction (with automatic retry)...",
       });
 
-      const result = await account.execute({
-        contractAddress: GAME_CONTRACT_ADDRESS,
-        entrypoint: "submit_condition_choice",
-        calldata: [
-          gameId.toString(),
-          choice ? "1" : "0",
-        ],
-      });
+      // Execute with automatic retry logic
+      await retryTransaction(
+        async () => {
+          const result = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "submit_condition_choice",
+            calldata: [
+              gameId.toString(),
+              choice ? "1" : "0",
+            ],
+          });
 
-      setProcessingStatus({
-        title: "SUBMITTING CONDITION CHOICE",
-        explanation: choice 
-          ? "You are submitting that your hand fulfills the condition. This will be verified later with a zero-knowledge proof."
-          : "You are submitting that your hand does not fulfill the condition. The game will proceed to the challenge phase.",
-        message: "Transaction sent, waiting for confirmation",
-      });
+          console.log("[Game] Condition choice tx hash:", result.transaction_hash);
 
-      await account.waitForTransaction(result.transaction_hash, {
-        retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
-      });
+          const receipt = await account.waitForTransaction(result.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          });
+
+          // Verify transaction actually succeeded
+          checkTransactionSuccess(receipt);
+        },
+        {
+          maxAttempts: 20,
+        }
+      );
 
       setProcessingStatus(null);
       toast.success(`Condition choice submitted: ${choice ? "YES" : "NO"}`);
@@ -707,30 +738,35 @@ export const Game = () => {
         explanation: choice
           ? "You are choosing to believe the opponent's claim. If the opponent is telling the truth, the round continues. If the opponent is lying, you may gain an advantage."
           : "You are choosing to challenge the opponent's claim. If the opponent cannot prove the claim with a valid zero-knowledge proof, you will win the round.",
-        message: "Preparing transaction...",
+        message: "Preparing transaction (with automatic retry)...",
       });
 
-      const result = await account.execute({
-        contractAddress: GAME_CONTRACT_ADDRESS,
-        entrypoint: "submit_challenge_choice",
-        calldata: [
-          gameId.toString(),
-          choice ? "1" : "0",
-        ],
-      });
+      // Execute with automatic retry logic
+      await retryTransaction(
+        async () => {
+          const result = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "submit_challenge_choice",
+            calldata: [
+              gameId.toString(),
+              choice ? "1" : "0",
+            ],
+          });
 
-      setProcessingStatus({
-        title: "SUBMITTING CHALLENGE CHOICE",
-        explanation: choice
-          ? "You are choosing to believe the opponent's claim. If the opponent is telling the truth, the round continues. If the opponent is lying, you may gain an advantage."
-          : "You are choosing to challenge the opponent's claim. If the opponent cannot prove the claim with a valid zero-knowledge proof, you will win the round.",
-        message: "Transaction sent, waiting for confirmation",
-      });
+          console.log("[Game] Challenge choice tx hash:", result.transaction_hash);
 
-      await account.waitForTransaction(result.transaction_hash, {
-        retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-      });
+          const receipt = await account.waitForTransaction(result.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          });
+
+          // Verify transaction actually succeeded
+          checkTransactionSuccess(receipt);
+        },
+        {
+          maxAttempts: 20,
+        }
+      );
 
       setProcessingStatus(null);
       toast.success(`Challenge choice submitted: ${choice ? "YES" : "NO"}`);

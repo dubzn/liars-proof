@@ -1,4 +1,5 @@
 import { Account, RpcProvider, ec, stark, type AccountInterface, CallData, hash, cairo } from "starknet";
+import { retryTransaction, checkTransactionSuccess } from "./retryTransaction";
 
 const GUEST_WALLET_STORAGE_KEY = "liars_proof_guest_wallet";
 
@@ -10,7 +11,7 @@ const OWNER_WALLET_PRIVATE_KEY = import.meta.env.VITE_OWNER_WALLET_PRIVATE_KEY |
 const ETH_TOKEN_ADDRESS = import.meta.env.VITE_ZN_FEE_TOKEN_ADDRESS || "";
 
 // Amount to fund guest wallets (0.0001 ETH in wei)
-const FUNDING_AMOUNT = import.meta.env.VITE_FUNDING_AMOUNT || "100000000000000";
+const FUNDING_AMOUNT = import.meta.env.VITE_FUNDING_AMOUNT || "100000000000000000";
 
 // OpenZeppelin Account contract class hash
 // IMPORTANT: This class hash must exist on your network (ZStarknet)
@@ -142,16 +143,27 @@ export async function fundGuestWallet(
 
     console.log("[GuestWallet] Executing transfer...");
 
-    // Execute transfer
-    const result = await ownerAccount.execute(transferCall);
+    // Execute transfer with retry logic
+    const result = await retryTransaction(
+      async () => {
+        const txResult = await ownerAccount.execute(transferCall);
+        console.log("[GuestWallet] Transfer tx hash:", txResult.transaction_hash);
 
-    console.log("[GuestWallet] Transfer tx hash:", result.transaction_hash);
+        // Wait for transaction confirmation
+        const receipt = await ownerAccount.waitForTransaction(txResult.transaction_hash, {
+          retryInterval: 1000,
+          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+        });
 
-    // Wait for transaction confirmation
-    await ownerAccount.waitForTransaction(result.transaction_hash, {
-      retryInterval: 1000,
-      successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-    });
+        // Verify transaction actually succeeded
+        checkTransactionSuccess(receipt);
+
+        return txResult;
+      },
+      {
+        maxAttempts: 20,
+      }
+    );
 
     console.log("[GuestWallet] Funding completed successfully!");
 
@@ -260,7 +272,7 @@ export async function deployGuestAccount(
     console.log("[GuestWallet] Waiting 2 seconds before deployment...");
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    // Deploy account using deployAccount method
+    // Deploy account using deployAccount method with retry logic
     const deployAccountPayload = {
       classHash: OZ_ACCOUNT_CLASS_HASH,
       constructorCalldata: CallData.compile({
@@ -269,15 +281,25 @@ export async function deployGuestAccount(
       addressSalt: walletData.publicKey,
     };
 
-    const { transaction_hash, contract_address } = await account.deployAccount(deployAccountPayload);
+    const { transaction_hash, contract_address } = await retryTransaction(
+      async () => {
+        const deployResult = await account.deployAccount(deployAccountPayload);
+        console.log("[GuestWallet] Account deployment tx:", deployResult.transaction_hash);
+        console.log("[GuestWallet] Account deployed at:", deployResult.contract_address);
 
-    console.log("[GuestWallet] Account deployment tx:", transaction_hash);
-    console.log("[GuestWallet] Account deployed at:", contract_address);
+        // Wait for the transaction to be accepted
+        const receipt = await account.waitForTransaction(deployResult.transaction_hash);
 
-    // Wait for the transaction to be accepted
-    await account.waitForTransaction(transaction_hash);
+        // Verify transaction actually succeeded
+        checkTransactionSuccess(receipt);
+        console.log("[GuestWallet] Account deployment confirmed");
 
-    console.log("[GuestWallet] Account deployment confirmed");
+        return deployResult;
+      },
+      {
+        maxAttempts: 20,
+      }
+    );
 
     // Wait 2 seconds after deployment
     console.log("[GuestWallet] Waiting 2 seconds after deployment...");

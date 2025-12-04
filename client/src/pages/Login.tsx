@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
 import { useGuestWallet } from "@/hooks/useGuestWallet";
+import { retryTransaction, checkTransactionSuccess } from "@/utils/retryTransaction";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
@@ -176,28 +177,35 @@ export const Login = () => {
       // Update modal - waiting for signature
       setProcessingStatus({
         title: "CREATING GAME",
-        message: "Please sign the transaction in your wallet",
+        message: "Submitting transaction (with automatic retry)...",
       });
 
-      // Execute the create function
-      const result = await account.execute({
-        contractAddress: GAME_CONTRACT_ADDRESS,
-        entrypoint: "create",
-        calldata: serializedByteArray,
-      });
-      console.log("[Login] Transaction hash:", result.transaction_hash);
-      
-      // Update modal - waiting for confirmation
-      setProcessingStatus({
-        title: "CREATING GAME",
-        message: "Transaction submitted, waiting for confirmation.....",
-      });
+      // Execute the create function with retry logic
+      const receipt = await retryTransaction(
+        async () => {
+          const result = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "create",
+            calldata: serializedByteArray,
+          });
 
-      // Wait for transaction to be accepted
-      const receipt = await account.waitForTransaction(result.transaction_hash, {
-        retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-      });
+          console.log("[Login] Transaction hash:", result.transaction_hash);
+
+          // Wait for transaction to be accepted
+          const txReceipt = await account.waitForTransaction(result.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          });
+
+          // Verify transaction actually succeeded
+          checkTransactionSuccess(txReceipt);
+
+          return txReceipt;
+        },
+        {
+          maxAttempts: 20,
+        }
+      );
 
       console.log("[Login] Transaction receipt:", receipt);
 
@@ -359,32 +367,36 @@ export const Login = () => {
         num.toHex(byteArrayData.pending_word_len),
       ];
 
-      // Update modal - waiting for signature
-      setProcessingStatus({
-        title: "JOINING GAME",
-        message: "Please sign the transaction in your wallet",
-      });
-
-      // Execute the join function
-      const result = await account.execute({
-        contractAddress: GAME_CONTRACT_ADDRESS,
-        entrypoint: "join",
-        calldata: [gameId.toString(), ...serializedByteArray],
-      });
-
-      console.log("[Login] Transaction hash:", result.transaction_hash);
-
       // Update modal - waiting for confirmation
       setProcessingStatus({
         title: "JOINING GAME",
-        message: "Transaction submitted, waiting for confirmation.....",
+        message: "Submitting transaction (with automatic retry)...",
       });
 
-      // Wait for transaction to be accepted
-      await account.waitForTransaction(result.transaction_hash, {
-        retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-      });
+      // Execute the join function with retry logic
+      await retryTransaction(
+        async () => {
+          const result = await account.execute({
+            contractAddress: GAME_CONTRACT_ADDRESS,
+            entrypoint: "join",
+            calldata: [gameId.toString(), ...serializedByteArray],
+          });
+
+          console.log("[Login] Transaction hash:", result.transaction_hash);
+
+          // Wait for transaction to be accepted
+          const receipt = await account.waitForTransaction(result.transaction_hash, {
+            retryInterval: 100,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          });
+
+          // Verify transaction actually succeeded
+          checkTransactionSuccess(receipt);
+        },
+        {
+          maxAttempts: 20,
+        }
+      );
 
       console.log("[Login] ✅ Successfully joined game:", gameId);
       setProcessingStatus(null); // Close modal

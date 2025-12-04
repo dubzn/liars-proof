@@ -8,6 +8,7 @@ import type {
   RpcProvider,
 } from "starknet";
 import useToast from "./toast";
+import { retryTransaction } from "@/utils/retryTransaction";
 
 /**
  * Execute a promise with a timeout
@@ -58,21 +59,33 @@ export const useExecuteCall = () => {
       let receipt: GetTransactionReceiptResponse;
       let tx: InvokeFunctionResponse;
       try {
-        // Execute the transaction with timeout (30 seconds)
-        tx = await executeWithTimeout(
-          account.execute(calls),
-          10000, // 10 seconds timeout
-          "Transaction request timed out. Please try again.",
+        // Execute the transaction with retry logic
+        const result = await retryTransaction(
+          async () => {
+            // Execute the transaction with timeout (10 seconds)
+            tx = await executeWithTimeout(
+              account.execute(calls),
+              10000,
+              "Transaction request timed out. Please try again.",
+            );
+
+            // Wait for transaction confirmation
+            receipt = await account.waitForTransaction(tx.transaction_hash, {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            });
+
+            // Check if transaction succeeded
+            checkTxReceipt(receipt);
+
+            return receipt;
+          },
+          {
+            maxAttempts: 20,
+          }
         );
 
-        // Wait for transaction confirmation
-        receipt = await account.waitForTransaction(tx.transaction_hash, {
-          retryInterval: 100,
-          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-        });
-
-        // Check if transaction succeeded
-        checkTxReceipt(receipt);
+        receipt = result;
 
         // Call success callback if provided
         onSuccess?.(receipt);
