@@ -53,7 +53,7 @@
   height: auto;
   width: auto;
   max-width: 40%;
-  max-height: 30%;
+  max-height: 25%;
   object-fit: contain;
   z-index: 10;
 }
@@ -90,9 +90,12 @@
   z-index: 10;
 }
 
-.login-player-name-input {
+.login-connected-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 0.5rem;
   color: white;
@@ -102,15 +105,64 @@
   letter-spacing: 0.1em;
   font-family: "BebasNeue", Arial, sans-serif;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-  transition: all 0.3s ease;
-  min-width: 150px;
-  max-width: 250px;
+}
+
+.login-player-name-input {
+  width: 100%;
+  padding: clamp(0.5rem, 1vw, 1.5rem) clamp(1rem, 2vw, 1.75rem) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
+  border-radius: 0.5rem !important;
+  color: white !important;
+  font-size: clamp(1rem, 2.5vw, 2.5rem) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.15em !important;
+  font-family: "BebasNeue", Arial, sans-serif !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s ease !important;
+  line-height: 1.5 !important;
+  cursor: text !important;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.login-player-name-input::after {
+  content: "|";
+  position: absolute;
+  left: clamp(2rem, 4vw, 3.5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-size: clamp(1rem, 2.5vw, 2.5rem);
+  font-weight: 700;
+  animation: blinkCursor 1s infinite;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.login-player-name-input:placeholder-shown::after {
+  opacity: 1;
+}
+
+.login-player-name-input:focus::after,
+.login-player-name-input:not(:placeholder-shown)::after {
+  opacity: 0;
+}
+
+@keyframes blinkCursor {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
 }
 
 .login-player-name-input:focus {
   outline: none;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
-  background-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
 }
 
 .login-player-name-input::placeholder {
@@ -125,7 +177,7 @@
 
 .login-logout-button {
   padding: 0.9rem 1rem;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -138,9 +190,9 @@
 }
 
 .login-logout-button:hover {
-  background-color: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
-  transform: translateY(-2px);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) !important;
 }
 
 .login-logout-button img {
@@ -153,14 +205,14 @@
 .login-buttons-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.2rem;
   width: 100%;
 }
 
 .login-button {
   width: 100% !important;
   padding: clamp(1.25rem, 2.5vw, 2rem) clamp(2rem, 4vw, 3.5rem) !important;
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
   border: none !important;
   border-radius: 0.5rem !important;
   color: white !important;
@@ -176,7 +228,7 @@
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: rgba(0, 0, 0, 0.6) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
   color: white !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
