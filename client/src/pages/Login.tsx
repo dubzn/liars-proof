@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
 import { JoinGameModal } from "@/components/login/JoinGameModal";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
+import { VolumeControl } from "@/components/audio/VolumeControl";
 import { useParallax } from "@/hooks/useParallax";
 import "./Login.css";
 
@@ -49,6 +50,7 @@ export const Login = () => {
   useEffect(() => {
     const audio = new Audio("/sounds/login.mp3");
     audio.loop = true;
+    
     audio.volume = 0; // Start at 0 for fade in
     audioRef.current = audio;
 
@@ -60,13 +62,27 @@ export const Login = () => {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            // Fade in over 2 seconds
-            const fadeInInterval = setInterval(() => {
-              if (audioRef.current && audioRef.current.volume < 0.3) {
-                audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, 0.3);
-              } else {
-                clearInterval(fadeInInterval);
+            // Fade in over 2 seconds to target volume
+            // Check for saved volume changes during fade-in
+            let fadeInInterval: NodeJS.Timeout | null = null;
+            fadeInInterval = setInterval(() => {
+              if (!audioRef.current) {
+                if (fadeInInterval) clearInterval(fadeInInterval);
+                return;
               }
+              
+              // Check if volume was changed externally (by VolumeControl)
+              const currentSavedVolume = localStorage.getItem("liars_proof_volume");
+              const currentTargetVolume = currentSavedVolume ? parseFloat(currentSavedVolume) : 0.3;
+              
+              // If volume is already at or above target, stop fading
+              if (audioRef.current.volume >= currentTargetVolume) {
+                if (fadeInInterval) clearInterval(fadeInInterval);
+                return;
+              }
+              
+              // Continue fading to current target volume
+              audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, currentTargetVolume);
             }, 100);
           })
           .catch(() => {
@@ -491,6 +507,9 @@ export const Login = () => {
         title={processingStatus?.title || ""}
         message={processingStatus?.message || ""}
       />
+
+      {/* Volume Control */}
+      <VolumeControl audioRef={audioRef} />
     </div>
   );
 };
