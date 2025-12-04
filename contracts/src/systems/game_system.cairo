@@ -118,6 +118,10 @@ pub mod game_system {
 
                 let mut condition = ConditionTrait::create(ref store);
                 game.condition_id = condition.id;
+                condition.condition = 1;
+                condition.comparator = 2;
+                condition.value = 3;
+                condition.suit = 0;
                 store.set_condition(condition);
             }
             store.set_game(game);
@@ -317,9 +321,12 @@ pub mod game_system {
             let mut store = self.store_default();
             let mut game = store.get_game(game_id);
 
-            // Get choices from game model
-            let player_1_lies = game.player_1_condition_choice && !player_1_proof.is_valid;
-            let player_2_lies = game.player_2_condition_choice && !player_2_proof.is_valid;
+            // Determine if players are lying by comparing their condition choice with proof
+            // validity A player lies when their claim doesn't match the proof result:
+            // - Claims to meet condition (true) but proof is invalid (false) -> lying
+            // - Claims to NOT meet condition (false) but proof is valid (true) -> lying
+            let player_1_lies = game.player_1_condition_choice != player_1_proof.is_valid;
+            let player_2_lies = game.player_2_condition_choice != player_2_proof.is_valid;
 
             // player_x_challenge_choice = false -> PX thinks the other player is lying
             // player_x_challenge_choice = true  -> PX thinks the other player is telling the truth
