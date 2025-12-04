@@ -615,7 +615,7 @@ export const Login = () => {
               </p>
               {!isAvailable && (
                 <p className="login-error-message">
-                  Please install Ready or Braavos Wallet
+                  Please install Ready Wallet
                 </p>
               )}
             </div>
