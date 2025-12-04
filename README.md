@@ -7,17 +7,239 @@
 ![Noir](https://img.shields.io/badge/Noir-1.0.0--beta.5-purple.svg)
 ![Dojo](https://img.shields.io/badge/Dojo-1.8.0-orange.svg)
 
-## 🎯 Overview
+## 🎯 The Problem Liar's Proof Solves
 
-**Liar's Proof** is a privacy-focused, fully on-chain card game that demonstrates the power of Zero-Knowledge Proofs in gaming. Players can make claims about their cards without revealing them, and prove the validity of their claims using ZK circuits powered by Noir and Garaga.
+### Privacy in On-Chain Gaming
 
-### 🔐 Privacy First
+Traditional on-chain games face a fundamental privacy problem: **all game state is publicly visible on the blockchain**. This eliminates strategic gameplay, makes games predictable, and prevents classic game mechanics like hidden cards, secret moves, or private information.
 
-The game showcases practical privacy-preserving gaming mechanics:
-- **Private Hand Commitments**: Players commit to their cards without revealing them
-- **Verifiable Claims**: Make provable statements about hidden cards using ZK proofs
-- **On-Chain Verification**: All proofs verified on ZStarknet using Cairo verifier contracts
-- **No Trusted Setup**: Leveraging Noir's UltraHonk proving system
+**Liars Proof solves this** by enabling privacy-preserving on-chain games where players can:
+
+- ✅ Keep their cards completely hidden from opponents
+- ✅ Make verifiable claims about hidden information
+- ✅ Prove statements without revealing underlying data
+- ✅ Play strategically without information leakage
+
+### Zero-Knowledge Proofs for Gaming
+
+#### The Challenge
+
+How do you verify that a player has a specific card (e.g., "a Heart card with value ≥ 10") without revealing:
+
+- Which exact card they have
+- Their entire hand
+- Any other private information
+
+#### Our Solution
+
+Using **Zero-Knowledge Proofs**, players can:
+
+1. **Commit to their hand privately** (cryptographic hash using Poseidon)
+2. **Claim they fulfill conditions** (e.g., "I have a Heart ≥ 10")
+3. **Prove their claim with a ZK proof** that verifies:
+   - The claim is true
+   - The proof matches their committed hand
+   - **Without revealing the actual cards**
+
+#### Problems Solved
+
+✅ **No Cheating**: Cryptographic proofs prevent players from lying about their cards
+✅ **No Information Leakage**: Opponents learn nothing beyond what you claim
+✅ **Verifiable Fairness**: All game logic is on-chain and auditable
+✅ **Trustless**: No need for trusted intermediaries or servers
+
+### Making On-Chain Games Practical
+
+**Before Liars Proof:**
+
+❌ All game state visible → No strategy possible
+❌ No hidden information → Can't implement classic game mechanics
+
+**With Liars Proof:**
+
+✅ Private game state → Strategic gameplay possible
+✅ Verifiable claims → Fair and secure with ZK
+✅ Hidden information → Classic game mechanics work on-chain
+
+## 🚧 Challenges I Ran Into
+
+### Network Instability & Transaction Failures
+
+#### The Problem
+
+Working with ZStarknet (a testnet) presented significant challenges:
+
+- **Frequent transaction rejections**: Transactions would fail unpredictably
+- **Network instability**: Connections dropping during critical operations
+
+#### The Solution
+
+We implemented robust retry logic and transaction verification:
+
+**Key improvements:**
+
+✅ **Automatic retry** with up to 20 attempts
+✅ **Transaction verification** before moving to next phase
+✅ **Better error handling** and user feedback
+✅ **Exponential backoff** to avoid overwhelming the network
+
+### Wallet Integration Challenges
+
+#### The Problem
+
+Integrating wallets (Ready/Braavos/Controller) with ZStarknet was difficult:
+
+- **Network configuration**: Users had to manually configure custom RPC endpoints
+- **Poor UX**: Required technical knowledge to set up correctly
+- **High friction**: Many users gave up before playing
+
+#### The Solution
+
+We built a **Guest Wallet** that eliminates the need for manual wallet setup:
+
+**Features:**
+
+✅ **Auto-generated wallets**: Create a Ready wallet with one click
+✅ **Automatic funding**: Wallet is funded from an owner account (0.0001 Ztf)
+✅ **Auto-deployment**: Account contract deployed automatically on first use
+✅ **Persistent storage**: Wallet saved in localStorage for returning players
+✅ **Seamless experience**: Users can start playing immediately
+
+**Impact:**
+
+- **Zero setup time**: Users can play in seconds, not minutes
+- **Better conversion**: No technical barriers to entry
+- **Fallback option**: Even experienced users prefer guest mode for quick testing
+
+## 🎮 Game Flow
+
+The key logic: **A player lies when their claim doesn't match the proof result** → `lied = (condition_choice ≠ proof_valid)`
+
+### Phase 1: Hand Commitment
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant Poseidon as Poseidon Hash (Garaga)
+    participant BC as Contract (ZStarknet)
+
+    P->>FE: Game starts
+    FE->>FE: Generate random 5-card hand
+    Note over FE: Example: [♥4, ♦3, ♣J]
+
+    FE->>Poseidon: hash(cards)
+    Poseidon-->>FE: hand_commitment (u256)
+
+    FE->>BC: submit_hand_commitment(game_id, hand_commitment)
+    BC-->>FE: ✓ Commitment stored
+    Note over BC: Waiting for opponent...
+```
+
+### Phase 2: Condition Choice
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant BC as Contract (ZStarknet)
+
+    BC->>BC: Generate random condition
+    BC-->>FE: Condition revealed
+    Note over FE: Example: "♥ card with value ≥ 10"
+
+    FE-->>P: "Do you fulfill the condition?"
+    P->>FE: Choose YES or NO (boolean)
+
+    FE->>BC: submit_condition_choice(game_id, boolean)
+    BC-->>FE: ✓ Choice stored
+    Note over BC: Waiting for opponent...
+```
+
+### Phase 3: Challenge Phase
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant BC as Contract (ZStarknet)
+
+    BC-->>FE: Opponent's choice revealed
+    Note over FE: Opponent says: YES/NO
+
+    FE-->>P: "Do you believe the opponent?"
+    P->>FE: Choose BELIEVE or DON'T BELIEVE (boolean)
+
+    FE->>BC: submit_challenge_choice(game_id, boolean)
+    BC-->>FE: ✓ Challenge stored
+    Note over BC: Waiting for opponent...
+```
+
+### Phase 4: Proof Generation & Submission
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant FE as Frontend
+    participant Noir as Noir Circuit
+    participant BB as Barretenberg
+    participant BC as Contract (ZStarknet)
+
+    FE->>Noir: Generate ZK proof for hand
+    Note over Noir: Proves:<br/>1. Hand matches commitment<br/>2. Card satisfies/doesn't satisfy condition
+    Noir-->>FE: witness.gz
+
+    FE->>BB: Generate UltraHonk proof
+    BB-->>FE: proof + calldata
+
+    FE->>BC: submit_round_proof(game_id, proof)
+    BC->>BC: Verify proof on-chain
+    BC-->>FE: ✓ Proof valid/invalid
+
+    BC->>BC: resolve_round()<br/>Compare choices with proof results
+    Note over BC: Determine who lied:<br/>lied = (condition_choice ≠ proof_valid)
+
+    BC-->>FE: Round results (score, lives)
+    FE-->>P: Show round outcome
+```
+
+### Next Round or Game Over
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant BC as Contract (ZStarknet)
+    participant P as Player
+
+    alt Lives > 0 and Score < 50
+        BC-->>FE: GameState::ConditionPhase
+        FE-->>P: New round starts!
+        Note over P,BC: Loop back to Phase 2
+    else Lives = 0 or Score ≥ 50
+        BC-->>FE: GameState::GameOver
+        FE-->>P: Game Over! Winner declared
+    end
+```
+
+### Lying Detection Logic
+
+```
+player_lies = (condition_choice ≠ proof_valid)
+```
+
+| Declared | Proof Valid | Result |
+|----------|-------------|--------|
+| YES (fulfill) | ✅ Valid | Telling truth |
+| YES (fulfill) | ❌ Invalid | **LYING** |
+| NO (don't fulfill) | ✅ Valid | **LYING** |
+| NO (don't fulfill) | ❌ Invalid | Telling truth |
+
+### Scoring System
+
+- **Caught lying**: Opponent gets +20 points, you lose 1 life
+- **Successful lie**: You get +10 points
+- **Wrong challenge**: You lose 1 life
+- **Game ends**: Lives = 0 OR Score ≥ 50
 
 ## 🏗️ Architecture
 
@@ -30,248 +252,6 @@ The game showcases practical privacy-preserving gaming mechanics:
 - **Frontend**: React 18 + TypeScript + Vite
 - **Blockchain**: Deployed on ZStarknet (Madara-based testnet)
 
-### System Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Player Client                            │
-│  ┌────────────┐  ┌─────────────┐  ┌──────────────────────┐    │
-│  │   Hand     │─>│ Noir Circuit │─>│ Barretenberg Prover  │    │
-│  │ Selection  │  │   (WASM)     │  │    (UltraHonk)       │    │
-│  └────────────┘  └─────────────┘  └──────────────────────┘    │
-│                                              │                   │
-│                                              +                   │
-│                                    ┌──────────────────┐         │
-│                                    │  Garaga Calldata │         │
-│                                    │    Formatter     │         │
-│                                    └──────────────────┘         │
-└────────────────────────────────────────────┬────────────────────┘
-                                             │
-                                             +
-┌─────────────────────────────────────────────────────────────────┐
-│                         ZStarknet                                │
-│  ┌────────────────┐         ┌──────────────────────────┐       │
-│  │  Dojo World    │         │   Garaga Verifier        │       │
-│  │  (Game Logic)  │◄────────│  (Cairo Contract)        │       │
-│  │                │         │                          │       │
-│  │ • Game State   │         │ • UltraHonk Verification │       │
-│  │ • Player Turns │         │ • Starknet ZK Mode       │       │
-│  │ • Commitments  │         │ • Public Input Checking  │       │
-│  └────────────────┘         └──────────────────────────┘       │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              Torii Indexer (GraphQL)                     │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## 🎮 Game Flow Diagram
-
-Complete sequence diagram showing the entire game flow from creation to end, including ZK proof generation and verification:
-
-```mermaid
-sequenceDiagram
-    participant P1 as Player 1
-    participant P2 as Player 2
-    participant FE as Frontend
-    participant Noir as Noir Circuit
-    participant BB as Barretenberg
-    participant BC as ZStarknet
-    participant Garaga as Garaga Verifier
-
-    %% Create game
-    P1->>FE: Create new game
-    FE->>BC: create_game(player_name)
-    BC-->>FE: game_id, WaitingForPlayers
-
-    %% Join game
-    P2->>FE: Join game with game_id
-    FE->>BC: join_game(game_id, player_name)
-    BC-->>FE: WaitingForHandCommitments
-
-    %% Player 1 hand commitment
-    P1->>FE: Select 5 cards
-    Note over FE: Cards: [♠A, ♥K, ♦Q, ♣J, ♠10]
-    FE->>FE: Compute commitment = hash(cards)
-    FE->>Noir: Execute circuit with hand
-    Noir-->>FE: witness
-    FE->>BB: Generate UltraHonk proof
-    Note over BB: ~2-3 seconds
-    BB-->>FE: proof + public_inputs
-    FE->>BC: submit_hand_commitment(game_id, commitment, proof)
-    BC->>Garaga: verify_proof(proof, commitment)
-    Garaga-->>BC: ✓ Valid
-    BC-->>FE: Hand commitment stored
-
-    %% Player 2 hand commitment
-    P2->>FE: Select 5 cards
-    Note over FE: Cards: [♦A, ♣K, ♥J, ♠9, ♦8]
-    FE->>FE: Compute commitment = hash(cards)
-    FE->>Noir: Execute circuit with hand
-    Noir-->>FE: witness
-    FE->>BB: Generate UltraHonk proof
-    BB-->>FE: proof + public_inputs
-    FE->>BC: submit_hand_commitment(game_id, commitment, proof)
-    BC->>Garaga: verify_proof(proof, commitment)
-    Garaga-->>BC: ✓ Valid
-    BC->>BC: Generate random condition
-    BC-->>FE: ConditionPhase
-    Note over BC: Condition: "♥ card ≥ 10"
-
-    %% Player 1 proves condition
-    P1->>FE: Select card matching condition (♥K)
-    FE->>Noir: Execute circuit(hand, card, condition)
-    Note over Noir: Verify:<br/>1. commitment matches<br/>2. card in hand<br/>3. card satisfies condition
-    Noir-->>FE: witness
-    FE->>BB: Generate proof
-    BB-->>FE: proof
-    FE->>BC: submit_condition_proof(game_id, proof)
-    BC->>Garaga: verify_proof(proof, condition)
-    Garaga-->>BC: ✓ Valid
-    BC-->>FE: Proof submitted
-
-    %% Player 2 proves condition
-    P2->>FE: Select card matching condition (♥J)
-    FE->>Noir: Execute circuit(hand, card, condition)
-    Noir-->>FE: witness
-    FE->>BB: Generate proof
-    BB-->>FE: proof
-    FE->>BC: submit_condition_proof(game_id, proof)
-    BC->>Garaga: verify_proof(proof, condition)
-    Garaga-->>BC: ✓ Valid
-    BC-->>FE: ChallengePhase
-
-    %% Challenge phase
-    alt Player 1 challenges Player 2
-        P1->>FE: Click "Liar!"
-        FE->>BC: submit_challenge(game_id, P2)
-        BC->>Garaga: Re-verify P2's proof
-        alt P2's proof is valid
-            Garaga-->>BC: ✓ Valid
-            BC-->>FE: P2 wins, P1 loses 1 life
-        else P2's proof is invalid
-            Garaga-->>BC: ✗ Invalid
-            BC-->>FE: P1 wins, P2 loses 1 life
-        end
-    else Both accept
-        P1->>FE: Click "Truth"
-        P2->>FE: Click "Truth"
-        FE->>BC: both_accept(game_id)
-        BC-->>FE: Round draw
-    end
-
-    %% Next round or game over
-    BC->>BC: Check lives remaining
-    alt Game continues (lives > 0)
-        BC-->>FE: New ConditionPhase
-        Note over BC: Generate new condition
-    else Game over (lives = 0)
-        BC-->>FE: GameOver, winner announced
-    end
-```
-
-## 🔬 Zero-Knowledge Circuit
-
-### Circuit Logic (Noir)
-
-The heart of the privacy mechanism is the Noir circuit that proves card possession without revealing the card:
-
-```noir
-// Simplified representation of the hand verification circuit
-fn verify_hand_condition(
-    // Private inputs (never revealed on-chain)
-    hand: [Card; 5],              // Player's 5 cards
-    card_index: u8,               // Which card satisfies condition
-
-    // Public inputs (verified on-chain)
-    hand_commitment: Field,       // Hash of entire hand
-    condition_suit: u8,           // Required suit
-    condition_value: u8,          // Minimum value
-    game_id: Field,               // Game identifier
-) -> bool {
-    // 1. Verify the hand commitment matches
-    let computed_commitment = poseidon_hash(hand);
-    assert(computed_commitment == hand_commitment);
-
-    // 2. Verify the selected card meets the condition
-    let selected_card = hand[card_index];
-    assert(selected_card.suit == condition_suit);
-    assert(selected_card.value >= condition_value);
-
-    // 3. Verify card is valid (not duplicate, in valid range)
-    assert(is_valid_card(selected_card));
-    assert(no_duplicates_in_hand(hand));
-
-    true
-}
-```
-
-### Proof Generation Flow
-
-```
-┌────────────────────────────────────────────────────────────────┐
-│                    Client-Side (Browser)                        │
-│                                                                 │
-│  Step 1: Player Input                                          │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │ Hand: [♠A, ♥K, ♦Q, ♣J, ♠10]                            │  │
-│  │ Condition: Suit=HEARTS, Value>=10                        │  │
-│  │ Selected Card: ♥K (index=1, satisfies condition)        │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                          │                                      │
-│                          +                                      │
-│  Step 2: Noir Circuit Execution (WASM)                         │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │ • Load circuit.json (compiled Noir circuit)              │  │
-│  │ • Prepare witness data from inputs                       │  │
-│  │ • Execute circuit constraints                            │  │
-│  │ • Generate witness file                                  │  │
-│  │ ⏱️  ~500ms                                                │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                          │                                      │
-│                          +                                      │
-│  Step 3: Barretenberg Proof Generation                         │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │ • Initialize UltraHonk prover                            │  │
-│  │ • Generate proof with Starknet ZK mode                   │  │
-│  │ • Proof size: ~200KB                                     │  │
-│  │ ⏱️  ~2-3 seconds (first run ~5s due to WASM init)       │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                          │                                      │
-│                          +                                      │
-│  Step 4: Garaga Calldata Formatting                            │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │ • Serialize proof for Cairo contract                     │  │
-│  │ • Format public inputs                                   │  │
-│  │ • Generate optimized calldata                            │  │
-│  │ ⏱️  ~100ms                                                │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────┘
-                          │
-                          +
-┌────────────────────────────────────────────────────────────────┐
-│                    ZStarknet Blockchain                         │
-│                                                                 │
-│  Step 5: On-Chain Verification                                 │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │ Garaga Verifier Contract (Cairo)                         │  │
-│  │ • Verify UltraHonk proof                                 │  │
-│  │ • Check public inputs match game state                   │  │
-│  │ • Validate commitment hasn't been used before            │  │
-│  │ ⏱️  ~500K gas, ~2-3 seconds                              │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                          │                                      │
-│                          +                                      │
-│  Step 6: Game State Update                                     │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │ Dojo Game Contract (Cairo)                               │  │
-│  │ • Update game state with verified proof                  │  │
-│  │ • Progress to next phase                                 │  │
-│  │ • Emit events for frontend                               │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────┘
-```
-
 ### Privacy Guarantees
 
 **What remains private:**
@@ -280,7 +260,7 @@ fn verify_hand_condition(
 - ✅ Cards you don't use in proofs
 
 **What is public:**
-- ✅ Hand commitment (hash)
+- ✅ Hand commitment (Poseidon hash)
 - ✅ That you possess a card matching the condition
 - ✅ The condition itself
 - ✅ Game outcomes and scores
@@ -289,7 +269,9 @@ fn verify_hand_condition(
 - ✅ **Soundness**: Cannot prove false statements (forged proofs rejected)
 - ✅ **Zero-Knowledge**: No information leaked beyond the claim
 - ✅ **Non-malleable**: Proofs cannot be modified or replayed
-- ✅ **Commitment Binding**: Cannot change hand after commitment
+- ✅ **Commitment Binding**: Cannot change hand after commitment (Poseidon hash)
+
+## 🎲 Live Demo
 
 Already deployed! Visit the live demo:
 - **Game**: https://liars-proof.vercel.app
@@ -319,26 +301,32 @@ We've implemented a **Guest Wallet** feature for seamless onboarding:
 - **Create**: Start a new game and wait for opponent
 - **Join**: Enter game ID to join existing game
 
-### Step 3: Select Your Hand
-- Choose 5 cards from the deck
-- Cards are committed privately using ZK proof
-- Opponent cannot see your selection
+### Step 3: Hand Commitment
+- Frontend generates random 5-card hand
+- Poseidon hash creates commitment
+- Submit to contract - cards remain hidden
 
-### Step 4: Prove Your Claims
-- Each round presents a condition (e.g., "♥ card with value ≥ 10")
-- Generate ZK proof that you have a matching card
-- Submit proof to smart contract
+### Step 4: Condition Phase
+- Random condition revealed (e.g., "♥ card with value ≥ 10")
+- Choose YES (I fulfill) or NO (I don't fulfill)
+- Submit choice to contract
 
-### Step 5: Challenge or Accept
-- Challenge opponent if you think they're bluffing
-- Accept to progress to next round
-- Invalid proofs result in instant loss!
+### Step 5: Challenge Phase
+- See opponent's claim
+- Choose BELIEVE or DON'T BELIEVE
+- Submit challenge choice
 
-### Step 6: Win the Game
-- First player to reduce opponent to 0 lives wins
-- Each won round: +1 score for winner, -1 life for loser
-- Strategy: Know when to bluff and when to challenge!
+### Step 6: Proof Generation
+- ZK proof generated automatically
+- Noir circuit proves hand validity
+- Barretenberg creates UltraHonk proof
+- Submit to contract for verification
+
+### Step 7: Win the Game
+- Contract resolves round using: `lied = (choice ≠ proof_valid)`
+- Score and lives updated based on outcome
+- First to reduce opponent to 0 lives or reach 50 points wins!
 
 ---
 
-**Built with privacy, powered by Caravana Studio. 🔐**
+**Built with privacy, powered by Zero-Knowledge Proofs on ZStarknet 🔐**
