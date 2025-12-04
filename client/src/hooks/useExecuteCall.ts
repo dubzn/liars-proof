@@ -67,8 +67,8 @@ export const useExecuteCall = () => {
 
         // Wait for transaction confirmation
         receipt = await account.waitForTransaction(tx.transaction_hash, {
-          retryInterval: 200,
-          successStates: ["PRE_CONFIRMED", "ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          retryInterval: 100,
+          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
         });
 
         // Check if transaction succeeded
@@ -103,8 +103,8 @@ export const waitForTransaction = async (
   while (maxRetry > 0) {
     try {
       const receipt = await provider.waitForTransaction(txHash, {
-        retryInterval: 200,
-        successStates: ["PRE_CONFIRMED", "ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+        retryInterval: 100,
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
       });
       return receipt;
     } catch (e) {

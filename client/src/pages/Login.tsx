@@ -185,7 +185,7 @@ export const Login = () => {
       // Wait for transaction to be accepted
       const receipt = await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
       });
 
       console.log("[Login] Transaction receipt:", receipt);
@@ -344,7 +344,7 @@ export const Login = () => {
       // Wait for transaction to be accepted
       await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
       });
 
       console.log("[Login] ✅ Successfully joined game:", gameId);

@@ -65,9 +65,6 @@ const getComparatorText = (comparator: number): string => {
   }
 };
 
-/**
- * Generates a human-readable English sentence from condition data
- */
 export const generateConditionText = (
   condition: number,
   quantity: number,

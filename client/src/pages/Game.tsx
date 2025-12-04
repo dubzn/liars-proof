@@ -241,7 +241,7 @@ export const Game = () => {
         // Wait for transaction
         await account.waitForTransaction(result.transaction_hash, {
           retryInterval: 100,
-          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
         });
 
         setProcessingStatus(null);
@@ -340,7 +340,7 @@ export const Game = () => {
           // Wait for transaction
           await account.waitForTransaction(txResult.transaction_hash, {
             retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
           });
 
           toast.success("Proof submitted successfully!");
@@ -361,7 +361,7 @@ export const Game = () => {
           // Wait for transaction
           await account.waitForTransaction(txResult.transaction_hash, {
             retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
           });
 
           toast.success("Proof submitted successfully!");
@@ -451,7 +451,7 @@ export const Game = () => {
       // Wait for transaction
       await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
       });
 
       setProcessingStatus(null);
@@ -489,7 +489,7 @@ export const Game = () => {
       // Wait for transaction
       await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
-        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
       });
 
       setProcessingStatus(null);
@@ -528,13 +528,15 @@ export const Game = () => {
       {/* Game Info Panel */}
       <GameInfo gameId={gameIdNumber} isPlayer1={isPlayer1} />
 
-      {/* Opponent Character (Jester) - includes cards in the image */}
-      <OpponentCharacter
-        image="/images/joker.png"
-        name={player2Name}
-        parallaxOffset={parallaxOffset}
-        isBlurred={isHoveringCards}
-      />
+      {/* Opponent Character (Jester) - includes cards in the image - only show if player 2 has joined */}
+      {hasPlayer2 && (
+        <OpponentCharacter
+          image="/images/joker.png"
+          name={player2Name}
+          parallaxOffset={parallaxOffset}
+          isBlurred={isHoveringCards}
+        />
+      )}
 
       {/* Table */}
       <div className={`game-table ${isHoveringCards ? "blurred" : ""}`}>
