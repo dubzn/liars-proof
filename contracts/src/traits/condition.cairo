@@ -6,7 +6,7 @@ use crate::traits::store::{Store, StoreTrait};
 pub impl ConditionTraitImpl of ConditionTrait {
     fn create(ref store: Store) -> Condition {
         let mut random = RandomTrait::create('random');
-        let condition = random.get_random_number_zero_indexed(condition_list().len());
+        let condition = random.get_random_number(condition_list().len());
         let quantity = *quantity_list(condition)
             .at(random.get_random_number_zero_indexed(quantity_list(condition).len()));
         let comparator = *comparator_list(condition)
@@ -128,15 +128,15 @@ fn comparator_list(condition_id: u32) -> Array<u32> {
 
 fn value_list(condition_id: u32) -> Array<u32> {
     if condition_id == CONDITION_CARDS_SUM_COMPARATOR_THAN_X {
-        array![10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        array![15, 18, 21, 24]
     } else if condition_id == CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y {
-        array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        array![2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     } else if condition_id == CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE {
-        array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        array![3, 4, 5, 6, 7, 8, 9, 10]
     } else if condition_id == CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X {
-        array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        array![5, 6, 7, 8, 9, 10]
     } else if condition_id == CONDITION_LOWEST_CARD_COMPARATOR_THAN_X {
-        array![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        array![3, 4, 5, 6, 7, 8]
     } else {
         array![0]
     }
