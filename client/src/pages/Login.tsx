@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
+import { useGuestWallet } from "@/hooks/useGuestWallet";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
@@ -16,7 +17,8 @@ const DEFAULT_PLAYER_NAME = "";
 const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
-  const { account, connector, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
+  const { account, connector, isConnecting, isAvailable, isGuestMode, connect, connectAsGuest, disconnect } = useStarknetKit();
+  const { ensureDeployed } = useGuestWallet();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
@@ -150,24 +152,33 @@ export const Login = () => {
     setIsCreatingGame(true);
     try {
       console.log("[Login] Creating game with contract:", GAME_CONTRACT_ADDRESS);
-      
+
+      // If guest mode, ensure account is deployed first
+      if (isGuestMode) {
+        setProcessingStatus({
+          title: "DEPLOYING ACCOUNT",
+          message: "Deploying your guest account...",
+        });
+        await ensureDeployed();
+      }
+
       // Convert playerName to ByteArray
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
-      
+
       // Show processing modal - preparing transaction
       setProcessingStatus({
         title: "CREATING GAME",
         message: "Please sign the transaction in your wallet",
       });
-      
+
       // Convert string to ByteArray using byteArrayFromString
       // Reference: https://starknetjs.com/docs/API/namespaces/byteArray/#bytearrayfromstring
       const byteArrayData = byteArray.byteArrayFromString(nameToUse);
-      
+
       console.log("[Login] Player name:", nameToUse);
       console.log("[Login] ByteArray data:", byteArrayData);
-      
+
       // Serialize ByteArray for calldata manually
       // ByteArray format: [data_length, ...data, pending_word, pending_word_len]
       // Convert all values to strings (hex format) as expected by calldata
@@ -177,13 +188,13 @@ export const Login = () => {
         num.toHex(byteArrayData.pending_word),
         num.toHex(byteArrayData.pending_word_len),
       ];
-      
+
       // Update modal - waiting for signature
       setProcessingStatus({
         title: "CREATING GAME",
         message: "Please sign the transaction in your wallet",
       });
-      
+
       // Execute the create function
       const result = await account.execute({
         contractAddress: GAME_CONTRACT_ADDRESS,
@@ -279,6 +290,25 @@ export const Login = () => {
     }
   };
 
+  const handleConnectAsGuest = async () => {
+    if (!account && !isConnecting) {
+      try {
+        console.log("[Login] Connecting as guest...");
+        setProcessingStatus({
+          title: "CREATING GUEST WALLET",
+          message: "Generating wallet and requesting funds...",
+        });
+        await connectAsGuest();
+        setProcessingStatus(null);
+        toast.success("Guest wallet created successfully!");
+      } catch (error) {
+        console.error("[Login] Error connecting as guest:", error);
+        setProcessingStatus(null);
+        toast.error("Failed to create guest wallet. Please try again.");
+      }
+    }
+  };
+
   const handleCreateGame = async () => {
     // Prevent multiple clicks
     if (isCreatingGame) {
@@ -315,6 +345,15 @@ export const Login = () => {
     setIsJoiningGame(true);
 
     try {
+      // If guest mode, ensure account is deployed first
+      if (isGuestMode) {
+        setProcessingStatus({
+          title: "DEPLOYING ACCOUNT",
+          message: "Deploying your guest account...",
+        });
+        await ensureDeployed();
+      }
+
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
       console.log("[Login] Joining game with ID:", gameId, "and name:", nameToUse);
@@ -403,14 +442,22 @@ export const Login = () => {
           <div className="login-wallet-status-container">
             
             <span className="login-connected-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {connector?.icon
-                ? typeof connector.icon === "string"
-                  ? <img src={connector.icon} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
-                  : typeof connector.icon === "object" && connector.icon.light
-                    ? <img src={connector.icon.light} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
-                    : null
-                : null}
-              {connector?.id} CONNECTED
+              {isGuestMode ? (
+                <>
+                  GUEST MODE
+                </>
+              ) : (
+                <>
+                  {connector?.icon
+                    ? typeof connector.icon === "string"
+                      ? <img src={connector.icon} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
+                      : typeof connector.icon === "object" && connector.icon.light
+                        ? <img src={connector.icon.light} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
+                        : null
+                    : null}
+                  {connector?.id} CONNECTED
+                </>
+              )}
             </span>
             <button
               onClick={handleDisconnect}
@@ -472,8 +519,23 @@ export const Login = () => {
                     ? "Wallet not available"
                     : "CONNECT WALLET"}
               </Button>
+              <Button
+                onClick={handleConnectAsGuest}
+                className="login-button"
+                variant="default"
+                disabled={isConnecting}
+                style={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "2px solid #9f7aea"
+                }}
+              >
+                {isConnecting ? "Connecting..." : "👤 PLAY AS GUEST"}
+              </Button>
               <p className="login-wallet-support-text">
                 Only Ready wallet on the ZStarknet network is supported
+              </p>
+              <p className="login-wallet-support-text" style={{ fontSize: "0.85em", marginTop: "0.5rem", opacity: 0.8 }}>
+                Guest mode creates a temporary wallet funded automatically
               </p>
               {!isAvailable && (
                 <p className="login-error-message">
