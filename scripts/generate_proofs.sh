@@ -110,10 +110,6 @@ generate_proof() {
     local card3_value=$6
     local card3_suit=$7
 
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Generating proof for $player_name"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
     # Calculate hand commitment
     echo "📊 Calculating hand commitment..."
     HAND_COMMITMENT=$(calculate_hand_commitment $card1_value $card1_suit $card2_value $card2_suit $card3_value $card3_suit)

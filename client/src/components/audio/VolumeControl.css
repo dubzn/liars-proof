@@ -1,0 +1,50 @@
+.volume-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+.volume-button {
+  padding: 0.9rem 1rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  height: fit-content;
+  width: fit-content;
+}
+
+.volume-button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
+  transform: translateY(-2px) !important;
+}
+
+.volume-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: white;
+  filter: brightness(0) invert(1);
+}
+
+.volume-button.muted svg {
+  opacity: 0.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .volume-button {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .volume-button svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}

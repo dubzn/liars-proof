@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
 import { JoinGameModal } from "@/components/login/JoinGameModal";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
+import { VolumeControl } from "@/components/audio/VolumeControl";
 import { useParallax } from "@/hooks/useParallax";
 import "./Login.css";
 
@@ -51,6 +52,7 @@ export const Login = () => {
   useEffect(() => {
     const audio = new Audio("/sounds/login.mp3");
     audio.loop = true;
+    
     audio.volume = 0; // Start at 0 for fade in
     audioRef.current = audio;
 
@@ -62,13 +64,27 @@ export const Login = () => {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            // Fade in over 2 seconds
-            const fadeInInterval = setInterval(() => {
-              if (audioRef.current && audioRef.current.volume < 0.3) {
-                audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, 0.3);
-              } else {
-                clearInterval(fadeInInterval);
+            // Fade in over 2 seconds to target volume
+            // Check for saved volume changes during fade-in
+            let fadeInInterval: NodeJS.Timeout | null = null;
+            fadeInInterval = setInterval(() => {
+              if (!audioRef.current) {
+                if (fadeInInterval) clearInterval(fadeInInterval);
+                return;
               }
+              
+              // Check if volume was changed externally (by VolumeControl)
+              const currentSavedVolume = localStorage.getItem("liars_proof_volume");
+              const currentTargetVolume = currentSavedVolume ? parseFloat(currentSavedVolume) : 0.15;
+              
+              // If volume is already at or above target, stop fading
+              if (audioRef.current.volume >= currentTargetVolume) {
+                if (fadeInInterval) clearInterval(fadeInInterval);
+                return;
+              }
+              
+              // Continue fading to current target volume
+              audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, currentTargetVolume);
             }, 100);
           })
           .catch(() => {
@@ -278,13 +294,78 @@ export const Login = () => {
     if (!account && !isConnecting) {
       try {
         console.log("[Login] Connecting as guest...");
+        
+        // Check if wallet already exists
+        const existingWallet = localStorage.getItem("liars_proof_guest_wallet");
+        
+        if (existingWallet) {
+          // Wallet exists, just connect
+          setProcessingStatus({
+            title: "CONNECTING GUEST WALLET",
+            message: "Restoring your guest wallet...",
+          });
+          await connectAsGuest();
+          setProcessingStatus(null);
+          toast.success("Guest wallet connected!");
+          return;
+        }
+
+        // New wallet creation flow with progress updates
         setProcessingStatus({
-          title: "CREATING GUEST WALLET",
-          message: "Generating wallet and requesting funds...",
+          title: "CREATING GUEST WALLET (COULD TAKE A MINUTE)",
+          message: "Connecting to ZStarknet network...",
         });
-        await connectAsGuest();
-        setProcessingStatus(null);
-        toast.success("Guest wallet created successfully!");
+
+        // Start the connection process
+        const connectPromise = connectAsGuest();
+
+        // Update progress messages with timeouts
+        const progressUpdates = [
+          { delay: 6000, message: "Computing wallet address.." },
+          { delay: 10000, message: "Requesting funds from faucet.." },
+          { delay: 16000, message: "Waiting for funding confirmation.." },
+          { delay: 22000, message: "Deploying account contract.." },
+          { delay: 27000, message: "Waiting for deployment confirmation.." },
+        ];
+
+        const timeouts: NodeJS.Timeout[] = [];
+        progressUpdates.forEach(({ delay, message }) => {
+          const timeout = setTimeout(() => {
+            setProcessingStatus((prev) => {
+              if (prev) {
+                return {
+                  title: prev.title,
+                  message: message,
+                };
+              }
+              return prev;
+            });
+          }, delay);
+          timeouts.push(timeout);
+        });
+
+        try {
+          await connectPromise;
+          
+          // Clear all timeouts
+          timeouts.forEach(clearTimeout);
+          
+          // Final success message
+          setProcessingStatus({
+            title: "GUEST WALLET READY",
+            message: "Wallet created and funded successfully!",
+          });
+          
+          // Close modal after a brief delay
+          setTimeout(() => {
+            setProcessingStatus(null);
+            toast.success("Guest wallet created successfully!");
+          }, 1000);
+        } catch (error) {
+          // Clear all timeouts on error
+          timeouts.forEach(clearTimeout);
+          throw error;
+        }
       } catch (error) {
         console.error("[Login] Error connecting as guest:", error);
         setProcessingStatus(null);
@@ -439,7 +520,7 @@ export const Login = () => {
                         ? <img src={connector.icon.light} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
                         : null
                     : null}
-                  {connector?.id} CONNECTED
+                  READY CONNECTED
                 </>
               )}
             </span>
@@ -455,7 +536,9 @@ export const Login = () => {
         
         {/* Logo - absolute bottom left */}
         <img src="/logo.png" alt="LIARS PROOF" className="login-logo" />
-        
+        <div className="login-volume-container">
+          <VolumeControl audioRef={audioRef} />
+        </div>
         <div className="login-left-panel">
           {account ? (
             <div className="login-connected-section">
@@ -501,23 +584,22 @@ export const Login = () => {
                     ? "Wallet not available"
                     : "CONNECT WALLET"}
               </Button>
+              {!isConnecting && (
               <Button
                 onClick={handleConnectAsGuest}
                 className="login-button"
                 variant="default"
                 disabled={isConnecting}
                 style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "2px solid #9f7aea"
+                  background: "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
                 }}
               >
-                {isConnecting ? "Connecting..." : "👤 PLAY AS GUEST"}
+                PLAY AS GUEST
               </Button>
+              )}
               <p className="login-wallet-support-text">
-                Ready wallets on the ZStarknet network are supported
-              </p>
-              <p className="login-wallet-support-text" style={{ fontSize: "0.85em", marginTop: "0.5rem", opacity: 0.8 }}>
-                Guest mode creates a temporary wallet funded automatically
+                Guest mode creates a temporary wallet funded automatically<br />
+                Only Ready wallet on the ZStarknet network is supported 
               </p>
               {!isAvailable && (
                 <p className="login-error-message">
