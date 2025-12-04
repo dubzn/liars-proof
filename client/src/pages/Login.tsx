@@ -73,7 +73,7 @@ export const Login = () => {
               
               // Check if volume was changed externally (by VolumeControl)
               const currentSavedVolume = localStorage.getItem("liars_proof_volume");
-              const currentTargetVolume = currentSavedVolume ? parseFloat(currentSavedVolume) : 0.3;
+              const currentTargetVolume = currentSavedVolume ? parseFloat(currentSavedVolume) : 0.15;
               
               // If volume is already at or above target, stop fading
               if (audioRef.current.volume >= currentTargetVolume) {
@@ -424,7 +424,9 @@ export const Login = () => {
         
         {/* Logo - absolute bottom left */}
         <img src="/logo.png" alt="LIARS PROOF" className="login-logo" />
-        
+        <div className="login-volume-container">
+          <VolumeControl audioRef={audioRef} />
+        </div>
         <div className="login-left-panel">
           {account ? (
             <div className="login-connected-section">
@@ -471,7 +473,7 @@ export const Login = () => {
                     : "CONNECT WALLET"}
               </Button>
               <p className="login-wallet-support-text">
-                Ready wallets on the ZStarknet network are supported
+                Only Ready wallet on the ZStarknet network is supported
               </p>
               {!isAvailable && (
                 <p className="login-error-message">
@@ -507,9 +509,6 @@ export const Login = () => {
         title={processingStatus?.title || ""}
         message={processingStatus?.message || ""}
       />
-
-      {/* Volume Control */}
-      <VolumeControl audioRef={audioRef} />
     </div>
   );
 };

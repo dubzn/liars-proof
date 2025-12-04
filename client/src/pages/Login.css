@@ -90,6 +90,15 @@
   z-index: 10;
 }
 
+.login-volume-container {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
 .login-connected-text {
   display: flex;
   align-items: center;
