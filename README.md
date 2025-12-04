@@ -299,7 +299,7 @@ Already deployed! Visit the live demo:
 
 We've implemented a **Guest Wallet** feature for seamless onboarding:
 
-1. Click **"👤 PLAY AS GUEST"** on the login page
+1. Click **"PLAY AS GUEST"** on the login page
 2. A wallet is automatically generated and funded
 3. Start playing immediately - no wallet extension required!
 

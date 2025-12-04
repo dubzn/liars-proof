@@ -428,7 +428,6 @@ export const Login = () => {
             <span className="login-connected-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {isGuestMode ? (
                 <>
-                  <span style={{ fontSize: "1.2em" }}>👤</span>
                   GUEST MODE
                 </>
               ) : (
