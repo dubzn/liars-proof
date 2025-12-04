@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
+import { useSessionKeys } from "@/context/sessionKeys";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
@@ -16,6 +17,7 @@ const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
   const { account, connector, isConnecting, isAvailable, connect, disconnect } = useStarknetKit();
+  const { sessionAccount, isSessionActive } = useSessionKeys();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
@@ -162,14 +164,31 @@ export const Login = () => {
         num.toHex(byteArrayData.pending_word_len),
       ];
       
+      // Use session account if available, otherwise use regular account
+      const executionAccount = sessionAccount || account;
+      const usingSession = sessionAccount !== null;
+
+      console.log("[Login] ====== SESSION DEBUG (CREATE GAME) ======");
+      console.log("[Login] sessionAccount:", sessionAccount);
+      console.log("[Login] sessionAccount type:", typeof sessionAccount);
+      console.log("[Login] isSessionActive:", isSessionActive);
+      console.log("[Login] account address:", account?.address);
+      console.log("[Login] executionAccount address:", executionAccount?.address);
+      console.log("[Login] executionAccount === account:", executionAccount === account);
+      console.log("[Login] executionAccount === sessionAccount:", executionAccount === sessionAccount);
+      console.log(`[Login] Using ${usingSession ? "SESSION" : "REGULAR"} account for create game`);
+      console.log("[Login] ============================================");
+
       // Update modal - waiting for signature
       setProcessingStatus({
         title: "CREATING GAME",
-        message: "Please sign the transaction in your wallet",
+        message: usingSession
+          ? "Creating game with session key..."
+          : "Please sign the transaction in your wallet",
       });
-      
+
       // Execute the create function
-      const result = await account.execute({
+      const result = await executionAccount.execute({
         contractAddress: GAME_CONTRACT_ADDRESS,
         entrypoint: "create",
         calldata: serializedByteArray,
@@ -183,7 +202,7 @@ export const Login = () => {
       });
 
       // Wait for transaction to be accepted
-      const receipt = await account.waitForTransaction(result.transaction_hash, {
+      const receipt = await executionAccount.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
         successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
       });
@@ -320,14 +339,22 @@ export const Login = () => {
         num.toHex(byteArrayData.pending_word_len),
       ];
 
+      // Use session account if available, otherwise use regular account
+      const executionAccount = sessionAccount || account;
+      const usingSession = sessionAccount !== null;
+
+      console.log(`[Login] Using ${usingSession ? "session" : "regular"} account for join game`);
+
       // Update modal - waiting for signature
       setProcessingStatus({
         title: "JOINING GAME",
-        message: "Please sign the transaction in your wallet",
+        message: usingSession
+          ? "Joining game with session key..."
+          : "Please sign the transaction in your wallet",
       });
 
       // Execute the join function
-      const result = await account.execute({
+      const result = await executionAccount.execute({
         contractAddress: GAME_CONTRACT_ADDRESS,
         entrypoint: "join",
         calldata: [gameId.toString(), ...serializedByteArray],
@@ -342,7 +369,7 @@ export const Login = () => {
       });
 
       // Wait for transaction to be accepted
-      await account.waitForTransaction(result.transaction_hash, {
+      await executionAccount.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
         successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
       });

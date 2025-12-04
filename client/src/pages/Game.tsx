@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { CallData, cairo } from "starknet";
 import type { Call } from "starknet";
 import { useStarknetKit } from "@/context/starknetkit";
+import { useSessionKeys } from "@/context/sessionKeys";
 import { useGameWatcher } from "@/hooks/useGameWatcher";
 import { useParallax } from "@/hooks/useParallax";
 import { useConditionGraphQL } from "@/hooks/useConditionGraphQL";
@@ -47,6 +48,7 @@ const generateRandomHand = (): Card[] => {
 export const Game = () => {
   const { game_id } = useParams<{ game_id: string }>();
   const { account } = useStarknetKit();
+  const { sessionAccount, isSessionActive } = useSessionKeys();
   const gameId = game_id ? parseInt(game_id) : 0;
 
   // Parallax effect
@@ -218,9 +220,17 @@ export const Game = () => {
           hand: playerHand,
         });
 
+        // Use session account if available, otherwise use regular account
+        const executionAccount = sessionAccount || account;
+        const usingSession = sessionAccount !== null;
+
+        console.log(`[Game] Using ${usingSession ? "session" : "regular"} account for transaction`);
+
         setProcessingStatus({
           title: "SUBMITTING HAND COMMITMENT",
-          message: "Please sign the transaction in your wallet",
+          message: usingSession
+            ? "Submitting transaction with session key..."
+            : "Please sign the transaction in your wallet",
         });
 
         // Create the call using cairo.uint256() for proper u256 serialization
@@ -230,7 +240,7 @@ export const Game = () => {
           calldata: CallData.compile([gameId, cairo.uint256(commitment)]),
         };
 
-        const result = await account.execute(submitHandCommitmentCall);
+        const result = await executionAccount.execute(submitHandCommitmentCall);
 
         console.log("[Game] Transaction hash:", result.transaction_hash);
 
@@ -240,7 +250,7 @@ export const Game = () => {
         });
 
         // Wait for transaction
-        const receipt = await account.waitForTransaction(result.transaction_hash, {
+        const receipt = await executionAccount.waitForTransaction(result.transaction_hash, {
           retryInterval: 100,
           successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
         });
@@ -580,6 +590,31 @@ export const Game = () => {
       </div>
 
       <img src="/logo.png" alt="LIARS PROOF" className="game-logo" />
+
+      {/* Session Status Badge */}
+      {isSessionActive && (
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "20px",
+            background: "rgba(34, 197, 94, 0.9)",
+            color: "white",
+            padding: "8px 16px",
+            borderRadius: "20px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+            zIndex: 1000,
+          }}
+        >
+          <span>🔑</span>
+          <span>Session Active</span>
+        </div>
+      )}
 
       {/* Player Hand Cards - 3 random cards */}
       <PlayerHandCards

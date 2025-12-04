@@ -25,6 +25,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@argent/x-sessions": "^8.0.1",
     "@aztec/bb.js": "=0.87.4-starknet.1",
     "@cartridge/connector": "0.11.2",
     "@cartridge/controller": "0.11.2",
