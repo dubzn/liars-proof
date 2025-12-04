@@ -29,8 +29,12 @@ interface GamePhasePanelProps {
   player2ProofValid: boolean;
   onChallengeChoice?: (choice: boolean) => void;
   onConditionChoice?: (choice: boolean) => void;
+  onSubmitCommitment?: () => void;
+  onSubmitProof?: () => void;
   hasSubmittedCondition?: boolean;
   hasSubmittedChallenge?: boolean;
+  isSubmittingCommitment?: boolean;
+  isSubmittingProof?: boolean;
 }
 
 export const GamePhasePanel = ({
@@ -55,8 +59,12 @@ export const GamePhasePanel = ({
   player2ProofValid,
   onChallengeChoice,
   onConditionChoice,
+  onSubmitCommitment,
+  onSubmitProof,
   hasSubmittedCondition = false,
   hasSubmittedChallenge = false,
+  isSubmittingCommitment = false,
+  isSubmittingProof = false,
 }: GamePhasePanelProps) => {
   const isCommitmentPhase = currentPhase === "WaitingForHandCommitments";
   const isConditionPhase = currentPhase === "ConditionPhase";
@@ -175,9 +183,21 @@ export const GamePhasePanel = ({
                 Waiting for opponent to submit commitment...
               </div>
             ) : (
-              <div className="game-phase-message">
-                Please submit your hand commitment to continue.
-              </div>
+              <>
+                <div className="game-phase-message">
+                  Please submit your hand commitment to continue.
+                </div>
+                <div className="game-phase-buttons">
+                  <Button
+                    variant="default"
+                    onClick={() => onSubmitCommitment?.()}
+                    className="game-phase-button"
+                    disabled={isSubmittingCommitment}
+                  >
+                    {isSubmittingCommitment ? "Submitting..." : "SUBMIT COMMITMENT"}
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -428,9 +448,29 @@ export const GamePhasePanel = ({
                 Both players have submitted their proofs! Determining winner...
               </div>
             ) : (
-              <div className="game-phase-message">
-                Waiting for proofs to be submitted and verified...
-              </div>
+              <>
+                <div className="game-phase-message">
+                  {isPlayer1 
+                    ? (player1ProofSubmitted 
+                        ? "Waiting for opponent to submit proof..."
+                        : "Submit your proof to verify your claim.")
+                    : (player2ProofSubmitted 
+                        ? "Waiting for opponent to submit proof..."
+                        : "Submit your proof to verify your claim.")}
+                </div>
+                {((isPlayer1 && !player1ProofSubmitted) || (!isPlayer1 && !player2ProofSubmitted)) && (
+                  <div className="game-phase-buttons">
+                    <Button
+                      variant="default"
+                      onClick={() => onSubmitProof?.()}
+                      className="game-phase-button"
+                      disabled={isSubmittingProof}
+                    >
+                      {isSubmittingProof ? "Submitting..." : "SUBMIT PROOF"}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

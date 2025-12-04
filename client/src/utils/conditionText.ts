@@ -92,9 +92,9 @@ export const generateConditionText = (
 
     case CONDITION_EXACTLY_X_PAIRS:
       if (quantity === 1) {
-        return `You have exactly ${quantity} pair`;
+        return `You have exactly ${quantity} pair card`;
       }
-      return `You have exactly ${quantity} pairs`;
+      return `You have exactly ${quantity} pairs cards`;
 
     case CONDITION_EXACTLY_X_ODDS:
       if (quantity === 1) {
