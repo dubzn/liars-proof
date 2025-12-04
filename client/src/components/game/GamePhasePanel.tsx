@@ -424,9 +424,9 @@ export const GamePhasePanel = ({
                 <span className="game-phase-condition-name">{player1Name || "Player 1"}</span>
                 <span className="game-phase-condition-message">
                   {player1ProofSubmitted
-                    ? player1ProofValid
-                      ? "✓ was telling the truth"
-                      : "✗ was lying"
+                    ? (player1ConditionChoice !== player1ProofValid)
+                      ? "✗ was lying"
+                      : "✓ was telling the truth"
                     : "Submitting proof..."}
                 </span>
               </div>
@@ -435,9 +435,9 @@ export const GamePhasePanel = ({
                   <span className="game-phase-condition-name">{player2Name}</span>
                   <span className="game-phase-condition-message">
                     {player2ProofSubmitted
-                      ? player2ProofValid
-                        ? "✓ was telling the truth"
-                        : "✗ was lying"
+                      ? (player2ConditionChoice !== player2ProofValid)
+                        ? "✗ was lying"
+                        : "✓ was telling the truth"
                       : "Submitting proof..."}
                   </span>
                 </div>
