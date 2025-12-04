@@ -117,6 +117,12 @@ export const GamePhasePanel = ({
   const currentPlayerCommitmentSubmitted = isPlayer1 ? player1CommitmentSubmitted : player2CommitmentSubmitted;
   const bothCommitmentsSubmitted = player1CommitmentSubmitted && player2CommitmentSubmitted;
 
+  // Current player's choices
+  const currentPlayerConditionChoice = isPlayer1 ? player1ConditionChoice : player2ConditionChoice;
+  const currentPlayerChallengeChoice = isPlayer1 ? player1ChallengeChoice : player2ChallengeChoice;
+  const currentPlayerConditionSubmitted = isPlayer1 ? player1ConditionSubmitted : player2ConditionSubmitted;
+  const currentPlayerChallengeSubmitted = isPlayer1 ? player1ChallengeSubmitted : player2ChallengeSubmitted;
+
   // Opponent info for challenge phase
   const opponentDisplayName = isPlayer1 ? (player2Name || "Player 2") : (player1Name || "Player 1");
   const opponentConditionSubmitted = isPlayer1 ? player2ConditionSubmitted : player1ConditionSubmitted;
@@ -151,15 +157,12 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">COMMITMENT PHASE</span>
           {canExpandCommitment && (
             <span className="game-phase-toggle">
-              {isCommitmentExpanded ? "▲" : "▼"}
+              {isCommitmentExpanded ? "-" : "+"}
             </span>
           )}
         </div>
         {isCommitmentExpanded && (
           <div className="game-phase-content">
-            <div className="game-phase-description">
-              Both players must commit to hand cards without revealing them.
-            </div>
             <div className="game-phase-commitment-status">
               <div className="game-phase-commitment-player">
                 <span className="game-phase-commitment-name">{player1Name || "Player 1"}</span>
@@ -191,8 +194,9 @@ export const GamePhasePanel = ({
                   <Button
                     variant="default"
                     onClick={() => onSubmitCommitment?.()}
-                    className="game-phase-button"
+                    className="game-phase-button game-phase-button-pulsing"
                     disabled={isSubmittingCommitment}
+                    style={{ boxShadow: 'none' }}
                   >
                     {isSubmittingCommitment ? "Submitting..." : "SUBMIT COMMITMENT"}
                   </Button>
@@ -219,15 +223,12 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">CONDITION PHASE</span>
           {canExpandCondition && (
             <span className="game-phase-toggle">
-              {isConditionExpanded ? "▲" : "▼"}
+              {isConditionExpanded ? "-" : "+"}
             </span>
           )}
         </div>
         {isConditionExpanded && (
           <div className="game-phase-content">
-            <div className="game-phase-description">
-              A random condition is revealed. Each player must decide if the hand fulfills it.
-            </div>
             {isLoadingCondition ? (
               <div className="game-phase-message">Loading condition...</div>
             ) : conditionText ? (
@@ -241,7 +242,13 @@ export const GamePhasePanel = ({
                 <div className="game-phase-condition-status">
                   <div className="game-phase-condition-player">
                     <span className="game-phase-condition-name">{player1Name || "Player 1"}</span>
-                    <span className="game-phase-condition-message">
+                    <span className={`game-phase-condition-message ${
+                      player1ConditionSubmitted
+                        ? player1ConditionChoice === true
+                          ? "game-phase-condition-fulfills"
+                          : "game-phase-condition-not-fulfills"
+                        : ""
+                    }`}>
                       {player1ConditionSubmitted
                         ? player1ConditionChoice === true
                           ? "says that fulfills the condition"
@@ -252,7 +259,13 @@ export const GamePhasePanel = ({
                   {player2Name && (
                     <div className="game-phase-condition-player">
                       <span className="game-phase-condition-name">{player2Name}</span>
-                      <span className="game-phase-condition-message">
+                      <span className={`game-phase-condition-message ${
+                        player2ConditionSubmitted
+                          ? player2ConditionChoice === true
+                            ? "game-phase-condition-fulfills"
+                            : "game-phase-condition-not-fulfills"
+                          : ""
+                      }`}>
                         {player2ConditionSubmitted
                           ? player2ConditionChoice === true
                             ? "says that fulfills the condition"
@@ -266,27 +279,41 @@ export const GamePhasePanel = ({
                   <div className="game-phase-message">
                     Both players have submitted condition choices!
                   </div>
-                ) : hasSubmittedCondition ? (
-                  <div className="game-phase-message">
-                    Waiting for opponent to submit condition choice...
-                  </div>
                 ) : (
                   <>
-                    <div className="game-phase-question">
-                      Do you fulfill the condition?
-                    </div>
+                    {hasSubmittedCondition ? (
+                      <div className="game-phase-message">
+                        Waiting for opponent to submit condition choice...
+                      </div>
+                    ) : (
+                      <div className="game-phase-question">
+                        Do you fulfill the condition?
+                      </div>
+                    )}
                     <div className="game-phase-buttons">
                       <Button
                         variant="default"
                         onClick={() => onConditionChoice?.(true)}
-                        className="game-phase-button game-phase-button-yes"
+                        className={`game-phase-button game-phase-button-yes ${
+                          currentPlayerConditionSubmitted && currentPlayerConditionChoice === true
+                            ? "game-phase-button-selected-yes"
+                            : ""
+                        }`}
+                        disabled={currentPlayerConditionSubmitted}
+                        style={currentPlayerConditionSubmitted && currentPlayerConditionChoice === true ? { boxShadow: 'none' } : undefined}
                       >
                         YES
                       </Button>
                       <Button
                         variant="destructive"
                         onClick={() => onConditionChoice?.(false)}
-                        className="game-phase-button game-phase-button-no"
+                        className={`game-phase-button game-phase-button-no ${
+                          currentPlayerConditionSubmitted && currentPlayerConditionChoice === false
+                            ? "game-phase-button-selected-no"
+                            : ""
+                        }`}
+                        disabled={currentPlayerConditionSubmitted}
+                        style={currentPlayerConditionSubmitted && currentPlayerConditionChoice === false ? { boxShadow: 'none' } : undefined}
                       >
                         NO
                       </Button>
@@ -317,19 +344,21 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">CHALLENGE PHASE</span>
           {canExpandChallenge && (
             <span className="game-phase-toggle">
-              {isChallengeExpanded ? "▲" : "▼"}
+              {isChallengeExpanded ? "-" : "+"}
             </span>
           )}
         </div>
         {isChallengeExpanded && (
           <div className="game-phase-content">
-            <div className="game-phase-description">
-              Each player decides whether to believe the opponent's claim about fulfilling the condition.
-            </div>
-            {/* Opponent's previous claim about the condition */}
             <div className="game-phase-opponent-claim-container">
               <div className="game-phase-opponent-claim-label">OPPONENT CLAIM</div>
-              <div className="game-phase-opponent-claim-text">
+              <div className={`game-phase-opponent-claim-text ${
+                opponentConditionSubmitted
+                  ? opponentConditionChoice === true
+                    ? "game-phase-condition-fulfills"
+                    : "game-phase-condition-not-fulfills"
+                  : ""
+              }`}>
                 {opponentConditionSummary}
               </div>
             </div>
@@ -337,7 +366,13 @@ export const GamePhasePanel = ({
             <div className="game-phase-condition-status">
               <div className="game-phase-condition-player">
                 <span className="game-phase-condition-name">{player1Name || "Player 1"}</span>
-                <span className="game-phase-condition-message">
+                <span className={`game-phase-condition-message ${
+                  player1ChallengeSubmitted
+                    ? player1ChallengeChoice === true
+                      ? "game-phase-condition-fulfills"
+                      : "game-phase-condition-not-fulfills"
+                    : ""
+                }`}>
                   {player1ChallengeSubmitted
                     ? player1ChallengeChoice === true
                       ? "believes the opponent"
@@ -348,7 +383,13 @@ export const GamePhasePanel = ({
               {player2Name && (
                 <div className="game-phase-condition-player">
                   <span className="game-phase-condition-name">{player2Name}</span>
-                  <span className="game-phase-condition-message">
+                  <span className={`game-phase-condition-message ${
+                    player2ChallengeSubmitted
+                      ? player2ChallengeChoice === true
+                        ? "game-phase-condition-fulfills"
+                        : "game-phase-condition-not-fulfills"
+                      : ""
+                  }`}>
                     {player2ChallengeSubmitted
                       ? player2ChallengeChoice === true
                         ? "believes the opponent"
@@ -362,27 +403,41 @@ export const GamePhasePanel = ({
               <div className="game-phase-message">
                 Both players have submitted challenge choices!
               </div>
-            ) : hasSubmittedChallenge ? (
-              <div className="game-phase-message">
-                Waiting for opponent to submit challenge choice...
-              </div>
             ) : (
               <>
-                <div className="game-phase-question">
-                  Do you believe {isPlayer1 ? (player2Name || "Player 2") : (player1Name || "Player 1")}?
-                </div>
+                {hasSubmittedChallenge ? (
+                  <div className="game-phase-message">
+                    Waiting for opponent to submit challenge choice...
+                  </div>
+                ) : (
+                  <div className="game-phase-question">
+                    Do you believe {isPlayer1 ? (player2Name || "Player 2") : (player1Name || "Player 1")}?
+                  </div>
+                )}
                 <div className="game-phase-buttons">
                   <Button
                     variant="default"
                     onClick={() => onChallengeChoice?.(true)}
-                    className="game-phase-button game-phase-button-yes"
+                    className={`game-phase-button game-phase-button-yes ${
+                      currentPlayerChallengeSubmitted && currentPlayerChallengeChoice === true
+                        ? "game-phase-button-selected-yes"
+                        : ""
+                    }`}
+                    disabled={currentPlayerChallengeSubmitted}
+                    style={currentPlayerChallengeSubmitted && currentPlayerChallengeChoice === true ? { boxShadow: 'none' } : undefined}
                   >
                     YES
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={() => onChallengeChoice?.(false)}
-                    className="game-phase-button game-phase-button-no"
+                    className={`game-phase-button game-phase-button-no ${
+                      currentPlayerChallengeSubmitted && currentPlayerChallengeChoice === false
+                        ? "game-phase-button-selected-no"
+                        : ""
+                    }`}
+                    disabled={currentPlayerChallengeSubmitted}
+                    style={currentPlayerChallengeSubmitted && currentPlayerChallengeChoice === false ? { boxShadow: 'none' } : undefined}
                   >
                     NO
                   </Button>
@@ -409,15 +464,12 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">RESULT PHASE</span>
           {canExpandResult && (
             <span className="game-phase-toggle">
-              {isResultExpanded ? "▲" : "▼"}
+              {isResultExpanded ? "-" : "+"}
             </span>
           )}
         </div>
         {isResultExpanded && (
           <div className="game-phase-content">
-            <div className="game-phase-description">
-              Players submit proofs to verify claims. The round winner is determined.
-            </div>
             {/* Show proof submission status */}
             <div className="game-phase-condition-status">
               <div className="game-phase-condition-player">
@@ -463,8 +515,9 @@ export const GamePhasePanel = ({
                     <Button
                       variant="default"
                       onClick={() => onSubmitProof?.()}
-                      className="game-phase-button"
+                      className="game-phase-button game-phase-button-pulsing"
                       disabled={isSubmittingProof}
+                      style={{ boxShadow: 'none' }}
                     >
                       {isSubmittingProof ? "Submitting..." : "SUBMIT PROOF"}
                     </Button>

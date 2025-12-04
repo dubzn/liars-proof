@@ -9,6 +9,7 @@ import { useConditionGraphQL } from "@/hooks/useConditionGraphQL";
 import { useRoundProofGraphQL } from "@/hooks/useRoundProofGraphQL";
 import { retryTransaction, checkTransactionSuccess } from "@/utils/retryTransaction";
 import { GameInfo } from "@/components/game/GameInfo";
+import { GameRules } from "@/components/game/GameRules";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
@@ -85,6 +86,7 @@ export const Game = () => {
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
   const [isSubmittingCommitment, setIsSubmittingCommitment] = useState(false);
   const [hasSubmittedCommitment, setHasSubmittedCommitment] = useState(false);
+  const [isRulesExpanded, setIsRulesExpanded] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<{
     title: string;
     message: string;
@@ -238,7 +240,7 @@ export const Game = () => {
       setProcessingStatus({
         title: "SUBMITTING HAND COMMITMENT",
         explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
-        message: "Transaction sent, waiting for confirmation ...",
+        message: "Transaction submitted, waiting for confirmation ...",
       });
 
       // Execute with automatic retry logic
@@ -400,7 +402,7 @@ export const Game = () => {
       setProcessingStatus({
         title: "SUBMITTING PROOF",
         explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
-        message: "Transaction sent, waiting for confirmation ...",
+        message: "Transaction submitted, waiting for confirmation ...",
       });
 
       // Execute with automatic retry logic
@@ -801,7 +803,10 @@ export const Game = () => {
         />
       </div>
 
-      <GameInfo gameId={gameIdNumber} isPlayer1={isPlayer1} />
+      <div className="game-info-container">
+        <GameInfo gameId={gameIdNumber} isPlayer1={isPlayer1} />
+        <GameRules onExpandChange={setIsRulesExpanded} />
+      </div>
 
       {hasPlayer2 && (
         <OpponentCharacter
@@ -820,7 +825,11 @@ export const Game = () => {
         />
       </div>
 
-      <img src="/logo.png" alt="LIARS PROOF" className="game-logo" />
+      <img 
+        src="/logo.png" 
+        alt="LIARS PROOF" 
+        className={`game-logo ${isRulesExpanded ? "hidden" : ""}`}
+      />
 
       <PlayerHandCards
         cards={playerHand}

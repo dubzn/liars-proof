@@ -79,7 +79,7 @@
 }
 
 .game-phase-toggle {
-  font-size: clamp(1rem, 2vw, 1rem);
+  font-size: clamp(1rem, 2vw, 1.3rem);
   font-weight: 700;
   color: white;
   width: 1.5rem;
@@ -187,15 +187,69 @@
   text-transform: uppercase !important;
   letter-spacing: 0.1em !important;
   cursor: pointer !important;
-  transition: all 0.3s ease !important;
+  transition: background-color 0.3s ease, transform 0.3s ease !important;
   font-family: "BebasNeue", Arial, sans-serif !important;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
 }
 
 .game-phase-button:hover {
   background-color: rgba(0, 0, 0, 0.6) !important;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
   transform: translateY(-2px) !important;
+}
+
+.game-phase-button-pulsing,
+.game-phase-button-pulsing:hover,
+.game-phase-button-pulsing:focus,
+.game-phase-button-pulsing:active,
+.game-phase-button-pulsing:disabled {
+  animation: buttonGlowPulse 1.5s ease-in-out infinite !important;
+  transition: background-color 0.3s ease, transform 0.3s ease !important;
+}
+
+.game-phase-button-pulsing:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  transform: translateY(-2px) !important;
+}
+
+@keyframes buttonGlowPulse {
+  0% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), 0 0 12px rgba(255, 255, 255, 0.3) !important;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)) !important;
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 30px rgba(255, 255, 255, 0.6), 0 0 40px rgba(255, 255, 255, 0.4) !important;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4)) !important;
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), 0 0 12px rgba(255, 255, 255, 0.3) !important;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)) !important;
+  }
+}
+
+.game-phase-button-selected-yes,
+.game-phase-button-selected-yes:disabled {
+  background-color: rgba(34, 197, 94, 0.6) !important;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.7), 0 0 20px rgba(34, 197, 94, 0.4) !important;
+  border: 2px solid rgba(34, 197, 94, 0.9) !important;
+  opacity: 1 !important;
+}
+
+.game-phase-button-selected-yes:hover:not(:disabled) {
+  background-color: rgba(34, 197, 94, 0.7) !important;
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.8), 0 0 24px rgba(34, 197, 94, 0.5) !important;
+}
+
+.game-phase-button-selected-no,
+.game-phase-button-selected-no:disabled {
+  background-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.7), 0 0 20px rgba(239, 68, 68, 0.4) !important;
+  border: 2px solid rgba(239, 68, 68, 0.9) !important;
+  opacity: 1 !important;
+}
+
+.game-phase-button-selected-no:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.7) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.8), 0 0 24px rgba(239, 68, 68, 0.5) !important;
 }
 
 
@@ -276,6 +330,16 @@
   letter-spacing: normal;
   font-weight: 400;
   font-style: italic;
+}
+
+.game-phase-condition-fulfills {
+  color: rgba(34, 197, 94, 1) !important;
+  font-weight: 600 !important;
+}
+
+.game-phase-condition-not-fulfills {
+  color: rgba(239, 68, 68, 1) !important;
+  font-weight: 600 !important;
 }
 
 .game-phase-opponent-claim-container {

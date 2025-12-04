@@ -1,0 +1,157 @@
+.game-rules {
+  position: relative;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  font-family: "BebasNeue", Arial, sans-serif;
+  margin-top: 1rem;
+}
+
+.game-rules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  user-select: none;
+}
+
+.game-rules-title {
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.game-rules-content {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.game-rules-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.game-rules-section:first-child {
+  border-top: none;
+}
+
+.game-rules-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.game-rules-section-header:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.game-rules-section-title {
+  font-family: "BebasNeue", Arial, sans-serif;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.game-rules-section-toggle {
+  font-size: clamp(0.75rem, 1.25vw, 1.3rem);
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.game-rules-section-content {
+  padding: 0.75rem 1rem 1rem 1rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-rules-section-text {
+  font-family: Arial, sans-serif;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.game-rules-list {
+  font-family: Arial, sans-serif;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.game-rules-list li {
+  margin-bottom: 0.5rem;
+}
+
+.game-rules-list li:last-child {
+  margin-bottom: 0;
+}
+
+.game-rules-scoring {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.game-rules-scoring-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.game-rules-scoring-label {
+  font-family: Arial, sans-serif;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.game-rules-scoring-value {
+  font-family: Arial, sans-serif;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .game-rules-content {
+    padding: 0.5rem 0;
+  }
+
+  .game-rules-section-content {
+    padding: 0.5rem 1rem 0.75rem 1rem;
+  }
+
+  .game-rules-scoring-item {
+    padding: 0.5rem;
+  }
+}
