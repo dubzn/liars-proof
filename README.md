@@ -65,76 +65,109 @@ The game showcases practical privacy-preserving gaming mechanics:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🎮 Game Flow
+## 🎮 Game Flow Diagram
 
-### Phase 1: Setup & Hand Commitment
+Complete sequence diagram showing the entire game flow from creation to end, including ZK proof generation and verification:
 
-```
-Player A                           Player B
-   │                                  │
-   ├──> Select Cards (Private)        │
-   │                                  │
-   ├──> Generate ZK Proof             │
-   │    • Input: hand + commitment    │
-   │    • Noir Circuit Execution      │
-   │    • Barretenberg Proving        │
-   │                                  │
-   ├──> Submit Commitment ────────────┼──> Smart Contract
-   │    (Proof + Public Inputs)       │    • Verify with Garaga
-   │                                  │    • Store Commitment
-   │                                  │
-   │    ◄──────────────────────────── ├─── Select Cards (Private)
-   │                                  │
-   │                                  ├──> Generate ZK Proof
-   │                                  │
-Smart Contract ◄────────────────────── ├─── Submit Commitment
-   │                                  │
-   └──> Both Committed ───────────────┘
-```
+```mermaid
+sequenceDiagram
+    participant P1 as Player 1
+    participant P2 as Player 2
+    participant FE as Frontend
+    participant Noir as Noir Circuit
+    participant BB as Barretenberg
+    participant BC as ZStarknet
+    participant Garaga as Garaga Verifier
 
-### Phase 2: Condition & Challenge
+    %% Create game
+    P1->>FE: Create new game
+    FE->>BC: create_game(player_name)
+    BC-->>FE: game_id, WaitingForPlayers
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Condition Phase                          │
-│                                                             │
-│  Random Condition Generated:                                │
-│  "Prove you have a card with Suit=HEARTS and Value >= 10"  │
-│                                                             │
-│  Both players submit ZK proofs showing:                     │
-│  ✓ They possess a card matching the condition              │
-│  ✓ The card belongs to their committed hand                │
-│  ✓ Without revealing the actual card                       │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Challenge Phase                          │
-│                                                             │
-│  Players can challenge opponent's proof:                    │
-│  • "Liar!" - Claim opponent doesn't have the card          │
-│  • "Truth" - Accept opponent's proof                       │
-│                                                             │
-│  ZK Verifier validates all proofs on-chain                 │
-│  Invalid proofs = Instant loss                             │
-│  Valid proofs = Continue to next round                     │
-└─────────────────────────────────────────────────────────────┘
-```
+    %% Join game
+    P2->>FE: Join game with game_id
+    FE->>BC: join_game(game_id, player_name)
+    BC-->>FE: WaitingForHandCommitments
 
-### Phase 3: Resolution
+    %% Player 1 hand commitment
+    P1->>FE: Select 5 cards
+    Note over FE: Cards: [♠A, ♥K, ♦Q, ♣J, ♠10]
+    FE->>FE: Compute commitment = hash(cards)
+    FE->>Noir: Execute circuit with hand
+    Noir-->>FE: witness
+    FE->>BB: Generate UltraHonk proof
+    Note over BB: ~2-3 seconds
+    BB-->>FE: proof + public_inputs
+    FE->>BC: submit_hand_commitment(game_id, commitment, proof)
+    BC->>Garaga: verify_proof(proof, commitment)
+    Garaga-->>BC: ✓ Valid
+    BC-->>FE: Hand commitment stored
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Result Phase                             │
-│                                                             │
-│  Smart Contract determines winner based on:                 │
-│  • Validity of ZK proofs                                    │
-│  • Challenge outcomes                                       │
-│  • Game rules (lives remaining)                             │
-│                                                             │
-│  Winner gets +1 score, loser loses 1 life                  │
-│  Game ends when a player reaches 0 lives                   │
-└─────────────────────────────────────────────────────────────┘
+    %% Player 2 hand commitment
+    P2->>FE: Select 5 cards
+    Note over FE: Cards: [♦A, ♣K, ♥J, ♠9, ♦8]
+    FE->>FE: Compute commitment = hash(cards)
+    FE->>Noir: Execute circuit with hand
+    Noir-->>FE: witness
+    FE->>BB: Generate UltraHonk proof
+    BB-->>FE: proof + public_inputs
+    FE->>BC: submit_hand_commitment(game_id, commitment, proof)
+    BC->>Garaga: verify_proof(proof, commitment)
+    Garaga-->>BC: ✓ Valid
+    BC->>BC: Generate random condition
+    BC-->>FE: ConditionPhase
+    Note over BC: Condition: "♥ card ≥ 10"
+
+    %% Player 1 proves condition
+    P1->>FE: Select card matching condition (♥K)
+    FE->>Noir: Execute circuit(hand, card, condition)
+    Note over Noir: Verify:<br/>1. commitment matches<br/>2. card in hand<br/>3. card satisfies condition
+    Noir-->>FE: witness
+    FE->>BB: Generate proof
+    BB-->>FE: proof
+    FE->>BC: submit_condition_proof(game_id, proof)
+    BC->>Garaga: verify_proof(proof, condition)
+    Garaga-->>BC: ✓ Valid
+    BC-->>FE: Proof submitted
+
+    %% Player 2 proves condition
+    P2->>FE: Select card matching condition (♥J)
+    FE->>Noir: Execute circuit(hand, card, condition)
+    Noir-->>FE: witness
+    FE->>BB: Generate proof
+    BB-->>FE: proof
+    FE->>BC: submit_condition_proof(game_id, proof)
+    BC->>Garaga: verify_proof(proof, condition)
+    Garaga-->>BC: ✓ Valid
+    BC-->>FE: ChallengePhase
+
+    %% Challenge phase
+    alt Player 1 challenges Player 2
+        P1->>FE: Click "Liar!"
+        FE->>BC: submit_challenge(game_id, P2)
+        BC->>Garaga: Re-verify P2's proof
+        alt P2's proof is valid
+            Garaga-->>BC: ✓ Valid
+            BC-->>FE: P2 wins, P1 loses 1 life
+        else P2's proof is invalid
+            Garaga-->>BC: ✗ Invalid
+            BC-->>FE: P1 wins, P2 loses 1 life
+        end
+    else Both accept
+        P1->>FE: Click "Truth"
+        P2->>FE: Click "Truth"
+        FE->>BC: both_accept(game_id)
+        BC-->>FE: Round draw
+    end
+
+    %% Next round or game over
+    BC->>BC: Check lives remaining
+    alt Game continues (lives > 0)
+        BC-->>FE: New ConditionPhase
+        Note over BC: Generate new condition
+    else Game over (lives = 0)
+        BC-->>FE: GameOver, winner announced
+    end
 ```
 
 ## 🔬 Zero-Knowledge Circuit
