@@ -1,0 +1,314 @@
+.round-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.round-result-modal {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 40, 0.95));
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  max-width: 900px;
+  width: 90%;
+  max-height: 95vh;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), 0 0 80px rgba(139, 92, 246, 0.4);
+  animation: slideUp 0.5s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.round-result-title {
+  color: white;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "BebasNeue", Arial, sans-serif;
+  text-align: center;
+  margin: 0 0 0.75rem 0;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.round-result-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.round-result-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease-out;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.round-result-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.round-result-player-card {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid;
+  margin-bottom: 0.75rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.round-result-player-card.truth {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2));
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.round-result-player-card.lied {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+  }
+}
+
+.round-result-player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.round-result-player-name {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 700;
+  color: white;
+  font-family: "BebasNeue", Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.round-result-status {
+  padding: 0.4rem 1rem;
+  border-radius: 0.5rem;
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: "BebasNeue", Arial, sans-serif;
+}
+
+.round-result-status.truth-badge {
+  background-color: rgba(34, 197, 94, 0.8);
+  color: white;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+}
+
+.round-result-status.lied-badge {
+  background-color: rgba(239, 68, 68, 0.8);
+  color: white;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+.round-result-beliefs {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.round-result-belief-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+}
+
+.round-result-belief-name {
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  font-weight: 600;
+  color: white;
+  font-family: "BebasNeue", Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+.round-result-belief-action {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: Arial, sans-serif;
+  font-style: italic;
+}
+
+.round-result-changes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.round-result-player-result {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(20, 20, 40, 0.4));
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.round-result-player-result-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.round-result-player-result-name {
+  font-size: clamp(0.875rem, 1.5vw, 1.25rem);
+  font-weight: 700;
+  color: white;
+  font-family: "BebasNeue", Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.round-result-player-result-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.round-result-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 600;
+}
+
+.round-result-stat.positive {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.round-result-stat.negative {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.round-result-stat.neutral {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.round-result-stat-label {
+  font-family: Arial, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.round-result-stat-value {
+  font-family: "BebasNeue", Arial, sans-serif;
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  font-weight: 700;
+}
+
+.round-result-player-result-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Arial, sans-serif;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.round-result-continue {
+  margin-top: 0.75rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease-out;
+  flex-shrink: 0;
+}
+
+.round-result-continue.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.round-result-continue-button {
+  width: 100%;
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 0.5rem !important;
+  color: white !important;
+  font-size: clamp(0.875rem, 1.5vw, 1.25rem) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  font-family: "BebasNeue", Arial, sans-serif !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3) !important;
+}
+
+.round-result-continue-button:hover {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-2px) !important;
+}
+

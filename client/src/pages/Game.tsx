@@ -12,6 +12,7 @@ import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
+import { RoundResultModal } from "@/components/game/RoundResultModal";
 import { calculateHandCommitment, type Card } from "@/utils/handCommitment";
 import { generateProofAndCalldata, initializeProofSystem } from "@/utils/proofGenerator";
 import { savePlayerHand, loadPlayerHand } from "@/utils/playerHandStorage";
@@ -69,6 +70,35 @@ export const Game = () => {
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
   const hasSubmittedProofRef = useRef(false);
   const handGeneratedRef = useRef(false); // Track if hand has been generated/loaded for this game
+  
+  // Round result modal state
+  const [showRoundResultModal, setShowRoundResultModal] = useState(false);
+  const [roundResultData, setRoundResultData] = useState<{
+    player1Lied: boolean;
+    player2Lied: boolean;
+    player1Believed: boolean;
+    player2Believed: boolean;
+    player1ScoreChange: number;
+    player2ScoreChange: number;
+    player1LivesChange: number;
+    player2LivesChange: number;
+    player1NewScore: number;
+    player2NewScore: number;
+    player1NewLives: number;
+    player2NewLives: number;
+  } | null>(null);
+  
+  // Track previous game state to calculate changes
+  const previousGameStateRef = useRef<{
+    player_1_score: number;
+    player_2_score: number;
+    player_1_lives: number;
+    player_2_lives: number;
+    round: number;
+  } | null>(null);
+  
+  // Track when we should show the result modal after proof submission
+  const shouldShowResultModalRef = useRef(false);
 
   // Watch game state with GraphQL polling (every 2 seconds)
   const { game } = useGameWatcher(gameId);
@@ -361,6 +391,20 @@ export const Game = () => {
 
           setProcessingStatus(null);
           toast.success("Proof submitted successfully!");
+          
+          // Store previous state before round resolution
+          if (game) {
+            previousGameStateRef.current = {
+              player_1_score: Number(game.player_1_score),
+              player_2_score: Number(game.player_2_score),
+              player_1_lives: Number(game.player_1_lives),
+              player_2_lives: Number(game.player_2_lives),
+              round: Number(game.round),
+            };
+          }
+          
+          // Mark that we should show the result modal
+          shouldShowResultModalRef.current = true;
         } else {
           const proofCalldata = result.calldata.map(item =>
             typeof item === 'bigint' ? item.toString() : String(item)
@@ -378,7 +422,7 @@ export const Game = () => {
           setProcessingStatus({
             title: "SUBMITTING PROOF",
             explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
-            message: "Transaction submitted, waiting for confirmation",
+            message: "Transaction sent, waiting for confirmation",
           });
 
           // Wait for transaction
@@ -389,6 +433,20 @@ export const Game = () => {
 
           setProcessingStatus(null);
           toast.success("Proof submitted successfully!");
+          
+          // Store previous state before round resolution
+          if (game) {
+            previousGameStateRef.current = {
+              player_1_score: Number(game.player_1_score),
+              player_2_score: Number(game.player_2_score),
+              player_1_lives: Number(game.player_1_lives),
+              player_2_lives: Number(game.player_2_lives),
+              round: Number(game.round),
+            };
+          }
+          
+          // Mark that we should show the result modal
+          shouldShowResultModalRef.current = true;
         }
 
       } catch (error) {
@@ -449,6 +507,80 @@ export const Game = () => {
 
   // Get player names
   const player1Name = game ? String(game.player_1_name || "Player 1") : "Player 1";
+
+  // Show result modal after proof submission when both proofs are submitted and round is resolved
+  useEffect(() => {
+    if (!game || !shouldShowResultModalRef.current || showRoundResultModal) {
+      return;
+    }
+
+    // Wait for both proofs to be submitted
+    if (!player1ProofSubmitted || !player2ProofSubmitted) {
+      return;
+    }
+
+    const previousState = previousGameStateRef.current;
+    if (!previousState) {
+      return;
+    }
+
+    // Check if round was resolved (scores/lives changed or round changed)
+    const scoresChanged = 
+      Number(game.player_1_score) !== previousState.player_1_score ||
+      Number(game.player_2_score) !== previousState.player_2_score;
+    const livesChanged =
+      Number(game.player_1_lives) !== previousState.player_1_lives ||
+      Number(game.player_2_lives) !== previousState.player_2_lives;
+    const roundChanged = Number(game.round) !== previousState.round;
+
+    // If scores/lives changed or round changed, the round was resolved
+    if (scoresChanged || livesChanged || roundChanged) {
+      // Calculate who lied
+      // player_x_lies = player_x_condition_choice && !player_x_proof.is_valid
+      const player1Lied = player1ConditionChoice === true && player1ProofValid === false;
+      const player2Lied = player2ConditionChoice === true && player2ProofValid === false;
+
+      // Calculate who believed
+      // player_x_challenge_choice = true means player_x believes the opponent
+      const player1Believed = player1ChallengeChoice === true;
+      const player2Believed = player2ChallengeChoice === true;
+
+      // Calculate changes
+      const player1ScoreChange = Number(game.player_1_score) - previousState.player_1_score;
+      const player2ScoreChange = Number(game.player_2_score) - previousState.player_2_score;
+      const player1LivesChange = Number(game.player_1_lives) - previousState.player_1_lives;
+      const player2LivesChange = Number(game.player_2_lives) - previousState.player_2_lives;
+
+      setRoundResultData({
+        player1Lied,
+        player2Lied,
+        player1Believed,
+        player2Believed,
+        player1ScoreChange,
+        player2ScoreChange,
+        player1LivesChange,
+        player2LivesChange,
+        player1NewScore: Number(game.player_1_score),
+        player2NewScore: Number(game.player_2_score),
+        player1NewLives: Number(game.player_1_lives),
+        player2NewLives: Number(game.player_2_lives),
+      });
+
+      setShowRoundResultModal(true);
+      shouldShowResultModalRef.current = false;
+    }
+  }, [
+    game,
+    player1ProofSubmitted,
+    player2ProofSubmitted,
+    player1ProofValid,
+    player2ProofValid,
+    player1ConditionChoice,
+    player2ConditionChoice,
+    player1ChallengeChoice,
+    player2ChallengeChoice,
+    showRoundResultModal,
+  ]);
 
   const handleConditionChoice = async (choice: boolean) => {
     if (!account) return;
@@ -628,6 +760,33 @@ export const Game = () => {
         message={processingStatus?.message || ""}
         explanation={processingStatus?.explanation}
       />
+
+      {/* Round Result Modal */}
+      {showRoundResultModal && roundResultData && (
+        <RoundResultModal
+          isOpen={showRoundResultModal}
+          player1Name={player1Name}
+          player2Name={player2Name}
+          player1Lied={roundResultData.player1Lied}
+          player2Lied={roundResultData.player2Lied}
+          player1Believed={roundResultData.player1Believed}
+          player2Believed={roundResultData.player2Believed}
+          player1ScoreChange={roundResultData.player1ScoreChange}
+          player2ScoreChange={roundResultData.player2ScoreChange}
+          player1LivesChange={roundResultData.player1LivesChange}
+          player2LivesChange={roundResultData.player2LivesChange}
+          player1NewScore={roundResultData.player1NewScore}
+          player2NewScore={roundResultData.player2NewScore}
+          player1NewLives={roundResultData.player1NewLives}
+          player2NewLives={roundResultData.player2NewLives}
+          onContinue={() => {
+            setShowRoundResultModal(false);
+            setRoundResultData(null);
+            shouldShowResultModalRef.current = false;
+            previousGameStateRef.current = null;
+          }}
+        />
+      )}
     </div>
   );
 };
