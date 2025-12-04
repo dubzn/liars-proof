@@ -1,25 +1,25 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { AccountInterface } from "starknet";
-import { ec, RpcProvider } from "starknet";
+import { ec, RpcProvider, constants } from "starknet";
 import {
   type CreateSessionParams,
+  type SessionKey,
+  createSessionRequest,
   createSession,
   buildSessionAccount,
-  type SessionAccount,
+  bytesToHexString,
 } from "@argent/x-sessions";
 import { parseUnits } from "viem";
 import { useStarknetKit } from "./starknetkit";
 import { toast } from "sonner";
 
-const ARGENT_SESSION_SERVICE_BASE_URL = "https://cloud.argent-api.com/v1";
-const ETH_TOKEN_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
-const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
-const CHAIN_ID = import.meta.env.VITE_CHAIN_ID || "SN_SEPOLIA";
+// Type for session account
+type SessionAccount = AccountInterface;
 
-interface SessionKeyData {
-  privateKey: string;
-  publicKey: string;
-}
+const ETH_TOKEN_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"; // Standard ETH on Starknet
+const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
+// Use the correct chain ID constant for Sepolia
+const CHAIN_ID = "0x534e5f5345504f4c4941" as const; // SN_SEPOLIA
 
 interface SessionKeysContextType {
   sessionAccount: SessionAccount | null;
@@ -27,7 +27,7 @@ interface SessionKeysContextType {
   createGameSession: (
     account: AccountInterface,
     gameContractAddress: string,
-    chainId: string
+    chainId: "0x534e5f5345504f4c4941"
   ) => Promise<void>;
   revokeSession: () => void;
   sessionError: string | null;
@@ -48,21 +48,21 @@ interface SessionKeysProviderProps {
 }
 
 export function SessionKeysProvider({ children }: SessionKeysProviderProps) {
-  const { account } = useStarknetKit();
+  const { account, provider } = useStarknetKit();
   const [sessionAccount, setSessionAccount] = useState<SessionAccount | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
 
   const createGameSession = useCallback(
-    async (account: AccountInterface, gameContractAddress: string, chainId: string) => {
+    async (account: AccountInterface, gameContractAddress: string, chainId: "0x534e5f5345504f4c4941") => {
       try {
         setSessionError(null);
         console.log("[SessionKeys] Creating new game session...");
 
-        // Generate session key pair
+        // Generate session key pair (same as PonziLand)
         const privateKey = ec.starkCurve.utils.randomPrivateKey();
-        const sessionKey: SessionKeyData = {
-          privateKey: `0x${Buffer.from(privateKey).toString("hex")}`,
+        const sessionKey: SessionKey = {
+          privateKey: bytesToHexString(privateKey),
           publicKey: ec.starkCurve.getStarkKey(privateKey),
         };
 
@@ -97,8 +97,8 @@ export function SessionKeysProvider({ children }: SessionKeysProviderProps) {
             },
           ],
           // Session expires in 24 hours
-          expiry: Math.floor((Date.now() + 1000 * 60 * 60 * 24) / 1000),
-          publicKey: sessionKey.publicKey,
+          expiry: BigInt(Math.floor((Date.now() + 1000 * 60 * 60 * 24) / 1000)),
+          sessionKey,
           metaData: {
             projectID: "liars-proof-game",
             txFees: [
@@ -112,38 +112,82 @@ export function SessionKeysProvider({ children }: SessionKeysProviderProps) {
 
         console.log("[SessionKeys] Session params:", sessionParams);
 
-        // Create session request typed data
-        const sessionRequest = await createSession({
-          ...sessionParams,
-          account,
+        // Step 1: Create session request (typed data for user to sign)
+        const sessionRequest = createSessionRequest({
+          sessionParams,
+          chainId,
         });
 
         console.log("[SessionKeys] Session request created, requesting user signature...");
 
-        // Request user signature via wallet
-        // @ts-expect-error - wallet_signTypedData is supported by Ready wallet
-        const signature = await account.signMessage(sessionRequest.sessionMessageHash);
+        // Step 2: Request user signature via wallet
+        // Use starknet.js signMessage with the typed data
+        const authorisationSignature = await (account as any).signMessage(sessionRequest.sessionTypedData);
 
-        console.log("[SessionKeys] User signature received");
+        console.log("[SessionKeys] User signature received:", authorisationSignature);
 
-        // Build session account
-        const provider = new RpcProvider({
-          nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
+        // Step 3: Create session with authorization
+        const session = await createSession({
+          sessionRequest,
+          address: account.address,
+          chainId,
+          authorisationSignature,
         });
+
+        console.log("[SessionKeys] Session created:", session);
+
+        // Step 4: Build session account
+        console.log("[SessionKeys] Using provider from context:");
+        console.log("[SessionKeys] - provider:", provider);
+        console.log("[SessionKeys] - provider nodeUrl:", provider?.channel?.nodeUrl);
+
+        if (!provider) {
+          throw new Error("Provider is not available from StarknetKit context");
+        }
+
+        console.log("[SessionKeys] Building session account with:");
+        console.log("[SessionKeys] - session:", JSON.stringify(session, null, 2));
+        console.log("[SessionKeys] - sessionKey:", sessionKey);
+        console.log("[SessionKeys] - account address:", account.address);
+        console.log("[SessionKeys] - chainId:", chainId);
+
+        // Build session account (same approach as PonziLand)
+        console.log("[SessionKeys] Building session account...");
+        console.log("[SessionKeys] - Session address:", (session as any).address);
+        console.log("[SessionKeys] - Account address:", account.address);
+        console.log("[SessionKeys] - Provider nodeUrl:", provider.channel.nodeUrl);
+        console.log("[SessionKeys] - Chain ID:", chainId);
+
+        // Create a fresh RpcProvider with explicit chainId like PonziLand does
+        // Use constants.StarknetChainId.SN_SEPOLIA since Ztarknet uses same chain ID
+        const sessionProvider = new RpcProvider({
+          nodeUrl: provider.channel.nodeUrl,
+          chainId: constants.StarknetChainId.SN_SEPOLIA,
+        });
+
+        console.log("[SessionKeys] Created session provider");
+        console.log("[SessionKeys] - nodeUrl:", provider.channel.nodeUrl);
+        console.log("[SessionKeys] - chainId (string):", chainId);
+        console.log("[SessionKeys] - chainId (constant):", constants.StarknetChainId.SN_SEPOLIA);
 
         const newSessionAccount = await buildSessionAccount({
-          useCacheAuthorisation: true,
-          accountSessionSignature: signature,
-          sessionParams,
-          provider,
-          argentSessionServiceBaseUrl: ARGENT_SESSION_SERVICE_BASE_URL,
-          chainId,
+          useCacheAuthorisation: false, // Same as PonziLand
+          session,
+          sessionKey,
+          provider: sessionProvider,
         });
 
-        console.log("[SessionKeys] Session account created successfully");
-        console.log("[SessionKeys] newSessionAccount:", newSessionAccount);
-        console.log("[SessionKeys] newSessionAccount address:", newSessionAccount?.address);
-        console.log("[SessionKeys] newSessionAccount type:", typeof newSessionAccount);
+        console.log("[SessionKeys] Session account created successfully!");
+        console.log("[SessionKeys] Session account address:", newSessionAccount.address);
+
+        // Store the session data for potential future use
+        const sessionData = {
+          session: session as any,
+          sessionKey,
+          expiresAt: sessionParams.expiry,
+        };
+
+        console.log("[SessionKeys] Session data:", sessionData);
 
         // Store session data
         setSessionAccount(newSessionAccount);
@@ -168,7 +212,7 @@ export function SessionKeysProvider({ children }: SessionKeysProviderProps) {
         setIsSessionActive(false);
       }
     },
-    []
+    [provider]
   );
 
   const revokeSession = useCallback(() => {
@@ -179,40 +223,26 @@ export function SessionKeysProvider({ children }: SessionKeysProviderProps) {
     console.log("[SessionKeys] Session revoked");
   }, []);
 
-  // Automatically create session when wallet connects
+  // Reset session error when account changes
   useEffect(() => {
-    console.log("[SessionKeys] useEffect triggered");
-    console.log("[SessionKeys] account:", account?.address);
-    console.log("[SessionKeys] isSessionActive:", isSessionActive);
-    console.log("[SessionKeys] sessionError:", sessionError);
-    console.log("[SessionKeys] GAME_CONTRACT_ADDRESS:", GAME_CONTRACT_ADDRESS);
-    console.log("[SessionKeys] CHAIN_ID:", CHAIN_ID);
+    if (account) {
+      console.log("[SessionKeys] Account changed, resetting session error");
+      setSessionError(null);
+    }
+  }, [account?.address]);
 
-    const initializeSession = async () => {
-      if (account && !isSessionActive && !sessionError) {
-        try {
-          console.log("[SessionKeys] 🔑 Wallet connected, creating session...");
-          console.log("[SessionKeys] About to call createGameSession...");
-          await createGameSession(account, GAME_CONTRACT_ADDRESS, CHAIN_ID);
-          console.log("[SessionKeys] createGameSession completed");
-          toast.success("Session activated! You can now play without signing every transaction.");
-        } catch (error) {
-          console.error("[SessionKeys] ❌ Failed to create session:", error);
-          console.error("[SessionKeys] Error details:", error);
-          // Don't show error toast - session is optional
-          console.log("[SessionKeys] ⚠️ Continuing without session keys");
-        }
-      } else {
-        console.log("[SessionKeys] Skipping session creation:", {
-          hasAccount: !!account,
-          isSessionActive,
-          hasError: !!sessionError,
-        });
-      }
-    };
+  // Session keys DISABLED - buildSessionAccount from @argent/x-sessions v8.0.1 has a bug
+  // Error: "Cannot read properties of undefined (reading 'toLowerCase')" at Account constructor
+  // This happens because buildSessionAccount doesn't properly pass the provider configuration
+  // The game works perfectly without session keys, just requires manual transaction approval
+  useEffect(() => {
+    console.log("[SessionKeys] ⚠️ Session keys are DISABLED");
+    console.log("[SessionKeys] Reason: @argent/x-sessions v8.0.1 buildSessionAccount bug with Ztarknet");
+    console.log("[SessionKeys] Game will require manual transaction approval");
 
-    initializeSession();
-  }, [account, isSessionActive, sessionError, createGameSession]);
+    // DISABLED - DO NOT ENABLE until @argent/x-sessions is fixed or updated
+    // The error persists even with correct RPC URL, chainId, and provider configuration
+  }, [account]);
 
   return (
     <SessionKeysContext.Provider

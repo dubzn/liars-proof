@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { AccountInterface } from "starknet";
+import type { AccountInterface, ProviderInterface } from "starknet";
 import { InjectedConnector } from "starknetkit/injected";
 import { RpcProvider } from "starknet";
 
 interface StarknetKitContextType {
   account: AccountInterface | null;
   connector: InjectedConnector | null;
+  provider: ProviderInterface | null;
   isConnecting: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
@@ -29,6 +30,7 @@ interface StarknetKitProviderProps {
 export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
   const [account, setAccount] = useState<AccountInterface | null>(null);
   const [connector, setConnector] = useState<InjectedConnector | null>(null);
+  const [provider, setProvider] = useState<ProviderInterface | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
 
@@ -50,12 +52,13 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
         // Try to restore connection if available
         if (available) {
           try {
-            const provider = new RpcProvider({
+            const rpcProvider = new RpcProvider({
               nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
             });
+            setProvider(rpcProvider);
             const ready = await argentConnector.ready();
             if (ready) {
-              const connectedAccount = await argentConnector.account(provider);
+              const connectedAccount = await argentConnector.account(rpcProvider);
               if (connectedAccount) {
                 setAccount(connectedAccount);
               }
@@ -88,11 +91,12 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
       console.log("[StarknetKit] Connected:", connectorData);
 
       // Get the account using the provider
-      const provider = new RpcProvider({
+      const rpcProvider = new RpcProvider({
         nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
       });
+      setProvider(rpcProvider);
 
-      const connectedAccount = await connector.account(provider);
+      const connectedAccount = await connector.account(rpcProvider);
       setAccount(connectedAccount);
       console.log("[StarknetKit] Account set:", connectedAccount.address);
     } catch (error) {
@@ -110,6 +114,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
       console.log("[StarknetKit] Disconnecting...");
       await connector.disconnect();
       setAccount(null);
+      setProvider(null);
       console.log("[StarknetKit] Disconnected");
     } catch (error) {
       console.error("[StarknetKit] Error disconnecting:", error);
@@ -121,6 +126,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
       value={{
         account,
         connector,
+        provider,
         isConnecting,
         connect,
         disconnect,
