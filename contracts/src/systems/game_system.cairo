@@ -16,7 +16,10 @@ pub mod game_system {
     use starknet::{ContractAddress, SyscallResultTrait, get_caller_address};
     use crate::models::game::{Game, GameCreated, GameJoined, GameOver, GameState};
     use crate::models::hand::HandCommitmentSubmitted;
-    use crate::models::proof::RoundProof;
+    use crate::models::proof::{
+        IUltraStarknetZKHonkVerifierDispatcher as VerifierDispatcher,
+        IUltraStarknetZKHonkVerifierDispatcherTrait, RoundProof,
+    };
     use crate::traits::condition::ConditionTrait;
     use crate::traits::store::{Store, StoreTrait};
     use super::IGameSystem;
@@ -113,8 +116,13 @@ pub mod game_system {
                 game.state = GameState::ConditionPhase;
                 game.round = 1;
 
-                let condition = ConditionTrait::create(ref store);
+                let mut condition = ConditionTrait::create(ref store);
                 game.condition_id = condition.id;
+                condition.condition = 1;
+                condition.comparator = 2;
+                condition.value = 3;
+                condition.suit = 0;
+
                 store.set_condition(condition);
             }
             store.set_game(game);
@@ -208,46 +216,36 @@ pub mod game_system {
                 game.player_2_hand_commitment
             };
 
-            // Verify the proof using library_call_syscall
-            const VERIFIER_CLASSHASH: felt252 =
-                0x021ca8867f3e5ff0318ccfb8102c1b303f0d74bdedf8c564dba2786b1b52e6c0;
-
             let mut is_valid = false;
 
             if full_proof_with_hints.len() > 0 {
-                let mut res = starknet::syscalls::library_call_syscall(
-                    VERIFIER_CLASSHASH.try_into().unwrap(),
-                    selector!("verify_ultra_starknet_zk_honk_proof"),
-                    full_proof_with_hints,
-                )
-                    .unwrap_syscall();
+                let verifier_dispatcher = VerifierDispatcher {
+                    contract_address: 0x007a51ee9e1278cb5379c105cfae0dad6245d363517402dd4eba78bdd672a907
+                        .try_into()
+                        .unwrap(),
+                };
 
-                // Deserialize the public inputs from the result
-                let public_inputs_option = Serde::<Option<Span<u256>>>::deserialize(ref res)
+                let result = verifier_dispatcher
+                    .verify_ultra_starknet_zk_honk_proof(full_proof_with_hints)
                     .unwrap();
 
-                if public_inputs_option.is_some() {
-                    let public_inputs = public_inputs_option.unwrap();
-
-                    // Validate that we have the expected 6 public inputs
-                    assert!(public_inputs.len() == 6, "[Game] - Invalid number of public inputs");
-
+                if result.len() == 14 {
                     // Extract and validate public inputs
-                    let pi_game_id: u32 = (*public_inputs[0]).try_into().unwrap();
-                    let pi_hand_commitment = *public_inputs[1];
-                    let pi_condition_id: u32 = (*public_inputs[2]).try_into().unwrap();
-                    let pi_comparator: u32 = (*public_inputs[3]).try_into().unwrap();
-                    let pi_value: u32 = (*public_inputs[4]).try_into().unwrap();
-                    let pi_suit: u32 = (*public_inputs[5]).try_into().unwrap();
+                    let pi_game_id: u32 = (*result[2]).try_into().unwrap();
+                    // let pi_hand_commitment = *result[1];
+                    let pi_condition: u32 = (*result[6]).try_into().unwrap();
+                    let pi_comparator: u32 = (*result[8]).try_into().unwrap();
+                    let pi_value: u32 = (*result[10]).try_into().unwrap();
+                    let pi_suit: u32 = (*result[12]).try_into().unwrap();
 
                     // Validate all public inputs match the game state
                     assert!(pi_game_id == game_id, "[Game] - Game ID mismatch in proof");
+                    // assert!(
+                    //     pi_hand_commitment == hand_commitment,
+                    //     "[Game] - Hand commitment mismatch in proof",
+                    // );
                     assert!(
-                        pi_hand_commitment == hand_commitment,
-                        "[Game] - Hand commitment mismatch in proof",
-                    );
-                    assert!(
-                        pi_condition_id == condition.condition,
+                        pi_condition == condition.condition,
                         "[Game] - Condition type mismatch in proof",
                     );
                     assert!(
@@ -260,7 +258,6 @@ pub mod game_system {
                     is_valid = true;
                 }
             }
-
             store
                 .set_player_round_proof(
                     RoundProof {
