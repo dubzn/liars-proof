@@ -1,12 +1,10 @@
 import { LuCopy } from "react-icons/lu";
 import { toast } from "sonner";
-import { StarknetColoredIcon } from "@/components/icons";
+// import { StarknetColoredIcon } from "@/components/icons";
 
 const useToast = () => {
   const chainIcon = (chainName: string) => {
-    return chainName === "Starknet Mainnet" ? (
-      <StarknetColoredIcon />
-    ) : (
+    return (
       <img
         className="w-6 h-6 rounded-full object-cover"
         src="/logo.png"
