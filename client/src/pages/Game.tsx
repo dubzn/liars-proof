@@ -13,6 +13,7 @@ import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
 import { RoundResultModal } from "@/components/game/RoundResultModal";
+import { GameOverModal } from "@/components/game/GameOverModal";
 import { calculateHandCommitment, type Card } from "@/utils/handCommitment";
 import { generateProofAndCalldata, initializeProofSystem } from "@/utils/proofGenerator";
 import { savePlayerHand, loadPlayerHand } from "@/utils/playerHandStorage";
@@ -605,6 +606,26 @@ export const Game = () => {
   const hasPlayer2 = game && game.player_2_name && String(game.player_2_name).trim() !== "";
   const player2Name = hasPlayer2 ? String(game.player_2_name) : "";
   const player1Name = game ? String(game.player_1_name || "Player 1") : "Player 1";
+  
+  // Get final scores and lives for GameOver modal
+  const player1Score = game ? Number(game.player_1_score) : 0;
+  const player2Score = game ? Number(game.player_2_score) : 0;
+  const player1Lives = game ? Number(game.player_1_lives) : 0;
+  const player2Lives = game ? Number(game.player_2_lives) : 0;
+  
+  // Determine winner based on game rules (matching contract logic):
+  // - If player_1_lives == 0, player_2 wins
+  // - If player_2_lives == 0, player_1 wins
+  // - If player_1_score >= 50, player_1 wins
+  // - Otherwise, player_2 wins (player_2_score >= 50)
+  const isGameOver = currentGameState === "GameOver";
+  const isPlayer1Winner = isGameOver && (
+    player1Lives === 0 ? false :
+    player2Lives === 0 ? true :
+    player1Score >= 50 ? true :
+    false // player_2_score >= 50
+  );
+  const winnerName = isGameOver && hasPlayer2 ? (isPlayer1Winner ? player1Name : player2Name) : "";
 
   const hasSubmittedCondition = game && isPlayer1
     ? Boolean(game.player_1_condition_submitted)
@@ -684,8 +705,8 @@ export const Game = () => {
       setProcessingStatus({
         title: "SUBMITTING CHALLENGE CHOICE",
         explanation: choice
-          ? "You are choosing to believe the opponent's claim. If they are telling the truth, the round continues. If they are lying, you may gain an advantage."
-          : "You are choosing to challenge the opponent's claim. If they cannot prove their claim with a valid zero-knowledge proof, you will win the round.",
+          ? "You are choosing to believe the opponent's claim. If the opponent is telling the truth, the round continues. If the opponent is lying, you may gain an advantage."
+          : "You are choosing to challenge the opponent's claim. If the opponent cannot prove the claim with a valid zero-knowledge proof, you will win the round.",
         message: "Preparing transaction...",
       });
 
@@ -701,8 +722,8 @@ export const Game = () => {
       setProcessingStatus({
         title: "SUBMITTING CHALLENGE CHOICE",
         explanation: choice
-          ? "You are choosing to believe the opponent's claim. If they are telling the truth, the round continues. If they are lying, you may gain an advantage."
-          : "You are choosing to challenge the opponent's claim. If they cannot prove their claim with a valid zero-knowledge proof, you will win the round.",
+          ? "You are choosing to believe the opponent's claim. If the opponent is telling the truth, the round continues. If the opponent is lying, you may gain an advantage."
+          : "You are choosing to challenge the opponent's claim. If the opponent cannot prove the claim with a valid zero-knowledge proof, you will win the round.",
         message: "Transaction sent, waiting for confirmation",
       });
 
@@ -824,6 +845,20 @@ export const Game = () => {
           player1NewLives={roundResultData.player1NewLives}
           player2NewLives={roundResultData.player2NewLives}
           onContinue={handleRoundResultContinue}
+        />
+      )}
+
+      {isGameOver && hasPlayer2 && (
+        <GameOverModal
+          isOpen={isGameOver}
+          player1Name={player1Name}
+          player2Name={player2Name}
+          player1Score={player1Score}
+          player2Score={player2Score}
+          player1Lives={player1Lives}
+          player2Lives={player2Lives}
+          winnerName={winnerName}
+          isPlayer1Winner={isPlayer1Winner}
         />
       )}
     </div>

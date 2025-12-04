@@ -158,7 +158,7 @@ export const GamePhasePanel = ({
         {isCommitmentExpanded && (
           <div className="game-phase-content">
             <div className="game-phase-description">
-              Both players must commit to their hand cards without revealing them.
+              Both players must commit to hand cards without revealing them.
             </div>
             <div className="game-phase-commitment-status">
               <div className="game-phase-commitment-player">
@@ -176,7 +176,7 @@ export const GamePhasePanel = ({
             </div>
             {bothCommitmentsSubmitted ? (
               <div className="game-phase-message">
-                Both players have submitted their hand commitments!
+                Both players have submitted hand commitments!
               </div>
             ) : currentPlayerCommitmentSubmitted ? (
               <div className="game-phase-message">
@@ -226,7 +226,7 @@ export const GamePhasePanel = ({
         {isConditionExpanded && (
           <div className="game-phase-content">
             <div className="game-phase-description">
-              A random condition is revealed. Each player must decide if their hand fulfills it.
+              A random condition is revealed. Each player must decide if the hand fulfills it.
             </div>
             {isLoadingCondition ? (
               <div className="game-phase-message">Loading condition...</div>
@@ -264,7 +264,7 @@ export const GamePhasePanel = ({
                 </div>
                 {player1ConditionSubmitted && player2ConditionSubmitted ? (
                   <div className="game-phase-message">
-                    Both players have submitted their condition choices!
+                    Both players have submitted condition choices!
                   </div>
                 ) : hasSubmittedCondition ? (
                   <div className="game-phase-message">
@@ -360,7 +360,7 @@ export const GamePhasePanel = ({
             </div>
             {player1ChallengeSubmitted && player2ChallengeSubmitted ? (
               <div className="game-phase-message">
-                Both players have submitted their challenge choices!
+                Both players have submitted challenge choices!
               </div>
             ) : hasSubmittedChallenge ? (
               <div className="game-phase-message">
@@ -416,7 +416,7 @@ export const GamePhasePanel = ({
         {isResultExpanded && (
           <div className="game-phase-content">
             <div className="game-phase-description">
-              Players submit proofs to verify their claims. The round winner is determined.
+              Players submit proofs to verify claims. The round winner is determined.
             </div>
             {/* Show proof submission status */}
             <div className="game-phase-condition-status">
@@ -425,8 +425,8 @@ export const GamePhasePanel = ({
                 <span className="game-phase-condition-message">
                   {player1ProofSubmitted
                     ? player1ProofValid
-                      ? "✓ Proof verified (valid)"
-                      : "✗ Proof verified (invalid)"
+                      ? "✓ was telling the truth"
+                      : "✗ was lying"
                     : "Submitting proof..."}
                 </span>
               </div>
@@ -436,8 +436,8 @@ export const GamePhasePanel = ({
                   <span className="game-phase-condition-message">
                     {player2ProofSubmitted
                       ? player2ProofValid
-                        ? "✓ Proof verified (valid)"
-                        : "✗ Proof verified (invalid)"
+                        ? "✓ was telling the truth"
+                        : "✗ was lying"
                       : "Submitting proof..."}
                   </span>
                 </div>
@@ -445,7 +445,7 @@ export const GamePhasePanel = ({
             </div>
             {player1ProofSubmitted && player2ProofSubmitted ? (
               <div className="game-phase-message">
-                Both players have submitted their proofs! Determining winner...
+                Both players have submitted proofs! Determining winner...
               </div>
             ) : (
               <>

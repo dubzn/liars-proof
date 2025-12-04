@@ -55,7 +55,7 @@
 
 @layer base {
   body {
-    @apply bg-purple-100;
+    background-color: #000000;
     font-family: Arial, sans-serif;
     color: white;
   }

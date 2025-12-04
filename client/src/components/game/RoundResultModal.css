@@ -23,7 +23,7 @@
 }
 
 .round-result-modal {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 40, 0.95));
+  background: rgba(0, 0, 0, 0.95);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 1rem;
   padding: 1.5rem 2rem;
@@ -31,7 +31,7 @@
   width: 90%;
   max-height: 95vh;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), 0 0 80px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
   animation: slideUp 0.5s ease-out;
   display: flex;
   flex-direction: column;
@@ -192,7 +192,7 @@
 }
 
 .round-result-player-result {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(20, 20, 40, 0.4));
+  background: rgba(0, 0, 0, 0.4);
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
