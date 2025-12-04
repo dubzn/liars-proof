@@ -12,8 +12,9 @@ import { GamePhasePanel } from "@/components/game/GamePhasePanel";
 import { OpponentCharacter } from "@/components/game/OpponentCharacter";
 import { PlayerHandCards } from "@/components/game/PlayerHandCards";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
-import { calculateHandCommitment, handCommitmentToHex, type Card } from "@/utils/handCommitment";
+import { calculateHandCommitment, type Card } from "@/utils/handCommitment";
 import { generateProofAndCalldata, initializeProofSystem } from "@/utils/proofGenerator";
+import { savePlayerHand, loadPlayerHand } from "@/utils/playerHandStorage";
 import type { ProofInput } from "@/types/proof";
 import { toast } from "sonner";
 // import { useGameExecute } from "@/hooks/examples/useGameExecute"; // Temporarily commented - uncomment after browser refresh
@@ -66,15 +67,14 @@ export const Game = () => {
   } | null>(null);
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
   const hasSubmittedProofRef = useRef(false);
+  const handGeneratedRef = useRef(false); // Track if hand has been generated/loaded for this game
 
   // Watch game state with GraphQL polling (every 2 seconds)
-  const { game } = useGameWatcher(gameId, (updatedGame) => {
-    console.log("🎮 Game updated in Game page:", updatedGame);
-  });
+  const { game } = useGameWatcher(gameId);
 
   // Fetch condition data for proof generation
   const conditionId = game ? Number(game.condition_id) : 0;
-  const { condition, isLoading: isLoadingCondition, error: conditionError } = useConditionGraphQL(conditionId);
+  const { condition, error: conditionError } = useConditionGraphQL(conditionId);
 
   // Helper to get game state variant (needed before useEffect)
   const getGameStateVariant = (state: any): string => {
@@ -101,12 +101,10 @@ export const Game = () => {
   const player2Address = game?.player_2;
 
   const {
-    proofs,
     player1ProofSubmitted,
     player1ProofValid,
     player2ProofSubmitted,
     player2ProofValid,
-    isLoading: isLoadingProofs,
     error: proofsError,
   } = useRoundProofGraphQL(
     gameId,
@@ -116,24 +114,19 @@ export const Game = () => {
     isResultPhase // Only poll when in ResultPhase
   );
 
-  // Debug logs for condition
+  // Log condition errors only
   useEffect(() => {
-    console.log("[Game] conditionId:", conditionId);
-    console.log("[Game] condition:", condition);
-    console.log("[Game] isLoadingCondition:", isLoadingCondition);
-    console.log("[Game] conditionError:", conditionError);
-  }, [conditionId, condition, isLoadingCondition, conditionError]);
-
-  // Debug logs for proofs
-  useEffect(() => {
-    if (isResultPhase) {
-      console.log("[Game] Round proofs:", proofs);
-      console.log("[Game] Player 1 proof submitted:", player1ProofSubmitted, "valid:", player1ProofValid);
-      console.log("[Game] Player 2 proof submitted:", player2ProofSubmitted, "valid:", player2ProofValid);
-      console.log("[Game] isLoadingProofs:", isLoadingProofs);
-      console.log("[Game] proofsError:", proofsError);
+    if (conditionError) {
+      console.error("[Game] Condition error:", conditionError);
     }
-  }, [isResultPhase, proofs, player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid, isLoadingProofs, proofsError]);
+  }, [conditionError]);
+
+  // Log proof errors only
+  useEffect(() => {
+    if (proofsError) {
+      console.error("[Game] Proofs error:", proofsError);
+    }
+  }, [proofsError]);
 
   // Determine if current player is player_1 or player_2 (needed before useEffect)
   const isPlayer1 = game && account?.address === game.player_1 ? true : false;
@@ -158,65 +151,73 @@ export const Game = () => {
     initialize();
   }, []);
 
-  // Generate random hand when game is loaded for the first time
+  // Load or generate player hand
+  // Cards should be generated only when:
+  // 1. Player 1 creates a game (game state: WaitingForPlayers)
+  // 2. Player 2 joins a game (game state: WaitingForHandCommitments, player_2 just joined)
   useEffect(() => {
-    if (gameId > 0 && playerHand.length === 0) {
+    // Skip if we don't have required data or if hand was already generated/loaded for this game
+    if (!gameId || !account?.address || !game || handGeneratedRef.current) {
+      return;
+    }
+
+    const userAddress = account.address;
+    const gameState = getGameStateVariant(game.state);
+    const isPlayer1 = userAddress === game.player_1;
+    const isPlayer2 = userAddress === game.player_2;
+
+    // Try to load from localStorage first
+    const savedHand = loadPlayerHand(gameId, userAddress);
+    if (savedHand && savedHand.length === 3) {
+      setPlayerHand(savedHand);
+      handGeneratedRef.current = true; // Mark as loaded
+      return;
+    }
+
+    // Generate new hand only in specific scenarios:
+    // 1. Player 1: when game is in WaitingForPlayers (just created)
+    // 2. Player 2: when game is in WaitingForHandCommitments and player_2 is set (just joined)
+    const shouldGenerateHand =
+      (isPlayer1 && gameState === "WaitingForPlayers") ||
+      (isPlayer2 && gameState === "WaitingForHandCommitments" && game.player_2);
+
+    if (shouldGenerateHand) {
       const newHand = generateRandomHand();
       setPlayerHand(newHand);
-      console.log("[Game] 🃏 Generated random hand:", newHand);
+      // Save to localStorage immediately
+      savePlayerHand(gameId, userAddress, newHand);
+      handGeneratedRef.current = true; // Mark as generated
     }
-  }, [gameId, playerHand.length]);
+  }, [gameId, account?.address, game, getGameStateVariant]);
+
+  // Reset handGeneratedRef when gameId or userAddress changes
+  useEffect(() => {
+    handGeneratedRef.current = false;
+  }, [gameId, account?.address]);
 
   // Submit hand commitment after generating hand
   useEffect(() => {
     const submitHandCommitment = async () => {
-      console.log("[Game] 🔍 Checking hand commitment conditions:", {
-        hasAccount: !!account,
-        hasGame: !!game,
-        hasSubmittedCommitment,
-        isSubmittingCommitment,
-        playerHandLength: playerHand.length,
-        gameState: game ? getGameStateVariant(game.state) : "no game",
-        isPlayer1,
-        player1CommitmentSubmitted,
-        player2CommitmentSubmitted,
-      });
-
       if (!account || !game || hasSubmittedCommitment || isSubmittingCommitment || playerHand.length !== 3) {
-        console.log("[Game] ⚠️ Skipping commitment - missing prerequisites");
         return;
       }
 
       // Check if current player already submitted commitment
       const currentPlayerCommitmentSubmitted = isPlayer1 ? player1CommitmentSubmitted : player2CommitmentSubmitted;
       if (currentPlayerCommitmentSubmitted) {
-        console.log("[Game] ✓ Current player already submitted commitment");
         setHasSubmittedCommitment(true);
         return;
       }
 
       // Only submit if we're in WaitingForHandCommitments state
       const gameState = getGameStateVariant(game.state);
-      console.log("[Game] 🎯 Game state:", gameState);
       if (gameState !== "WaitingForHandCommitments") {
-        console.log("[Game] ⚠️ Not in WaitingForHandCommitments, current state:", gameState);
         return;
       }
 
-      console.log("[Game] ✅ All conditions met, submitting hand commitment...");
-
       setIsSubmittingCommitment(true);
       try {
-        console.log("[Game] 🔐 Calculating hand commitment...");
         const commitment = await calculateHandCommitment(playerHand);
-        const commitmentHex = handCommitmentToHex(commitment);
-
-        console.log("[Game] 📤 Submitting hand commitment to contract:", {
-          gameId,
-          commitment: commitment.toString(),
-          commitmentHex,
-          hand: playerHand,
-        });
 
         setProcessingStatus({
           title: "SUBMITTING HAND COMMITMENT",
@@ -232,20 +233,17 @@ export const Game = () => {
 
         const result = await account.execute(submitHandCommitmentCall);
 
-        console.log("[Game] Transaction hash:", result.transaction_hash);
-
         setProcessingStatus({
           title: "SUBMITTING HAND COMMITMENT",
           message: "Transaction submitted, waiting for confirmation...",
         });
 
         // Wait for transaction
-        const receipt = await account.waitForTransaction(result.transaction_hash, {
+        await account.waitForTransaction(result.transaction_hash, {
           retryInterval: 100,
           successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
         });
 
-        console.log("[Game] ✅ Hand commitment submitted successfully!", receipt);
         setProcessingStatus(null);
         toast.success("Hand commitment submitted!");
         setHasSubmittedCommitment(true);
@@ -299,8 +297,6 @@ export const Game = () => {
       hasSubmittedProofRef.current = true;
 
       try {
-        console.log("[Game] 🔐 Generating ZK proof for ResultPhase...");
-
         // Wait for condition data to be loaded
         if (!condition) {
           console.error("[Game] ❌ Condition data not loaded yet");
@@ -328,24 +324,10 @@ export const Game = () => {
           },
         };
 
-        console.log("[Game] Proof input:", proofInput);
-        console.log("[Game] Using condition data:", {
-          comparator: condition.comparator,
-          value: condition.value,
-          suit: condition.suit,
-        });
-
         // Generate proof
         const result = await generateProofAndCalldata(proofInput);
-        console.log("[Game] ✅ Proof generated! Calldata length:", result.calldata.length);
-        console.log("[Game] Proof generated! Calldata:", result.calldata);
-
-        // Submit proof to contract
-        console.log("[Game] 📤 Submitting proof to contract...");
-
 
         if (result.calldata.length === 0) {
-          console.log("[Game] No calldata generated");
           const txResult = await account.execute({
             contractAddress: GAME_CONTRACT_ADDRESS,
             entrypoint: "submit_round_proof",
@@ -355,15 +337,12 @@ export const Game = () => {
             ],
           });
 
-          console.log("[Game] Transaction hash:", txResult.transaction_hash);
-
           // Wait for transaction
-          const receipt = await account.waitForTransaction(txResult.transaction_hash, {
+          await account.waitForTransaction(txResult.transaction_hash, {
             retryInterval: 100,
             successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
           });
 
-          console.log("[Game] ✅ Proof submitted successfully!", receipt);
           toast.success("Proof submitted successfully!");
         } else {
           const proofCalldata = result.calldata.map(item =>
@@ -379,15 +358,12 @@ export const Game = () => {
             ],
           });
 
-          console.log("[Game] Transaction hash:", txResult.transaction_hash);
-
           // Wait for transaction
-          const receipt = await account.waitForTransaction(txResult.transaction_hash, {
+          await account.waitForTransaction(txResult.transaction_hash, {
             retryInterval: 100,
             successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
           });
 
-          console.log("[Game] ✅ Proof submitted successfully!", receipt);
           toast.success("Proof submitted successfully!");
         }
 
@@ -453,8 +429,6 @@ export const Game = () => {
     if (!account) return;
 
     try {
-      console.log("[Game] 📤 Submitting condition choice:", { gameId, choice });
-
       setProcessingStatus({
         title: "SUBMITTING CONDITION CHOICE",
         message: "Please sign the transaction in your wallet",
@@ -469,20 +443,17 @@ export const Game = () => {
         ],
       });
 
-      console.log("[Game] Transaction hash:", result.transaction_hash);
-
       setProcessingStatus({
         title: "SUBMITTING CONDITION CHOICE",
         message: "Transaction submitted, waiting for confirmation...",
       });
 
       // Wait for transaction
-      const receipt = await account.waitForTransaction(result.transaction_hash, {
+      await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
         successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
       });
 
-      console.log("[Game] ✅ Condition choice submitted successfully!", receipt);
       setProcessingStatus(null);
       toast.success(`Condition choice submitted: ${choice ? "YES" : "NO"}`);
     } catch (error) {
@@ -496,8 +467,6 @@ export const Game = () => {
     if (!account) return;
 
     try {
-      console.log("[Game] 📤 Submitting challenge choice:", { gameId, choice });
-
       setProcessingStatus({
         title: "SUBMITTING CHALLENGE CHOICE",
         message: "Please sign the transaction in your wallet",
@@ -512,20 +481,17 @@ export const Game = () => {
         ],
       });
 
-      console.log("[Game] Transaction hash:", result.transaction_hash);
-
       setProcessingStatus({
         title: "SUBMITTING CHALLENGE CHOICE",
         message: "Transaction submitted, waiting for confirmation...",
       });
 
       // Wait for transaction
-      const receipt = await account.waitForTransaction(result.transaction_hash, {
+      await account.waitForTransaction(result.transaction_hash, {
         retryInterval: 100,
         successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "PRE_CONFIRMED"],
       });
 
-      console.log("[Game] ✅ Challenge choice submitted successfully!", receipt);
       setProcessingStatus(null);
       toast.success(`Challenge choice submitted: ${choice ? "YES" : "NO"}`);
     } catch (error) {

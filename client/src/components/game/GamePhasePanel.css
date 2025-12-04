@@ -79,7 +79,7 @@
 }
 
 .game-phase-toggle {
-  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-size: clamp(1rem, 2vw, 1rem);
   font-weight: 700;
   color: white;
   width: 1.5rem;
@@ -117,52 +117,31 @@
 }
 
 .game-phase-condition-container {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.game-phase-condition-container::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  z-index: 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 12px rgba(148, 163, 184, 0.35);
 }
 
 .game-phase-condition-label {
-  font-size: clamp(0.75rem, 1.5vw, 1.3rem);
+  font-size: clamp(0.75rem, 1.4vw, 1.5rem);
   color: rgba(255, 255, 255, 0.8);
   font-family: "BebasNeue", Arial, sans-serif;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   font-weight: 700;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.4rem;
   text-align: center;
-  position: relative;
-  z-index: 1;
 }
 
-.game-phase-condition {
-  font-size: clamp(1.125rem, 2.5vw, 1.3rem);
+.game-phase-condition-text {
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
   color: white;
-  text-align: center;
   font-family: Arial, sans-serif;
-  line-height: 1.6;
-  text-transform: none;
-  letter-spacing: normal;
-  font-weight: 600;
-  position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  line-height: 1.5;
 }
 
 .game-phase-question {
@@ -219,19 +198,15 @@
   transform: translateY(-2px) !important;
 }
 
-.game-phase-button-yes {
-  /* Keep default styles, can add specific styling if needed */
-}
-
-.game-phase-button-no {
-  /* Keep default styles, can add specific styling if needed */
-}
 
 .game-phase-commitment-status {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .game-phase-commitment-player {
@@ -241,6 +216,8 @@
   padding: 0.75rem 1rem;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 0.5rem;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .game-phase-commitment-name {
@@ -262,9 +239,13 @@
 
 .game-phase-condition-status {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
 }
 
 .game-phase-condition-player {
@@ -274,6 +255,8 @@
   padding: 0.75rem 1rem;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .game-phase-condition-name {
@@ -293,5 +276,33 @@
   letter-spacing: normal;
   font-weight: 400;
   font-style: italic;
+}
+
+.game-phase-opponent-claim-container {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 12px rgba(148, 163, 184, 0.35);
+}
+
+.game-phase-opponent-claim-label {
+  font-size: clamp(0.75rem, 1.4vw, 1.5rem);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: "BebasNeue", Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+
+.game-phase-opponent-claim-text {
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  line-height: 1.5;
 }
 

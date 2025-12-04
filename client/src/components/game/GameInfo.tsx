@@ -42,8 +42,8 @@ export const GameInfo = ({ gameId, isPlayer1 }: GameInfoProps) => {
       <div className="game-info-title">LIARS PROOF - GAME #{gameId}</div>
       <div className="game-info-players">
         <div className={`game-info-player ${isPlayer1 ? "game-info-player-current" : ""}`}>
-          <span className="game-info-player-name">{player1Name}:</span>
-          <span className="game-info-player-score">{player1Score} / 50</span>
+          <span className="game-info-player-name">{player1Name} {isPlayer1 ? "(YOU)" : ""}:</span>
+          <span className="game-info-player-score">{player1Score} / 50</span> 
           <div className="game-info-lives">
             {Array.from({ length: 3 }).map((_, i) => (
               <span
@@ -59,7 +59,7 @@ export const GameInfo = ({ gameId, isPlayer1 }: GameInfoProps) => {
         </div>
         {hasPlayer2 && (
           <div className={`game-info-player ${!isPlayer1 ? "game-info-player-current" : ""}`}>
-            <span className="game-info-player-name">{player2Name}:</span>
+            <span className="game-info-player-name">{player2Name} {!isPlayer1 ? "(YOU)" : ""}:</span>
             <span className="game-info-player-score">{player2Score} / 50</span>
             <div className="game-info-lives">
               {Array.from({ length: 3 }).map((_, i) => (

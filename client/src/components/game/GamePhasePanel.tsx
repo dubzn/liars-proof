@@ -35,7 +35,6 @@ interface GamePhasePanelProps {
 
 export const GamePhasePanel = ({
   currentPhase,
-  opponentName,
   conditionId,
   player1Name,
   player2Name,
@@ -80,15 +79,7 @@ export const GamePhasePanel = ({
   const canExpandResult = isResultPhase; // Only expandable when it's the current phase
 
   // Fetch condition data
-  const { condition, isLoading: isLoadingCondition, error: conditionError } = useConditionGraphQL(conditionId);
-
-  // Debug logs
-  useEffect(() => {
-    console.log("[GamePhasePanel] conditionId:", conditionId);
-    console.log("[GamePhasePanel] condition:", condition);
-    console.log("[GamePhasePanel] isLoadingCondition:", isLoadingCondition);
-    console.log("[GamePhasePanel] conditionError:", conditionError);
-  }, [conditionId, condition, isLoadingCondition, conditionError]);
+  const { condition, isLoading: isLoadingCondition } = useConditionGraphQL(conditionId);
 
   // Generate condition text
   const conditionText = condition
@@ -118,6 +109,22 @@ export const GamePhasePanel = ({
   const currentPlayerCommitmentSubmitted = isPlayer1 ? player1CommitmentSubmitted : player2CommitmentSubmitted;
   const bothCommitmentsSubmitted = player1CommitmentSubmitted && player2CommitmentSubmitted;
 
+  // Opponent info for challenge phase
+  const opponentDisplayName = isPlayer1 ? (player2Name || "Player 2") : (player1Name || "Player 1");
+  const opponentConditionSubmitted = isPlayer1 ? player2ConditionSubmitted : player1ConditionSubmitted;
+  const opponentConditionChoice = isPlayer1 ? player2ConditionChoice : player1ConditionChoice;
+
+  let opponentConditionSummary = "";
+  if (opponentConditionSubmitted) {
+    if (opponentConditionChoice === true) {
+      opponentConditionSummary = `${opponentDisplayName} says that fulfills the condition.`;
+    } else if (opponentConditionChoice === false) {
+      opponentConditionSummary = `${opponentDisplayName} says that doesn't fulfill the condition.`;
+    }
+  } else {
+    opponentConditionSummary = `${opponentDisplayName} is thinking...`;
+  }
+
   return (
     <div className="game-phase-panel">
       {/* Commitment Phase */}
@@ -136,7 +143,7 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">COMMITMENT PHASE</span>
           {canExpandCommitment && (
             <span className="game-phase-toggle">
-              {isCommitmentExpanded ? "−" : "+"}
+              {isCommitmentExpanded ? "▲" : "▼"}
             </span>
           )}
         </div>
@@ -161,7 +168,7 @@ export const GamePhasePanel = ({
             </div>
             {bothCommitmentsSubmitted ? (
               <div className="game-phase-message">
-                Both players have submitted their commitments!
+                Both players have submitted their hand commitments!
               </div>
             ) : currentPlayerCommitmentSubmitted ? (
               <div className="game-phase-message">
@@ -192,7 +199,7 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">CONDITION PHASE</span>
           {canExpandCondition && (
             <span className="game-phase-toggle">
-              {isConditionExpanded ? "−" : "+"}
+              {isConditionExpanded ? "▲" : "▼"}
             </span>
           )}
         </div>
@@ -207,7 +214,7 @@ export const GamePhasePanel = ({
               <>
                 <div className="game-phase-condition-container">
                   <div className="game-phase-condition-label">CONDITION</div>
-                  <div className="game-phase-condition">
+                  <div className="game-phase-condition-text">
                     {conditionText}
                   </div>
                 </div>
@@ -290,7 +297,7 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">CHALLENGE PHASE</span>
           {canExpandChallenge && (
             <span className="game-phase-toggle">
-              {isChallengeExpanded ? "−" : "+"}
+              {isChallengeExpanded ? "▲" : "▼"}
             </span>
           )}
         </div>
@@ -298,6 +305,13 @@ export const GamePhasePanel = ({
           <div className="game-phase-content">
             <div className="game-phase-description">
               Each player decides whether to believe the opponent's claim about fulfilling the condition.
+            </div>
+            {/* Opponent's previous claim about the condition */}
+            <div className="game-phase-opponent-claim-container">
+              <div className="game-phase-opponent-claim-label">OPPONENT CLAIM</div>
+              <div className="game-phase-opponent-claim-text">
+                {opponentConditionSummary}
+              </div>
             </div>
             {/* Show challenge choices status */}
             <div className="game-phase-condition-status">
@@ -375,7 +389,7 @@ export const GamePhasePanel = ({
           <span className="game-phase-title">RESULT PHASE</span>
           {canExpandResult && (
             <span className="game-phase-toggle">
-              {isResultExpanded ? "−" : "+"}
+              {isResultExpanded ? "▲" : "▼"}
             </span>
           )}
         </div>
