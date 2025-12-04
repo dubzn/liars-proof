@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { AccountInterface } from "starknet";
 import { InjectedConnector } from "starknetkit/injected";
 import { RpcProvider } from "starknet";
-import { setupGuestWallet, loadGuestWallet, deleteGuestWallet, hasGuestWallet } from "@/utils/guestWallet";
+import { setupGuestWallet, loadGuestWallet, hasGuestWallet } from "@/utils/guestWallet";
 
 interface StarknetKitContextType {
   account: AccountInterface | null;
@@ -153,8 +153,8 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
       console.log("[StarknetKit] Disconnecting...");
 
       if (isGuestMode) {
-        // For guest mode, clear the guest wallet
-        deleteGuestWallet();
+        // For guest mode, just clear the state but keep wallet in localStorage
+        // This allows users to reconnect to the same guest wallet later
         setIsGuestMode(false);
       } else if (connector) {
         // For wallet connections, disconnect the connector

@@ -214,8 +214,9 @@ export async function setupGuestWallet(
     console.log("[GuestWallet] Funding wallet at address:", account.address);
     await fundGuestWallet(account.address, provider);
 
-    // Save wallet data with the address
-    saveGuestWallet(walletData);
+    // Deploy the account after funding
+    console.log("[GuestWallet] Deploying account after funding...");
+    await deployGuestAccount(account, walletData);
 
     console.log("[GuestWallet] Guest wallet setup complete:", walletData.address);
     return { account, walletData };
@@ -255,6 +256,10 @@ export async function deployGuestAccount(
   try {
     console.log("[GuestWallet] Deploying account contract at:", account.address);
 
+    // Wait 2 seconds before deploying to ensure funding is settled
+    console.log("[GuestWallet] Waiting 2 seconds before deployment...");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // Deploy account using deployAccount method
     const deployAccountPayload = {
       classHash: OZ_ACCOUNT_CLASS_HASH,
@@ -273,6 +278,10 @@ export async function deployGuestAccount(
     await account.waitForTransaction(transaction_hash);
 
     console.log("[GuestWallet] Account deployment confirmed");
+
+    // Wait 2 seconds after deployment
+    console.log("[GuestWallet] Waiting 2 seconds after deployment...");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Update wallet data to mark as deployed
     walletData.deployed = true;
