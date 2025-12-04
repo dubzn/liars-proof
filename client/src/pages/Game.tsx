@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { CallData, cairo } from "starknet";
+import type { Call } from "starknet";
 import { useStarknetKit } from "@/context/starknetkit";
 import { useGameWatcher } from "@/hooks/useGameWatcher";
 import { useParallax } from "@/hooks/useParallax";
@@ -216,24 +218,19 @@ export const Game = () => {
           hand: playerHand,
         });
 
-        // Split the u256 commitment into two u128 values (low, high)
-        const low = commitment & ((BigInt(1) << BigInt(128)) - BigInt(1));
-        const high = commitment >> BigInt(128);
-
         setProcessingStatus({
           title: "SUBMITTING HAND COMMITMENT",
           message: "Please sign the transaction in your wallet",
         });
 
-        const result = await account.execute({
+        // Create the call using cairo.uint256() for proper u256 serialization
+        const submitHandCommitmentCall: Call = {
           contractAddress: GAME_CONTRACT_ADDRESS,
           entrypoint: "submit_hand_commitment",
-          calldata: [
-            gameId.toString(), // game_id: u32
-            low.toString(), // hand_commitment low part
-            high.toString(), // hand_commitment high part
-          ],
-        });
+          calldata: CallData.compile([gameId, cairo.uint256(commitment)]),
+        };
+
+        const result = await account.execute(submitHandCommitmentCall);
 
         console.log("[Game] Transaction hash:", result.transaction_hash);
 

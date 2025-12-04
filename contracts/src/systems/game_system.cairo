@@ -118,11 +118,6 @@ pub mod game_system {
 
                 let mut condition = ConditionTrait::create(ref store);
                 game.condition_id = condition.id;
-                condition.condition = 1;
-                condition.comparator = 2;
-                condition.value = 3;
-                condition.suit = 0;
-
                 store.set_condition(condition);
             }
             store.set_game(game);
@@ -229,21 +224,21 @@ pub mod game_system {
                     .verify_ultra_starknet_zk_honk_proof(full_proof_with_hints)
                     .unwrap();
 
-                if result.len() == 14 {
+                if result.len() > 1 {
                     // Extract and validate public inputs
-                    let pi_game_id: u32 = (*result[2]).try_into().unwrap();
-                    // let pi_hand_commitment = *result[1];
-                    let pi_condition: u32 = (*result[6]).try_into().unwrap();
-                    let pi_comparator: u32 = (*result[8]).try_into().unwrap();
-                    let pi_value: u32 = (*result[10]).try_into().unwrap();
-                    let pi_suit: u32 = (*result[12]).try_into().unwrap();
+                    let pi_game_id: u32 = (*result[0]).try_into().unwrap();
+                    let pi_hand_commitment = *result[1];
+                    let pi_condition: u32 = (*result[2]).try_into().unwrap();
+                    let pi_comparator: u32 = (*result[3]).try_into().unwrap();
+                    let pi_value: u32 = (*result[4]).try_into().unwrap();
+                    let pi_suit: u32 = (*result[5]).try_into().unwrap();
 
                     // Validate all public inputs match the game state
                     assert!(pi_game_id == game_id, "[Game] - Game ID mismatch in proof");
-                    // assert!(
-                    //     pi_hand_commitment == hand_commitment,
-                    //     "[Game] - Hand commitment mismatch in proof",
-                    // );
+                    assert!(
+                        pi_hand_commitment == hand_commitment,
+                        "[Game] - Hand commitment mismatch in proof",
+                    );
                     assert!(
                         pi_condition == condition.condition,
                         "[Game] - Condition type mismatch in proof",
@@ -258,6 +253,7 @@ pub mod game_system {
                     is_valid = true;
                 }
             }
+
             store
                 .set_player_round_proof(
                     RoundProof {

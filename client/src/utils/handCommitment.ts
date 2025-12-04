@@ -50,6 +50,8 @@ export const calculateHandCommitment = async (hand: Card[]): Promise<bigint> => 
     throw new Error("Hand must contain exactly 3 cards");
   }
 
+  console.log("[handCommitment] Calculating commitment for hand:", hand);
+
   try {
     // Pack each card
     const card1 = packCard(hand[0].value, hand[0].suit);
