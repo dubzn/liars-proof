@@ -1,180 +1,116 @@
-# Liar's Proof - Game State Flow Diagram
+# Liar's Proof - Simplified Game Flow
 
-This diagram shows the complete flow of the Liar's Proof card game, including frontend interactions, ZK proof generation, and blockchain state transitions.
+This document shows the complete game flow from a single player's perspective, including:
+- **Commitment Phase**: Random hand generation + Poseidon hash
+- **Condition Phase**: Player declares YES/NO (do I fulfill the condition?)
+- **Challenge Phase**: Player chooses to BELIEVE or DON'T BELIEVE opponent
+- **Result Phase**: ZK proof generation and on-chain verification
 
-## Complete Game Flow
+The key logic: **A player lies when their claim doesn't match the proof result** → `lied = (condition_choice ≠ proof_valid)`
+
+## Simplified Game Flow (Single Player View)
 
 ```mermaid
 sequenceDiagram
-    participant P1 as Player 1
-    participant P2 as Player 2
+    participant P as Player
     participant FE as Frontend
-    participant Noir as Noir Circuit (WASM)
-    participant BB as Barretenberg Prover
-    participant BC as Blockchain (ZStarknet)
-    participant Garaga as Garaga Verifier
+    participant Poseidon as Poseidon Hash (Garaga)
+    participant Noir as Noir Circuit
+    participant BB as Barretenberg
+    participant BC as Contract (ZStarknet)
 
-    %% ==================== GAME CREATION ====================
-    rect rgb(200, 220, 255)
-    Note over P1,BC: Phase 1: Game Setup
-    P1->>FE: Click "Create Game"
-    FE->>BC: create_game(player_name)
-    BC-->>FE: game_id, GameState::WaitingForPlayers
-    FE-->>P1: "Waiting for opponent..."
-    end
-
-    %% ==================== JOIN GAME ====================
-    rect rgb(200, 220, 255)
-    P2->>FE: Enter game_id, Click "Join"
-    FE->>BC: join_game(game_id, player_name)
-    BC-->>FE: GameState::WaitingForHandCommitments
-    FE-->>P1: "Player 2 joined!"
-    FE-->>P2: "Joined game!"
-    end
-
-    %% ==================== HAND COMMITMENT (Player 1) ====================
+    %% ==================== COMMITMENT PHASE ====================
     rect rgb(255, 230, 200)
-    Note over P1,Garaga: Phase 2: Hand Commitment (Player 1)
-    P1->>FE: Select 5 cards from deck
-    Note over FE: Cards: [♠A, ♥K, ♦Q, ♣J, ♠10]
+    Note over P,BC: PHASE 1: Hand Commitment
 
-    FE->>FE: Compute hand_commitment = hash(cards)
-    FE->>Noir: Execute circuit with hand
-    Noir-->>FE: witness.gz
+    P->>FE: Game starts
+    FE->>FE: Generate random 5-card hand
+    Note over FE: Example: [♠A, ♥K, ♦Q, ♣J, ♠10]
 
-    FE->>BB: Generate UltraHonk proof (Starknet ZK mode)
-    Note over BB: ~2-3 seconds
-    BB-->>FE: proof (~200KB)
+    FE->>Poseidon: hash(cards)
+    Poseidon-->>FE: hand_commitment (u256)
 
-    FE->>FE: Format calldata with Garaga
-    FE->>BC: submit_hand_commitment(game_id, commitment, proof)
-
-    BC->>Garaga: verify_proof(proof, commitment)
-    Garaga-->>BC: ✓ Valid
-    BC-->>FE: Hand commitment stored
-    FE-->>P1: "Commitment submitted! Waiting for Player 2..."
+    FE->>BC: submit_hand_commitment(game_id, hand_commitment)
+    BC-->>FE: ✓ Commitment stored
+    Note over BC: Waiting for opponent...
     end
 
-    %% ==================== HAND COMMITMENT (Player 2) ====================
-    rect rgb(255, 230, 200)
-    Note over P2,Garaga: Phase 2: Hand Commitment (Player 2)
-    P2->>FE: Select 5 cards from deck
-    Note over FE: Cards: [♦A, ♣K, ♥J, ♠9, ♦8]
-
-    FE->>FE: Compute hand_commitment = hash(cards)
-    FE->>Noir: Execute circuit with hand
-    Noir-->>FE: witness.gz
-
-    FE->>BB: Generate UltraHonk proof
-    BB-->>FE: proof
-
-    FE->>FE: Format calldata with Garaga
-    FE->>BC: submit_hand_commitment(game_id, commitment, proof)
-
-    BC->>Garaga: verify_proof(proof, commitment)
-    Garaga-->>BC: ✓ Valid
-    BC-->>BC: Generate random condition
-    BC-->>FE: GameState::ConditionPhase
-    Note over BC: Condition: "♥ card with value ≥ 10"
-    FE-->>P1: "Both committed! Condition: ♥ ≥ 10"
-    FE-->>P2: "Both committed! Condition: ♥ ≥ 10"
-    end
-
-    %% ==================== PROVE CONDITION (Player 1) ====================
+    %% ==================== CONDITION PHASE ====================
     rect rgb(200, 255, 220)
-    Note over P1,Garaga: Phase 3: Condition Phase (Player 1)
-    P1->>FE: Select matching card (♥K)
-    Note over FE: Proving I have ♥K (satisfies ♥ ≥ 10)
+    Note over P,BC: PHASE 2: Condition Choice
 
-    FE->>Noir: Execute circuit(hand, ♥K, condition, commitment)
-    Note over Noir: Verify:<br/>1. commitment matches hand<br/>2. ♥K in hand<br/>3. ♥K satisfies condition
-    Noir-->>FE: witness.gz
+    BC->>BC: Generate random condition
+    BC-->>FE: Condition revealed
+    Note over FE: Example: "♥ card with value ≥ 10"
 
-    FE->>BB: Generate proof
-    BB-->>FE: proof
+    FE-->>P: "Do you fulfill the condition?"
+    P->>FE: Choose YES or NO (boolean)
 
-    FE->>FE: Format calldata
-    FE->>BC: submit_condition_proof(game_id, proof)
-
-    BC->>Garaga: verify_proof(proof, condition, commitment)
-    Garaga-->>BC: ✓ Valid
-    BC-->>FE: Proof submitted, waiting for Player 2
-    FE-->>P1: "Proof submitted! Waiting for opponent..."
-    end
-
-    %% ==================== PROVE CONDITION (Player 2) ====================
-    rect rgb(200, 255, 220)
-    Note over P2,Garaga: Phase 3: Condition Phase (Player 2)
-    P2->>FE: Select matching card (♥J)
-    Note over FE: Proving I have ♥J (satisfies ♥ ≥ 10)
-
-    FE->>Noir: Execute circuit(hand, ♥J, condition, commitment)
-    Noir-->>FE: witness.gz
-
-    FE->>BB: Generate proof
-    BB-->>FE: proof
-
-    FE->>FE: Format calldata
-    FE->>BC: submit_condition_proof(game_id, proof)
-
-    BC->>Garaga: verify_proof(proof, condition, commitment)
-    Garaga-->>BC: ✓ Valid
-    BC-->>FE: GameState::ChallengePhase
-    FE-->>P1: "Challenge Phase: Truth or Liar?"
-    FE-->>P2: "Challenge Phase: Truth or Liar?"
+    FE->>BC: submit_condition_choice(game_id, boolean)
+    BC-->>FE: ✓ Choice stored
+    Note over BC: Waiting for opponent...
     end
 
     %% ==================== CHALLENGE PHASE ====================
     rect rgb(255, 220, 220)
-    Note over P1,BC: Phase 4: Challenge Phase
+    Note over P,BC: PHASE 3: Challenge Phase
 
-    alt Player 1 Challenges Player 2
-        P1->>FE: Click "Liar!" (challenge P2)
-        FE->>BC: submit_challenge(game_id, challenged_player=P2)
-        BC->>BC: Verify P2's proof again
+    BC-->>FE: Opponent's choice revealed
+    Note over FE: Opponent says: YES/NO
 
-        alt P2's proof is VALID
-            BC-->>FE: P2 wins round, P1 loses 1 life
-            FE-->>P1: "Challenge failed! You lose 1 life"
-            FE-->>P2: "Challenge succeeded! You win the round"
-        else P2's proof is INVALID
-            BC-->>FE: P1 wins round, P2 loses 1 life
-            FE-->>P1: "Challenge succeeded! You win the round"
-            FE-->>P2: "Challenge failed! You lose 1 life"
-        end
+    FE-->>P: "Do you believe the opponent?"
+    P->>FE: Choose BELIEVE or DON'T BELIEVE (boolean)
 
-    else Both Accept (No Challenge)
-        P1->>FE: Click "Truth" (accept)
-        P2->>FE: Click "Truth" (accept)
-        FE->>BC: both_accept(game_id)
-        BC-->>FE: Round draw, no lives lost
-        FE-->>P1: "Round accepted, no score change"
-        FE-->>P2: "Round accepted, no score change"
-    end
+    FE->>BC: submit_challenge_choice(game_id, boolean)
+    BC-->>FE: ✓ Challenge stored
+    Note over BC: Waiting for opponent...
     end
 
-    %% ==================== NEXT ROUND OR GAME OVER ====================
+    %% ==================== RESULT PHASE ====================
+    rect rgb(220, 220, 255)
+    Note over P,BC: PHASE 4: Proof Generation & Submission
+
+    FE->>Noir: Generate ZK proof for hand
+    Note over Noir: Proves:<br/>1. Hand matches commitment<br/>2. Card satisfies/doesn't satisfy condition
+    Noir-->>FE: witness.gz
+
+    FE->>BB: Generate UltraHonk proof
+    Note over BB: ~2-3 seconds
+    BB-->>FE: proof + calldata
+
+    FE->>BC: submit_round_proof(game_id, proof)
+    BC->>BC: Verify proof on-chain
+    BC-->>FE: ✓ Proof valid/invalid
+
+    BC->>BC: resolve_round()<br/>Compare choices with proof results
+    Note over BC: Determine who lied:<br/>lied = (condition_choice ≠ proof_valid)
+
+    BC-->>FE: Round results (score, lives)
+    FE-->>P: Show round outcome
+    end
+
+    %% ==================== NEXT ROUND ====================
     rect rgb(240, 240, 240)
-    Note over P1,BC: Phase 5: Result & Next Round
+    Note over P,BC: Next Round or Game Over
 
-    BC->>BC: Check lives remaining
-
-    alt Game Continues (both players have lives > 0)
+    alt Lives > 0 and Score < 50
         BC-->>FE: GameState::ConditionPhase
-        BC->>BC: Generate new random condition
-        Note over BC: New condition: "♣ card with value ≥ 8"
-        FE-->>P1: "Next round! New condition: ♣ ≥ 8"
-        FE-->>P2: "Next round! New condition: ♣ ≥ 8"
-        Note over P1,P2: Game loops back to Condition Phase
-
-    else Game Over (one player has 0 lives)
+        Note over P,BC: Loop back to Phase 2
+    else Lives = 0 or Score ≥ 50
         BC-->>FE: GameState::GameOver
-        BC-->>FE: winner_address, final_scores
-        FE-->>P1: "Game Over! Winner: Player X"
-        FE-->>P2: "Game Over! Winner: Player X"
+        FE-->>P: Game Over! Winner declared
     end
     end
 ```
+
+## Game Phases Summary
+
+| Phase | Frontend Action | Contract Action | Output |
+|-------|----------------|-----------------|--------|
+| **1. Commitment** | Generate random hand → Poseidon hash | Store `hand_commitment` | Waiting for opponent |
+| **2. Condition** | Player chooses YES/NO | Store `condition_choice` boolean | Reveal condition |
+| **3. Challenge** | Player chooses BELIEVE/DON'T BELIEVE | Store `challenge_choice` boolean | Opponent's claim visible |
+| **4. Result** | Generate ZK proof → Submit | Verify proof → Calculate `lied = (choice ≠ proof_valid)` → Resolve round | Score/lives updated |
 
 ## State Transition Diagram
 
@@ -184,52 +120,40 @@ stateDiagram-v2
 
     WaitingForPlayers --> WaitingForHandCommitments: join_game()
 
-    WaitingForHandCommitments --> WaitingForHandCommitments: Player 1 commits
-    WaitingForHandCommitments --> ConditionPhase: Player 2 commits<br/>(generate random condition)
+    WaitingForHandCommitments --> ConditionPhase: Both players submit commitments
 
-    ConditionPhase --> ConditionPhase: Player 1 submits proof
-    ConditionPhase --> ChallengePhase: Player 2 submits proof<br/>(both proofs submitted)
+    ConditionPhase --> ChallengePhase: Both players submit condition choices
 
-    ChallengePhase --> ResultPhase: submit_challenge() or both_accept()
+    ChallengePhase --> ResultPhase: Both players submit challenge choices
 
-    ResultPhase --> ConditionPhase: Lives > 0<br/>(new round, new condition)
-    ResultPhase --> GameOver: Lives = 0<br/>(winner determined)
+    ResultPhase --> ConditionPhase: Lives > 0 & Score < 50<br/>(new round)
+    ResultPhase --> GameOver: Lives = 0 OR Score ≥ 50
 
     GameOver --> [*]
 
-    note right of WaitingForPlayers
-        Initial state
-        1 player in game
-    end note
-
     note right of WaitingForHandCommitments
-        2 players in game
-        Awaiting ZK proofs of hands
-        Commitments are binding
+        Frontend generates random hand
+        Poseidon hash → commitment
+        Submit to contract
     end note
 
     note right of ConditionPhase
-        Random condition generated
-        Players prove they have
-        matching cards using ZK
+        Random condition revealed
+        Player chooses: YES/NO
+        (Do I fulfill the condition?)
     end note
 
     note right of ChallengePhase
-        Players can challenge
-        or accept opponent's claim
-        Invalid proofs = instant loss
+        See opponent's choice
+        Player chooses: BELIEVE/DON'T BELIEVE
+        (Is opponent telling the truth?)
     end note
 
     note right of ResultPhase
-        Update scores & lives
-        Winner: +1 score
-        Loser: -1 life
-    end note
-
-    note right of GameOver
-        Final state
-        Winner determined
-        Game ended
+        Generate ZK proof
+        Submit to contract
+        Contract verifies & resolves round
+        lied = (choice ≠ proof_valid)
     end note
 ```
 
@@ -306,29 +230,31 @@ graph TB
 ## ZK Proof Generation Pipeline
 
 ```mermaid
-flowchart LR
-    subgraph Player["Player Browser"]
-        A[Select Cards] --> B[Compute Commitment]
-        B --> C[Prepare Circuit Inputs]
-        C --> D[Noir WASM Execution]
+flowchart TB
+    subgraph Frontend["Frontend (Browser)"]
+        A[Random Hand Generation] --> B[Poseidon Hash]
+        B --> C[hand_commitment u256]
+        C --> D[Noir Circuit Execution]
         D --> E[Barretenberg Prover]
-        E --> F[Garaga Formatter]
+        E --> F[Proof + Calldata]
     end
 
-    subgraph Blockchain["ZStarknet"]
-        G[Smart Contract] --> H{Garaga Verifier}
-        H -->|Valid| I[Update Game State]
-        H -->|Invalid| J[Reject & Penalize]
+    subgraph Contract["Smart Contract (ZStarknet)"]
+        G[Receive Proof] --> H{Garaga Verifier}
+        H -->|Valid| I[Store is_valid = true]
+        H -->|Invalid| J[Store is_valid = false]
+        I --> K[resolve_round]
+        J --> K
+        K --> L[Calculate: lied = choice ≠ proof_valid]
     end
 
-    F -->|Calldata + Proof| G
+    F -->|Submit to Contract| G
 
-    style D fill:#e1bee7
-    style E fill:#ce93d8
-    style F fill:#ba68c8
-    style H fill:#ab47bc
-    style I fill:#9c27b0
-    style J fill:#f44336
+    style B fill:#FFE082
+    style D fill:#CE93D8
+    style E fill:#BA68C8
+    style H fill:#AB47BC
+    style L fill:#66BB6A
 ```
 
 ## Guest Wallet Flow
@@ -372,24 +298,37 @@ sequenceDiagram
     ZStarknet-->>User: Transaction confirmed
 ```
 
-## Key Features
+## Key Game Mechanics
 
-### 🔐 Privacy Guarantees
-- **Zero-Knowledge**: Cards never revealed, only possession proven
-- **Commitment Binding**: Cannot change hand after commitment
-- **Verifiable**: All claims verified on-chain without revealing private data
+### 🎮 Core Flow
+1. **Commitment**: Frontend generates random hand → Poseidon hash → Submit to contract
+2. **Condition**: Player declares YES (I fulfill) or NO (I don't fulfill)
+3. **Challenge**: Player chooses to BELIEVE or DON'T BELIEVE opponent's claim
+4. **Result**: Generate ZK proof → Verify on-chain → Resolve round
 
-### ⚡ Performance
-- **Proof Generation**: ~2-3 seconds (client-side)
-- **On-Chain Verification**: ~2-3 seconds (~500K gas)
-- **Guest Wallet Setup**: ~6-8 seconds (one-time)
+### 🎯 Lying Detection Logic
+```
+player_lies = (condition_choice ≠ proof_valid)
+```
 
-### 🎮 Game Mechanics
-- **Lives System**: 3 lives per player
-- **Challenge System**: Call bluff or accept claims
-- **Random Conditions**: Fair condition generation on-chain
-- **Score Tracking**: Persistent leaderboard
+| Declared | Proof Valid | Result |
+|----------|-------------|--------|
+| YES (fulfill) | ✅ Valid | Telling truth |
+| YES (fulfill) | ❌ Invalid | **LYING** |
+| NO (don't fulfill) | ✅ Valid | **LYING** |
+| NO (don't fulfill) | ❌ Invalid | Telling truth |
+
+### 🏆 Scoring System
+- **Caught lying**: Opponent gets +20 points, you lose 1 life
+- **Successful lie**: You get +10 points
+- **Wrong challenge**: You lose 1 life
+- **Game ends**: Lives = 0 OR Score ≥ 50
+
+### 🔐 Privacy
+- **Zero-Knowledge**: Cards never revealed, only proven
+- **Binding**: Cannot change hand after commitment (Poseidon hash)
+- **On-chain verification**: Garaga verifier in Cairo contract
 
 ---
 
-**Built with privacy, powered by Zero-Knowledge Proofs on ZStarknet 🔐**
+**Built with ZK privacy on ZStarknet 🔐**
