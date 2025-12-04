@@ -321,11 +321,11 @@ export const Login = () => {
 
         // Update progress messages with timeouts
         const progressUpdates = [
-          { delay: 4000, message: "Computing wallet address.." },
-          { delay: 8000, message: "Requesting funds from faucet.." },
-          { delay: 12000, message: "Waiting for funding confirmation.." },
-          { delay: 20000, message: "Deploying account contract.." },
-          { delay: 24000, message: "Waiting for deployment confirmation.." },
+          { delay: 6000, message: "Computing wallet address.." },
+          { delay: 10000, message: "Requesting funds from faucet.." },
+          { delay: 16000, message: "Waiting for funding confirmation.." },
+          { delay: 22000, message: "Deploying account contract.." },
+          { delay: 27000, message: "Waiting for deployment confirmation.." },
         ];
 
         const timeouts: NodeJS.Timeout[] = [];
