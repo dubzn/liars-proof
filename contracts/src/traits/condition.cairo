@@ -90,7 +90,7 @@ fn condition_list() -> Array<u32> {
 
 fn quantity_list(condition_id: u32) -> Array<u32> {
     if condition_id == CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y {
-        array![1, 2, 3]
+        array![1, 2]
     } else if condition_id == CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_PAIRS {
@@ -102,7 +102,7 @@ fn quantity_list(condition_id: u32) -> Array<u32> {
     } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_VALUES {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_SUITS {
-        array![1, 2, 3]
+        array![2, 3]
     } else {
         array![0]
     }

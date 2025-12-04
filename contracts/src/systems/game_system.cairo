@@ -118,10 +118,6 @@ pub mod game_system {
 
                 let mut condition = ConditionTrait::create(ref store);
                 game.condition_id = condition.id;
-                condition.condition = 1; // TODO: 
-                condition.comparator = 2;
-                condition.value = 3;
-                condition.suit = 0;
                 store.set_condition(condition);
             }
             store.set_game(game);
