@@ -560,8 +560,11 @@ export const Game = () => {
       console.log("[Game] ✅ Round resolved! Calculating results...");
 
       // Calculate who lied using snapshot data (before resolution)
-      const player1Lied = snapshot.player_1_condition_choice === true && snapshot.player_1_proof_valid === false;
-      const player2Lied = snapshot.player_2_condition_choice === true && snapshot.player_2_proof_valid === false;
+      // A player lies when their claim doesn't match the proof result:
+      // - Claims to meet condition (true) but proof is invalid (false) -> lying
+      // - Claims to NOT meet condition (false) but proof is valid (true) -> lying
+      const player1Lied = snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
+      const player2Lied = snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
 
       // Calculate who believed using snapshot data
       const player1Believed = snapshot.player_1_challenge_choice === true;
