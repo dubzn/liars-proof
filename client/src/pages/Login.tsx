@@ -142,7 +142,7 @@ export const Login = () => {
       // Show processing modal - preparing transaction
       setProcessingStatus({
         title: "CREATING GAME",
-        message: "Preparing transaction...",
+        message: "Please sign the transaction in your wallet",
       });
       
       // Convert string to ByteArray using byteArrayFromString
@@ -179,7 +179,7 @@ export const Login = () => {
       // Update modal - waiting for confirmation
       setProcessingStatus({
         title: "CREATING GAME",
-        message: "Transaction submitted, waiting for confirmation...",
+        message: "Transaction submitted, waiting for confirmation.....",
       });
 
       // Wait for transaction to be accepted
@@ -306,7 +306,7 @@ export const Login = () => {
       // Show processing modal - preparing transaction
       setProcessingStatus({
         title: "JOINING GAME",
-        message: "Preparing transaction...",
+        message: "Please sign the transaction in your wallet",
       });
 
       // Convert playerName to ByteArray
@@ -338,7 +338,7 @@ export const Login = () => {
       // Update modal - waiting for confirmation
       setProcessingStatus({
         title: "JOINING GAME",
-        message: "Transaction submitted, waiting for confirmation...",
+        message: "Transaction submitted, waiting for confirmation.....",
       });
 
       // Wait for transaction to be accepted

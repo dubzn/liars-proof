@@ -24,9 +24,27 @@
 }
 
 .processing-modal-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 1.5rem;
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.processing-modal-explanation {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.processing-modal-explanation-text {
+  color: rgba(161, 161, 161, 0.9);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-family: Arial, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.6;
+  text-align: center;
 }
 
 .processing-modal-title {

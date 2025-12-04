@@ -64,6 +64,7 @@ export const Game = () => {
   const [processingStatus, setProcessingStatus] = useState<{
     title: string;
     message: string;
+    explanation?: string;
   } | null>(null);
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
   const hasSubmittedProofRef = useRef(false);
@@ -217,12 +218,13 @@ export const Game = () => {
 
       setIsSubmittingCommitment(true);
       try {
-        const commitment = await calculateHandCommitment(playerHand);
-
         setProcessingStatus({
           title: "SUBMITTING HAND COMMITMENT",
+          explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
           message: "Please sign the transaction in your wallet",
         });
+
+        const commitment = await calculateHandCommitment(playerHand);
 
         // Create the call using cairo.uint256() for proper u256 serialization
         const submitHandCommitmentCall: Call = {
@@ -235,7 +237,8 @@ export const Game = () => {
 
         setProcessingStatus({
           title: "SUBMITTING HAND COMMITMENT",
-          message: "Transaction submitted, waiting for confirmation...",
+          explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
+          message: "Transaction submitted, waiting for confirmation",
         });
 
         // Wait for transaction
@@ -297,10 +300,17 @@ export const Game = () => {
       hasSubmittedProofRef.current = true;
 
       try {
+        setProcessingStatus({
+          title: "SUBMITTING PROOF",
+          explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
+          message: "Generating proof...",
+        });
+
         // Wait for condition data to be loaded
         if (!condition) {
           console.error("[Game] ❌ Condition data not loaded yet");
           toast.error("Waiting for condition data...");
+          setProcessingStatus(null);
           hasSubmittedProofRef.current = false;
           setIsSubmittingProof(false);
           return;
@@ -337,12 +347,19 @@ export const Game = () => {
             ],
           });
 
+          setProcessingStatus({
+            title: "SUBMITTING PROOF",
+            explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
+            message: "Transaction submitted, waiting for confirmation",
+          });
+
           // Wait for transaction
           await account.waitForTransaction(txResult.transaction_hash, {
             retryInterval: 100,
             successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
           });
 
+          setProcessingStatus(null);
           toast.success("Proof submitted successfully!");
         } else {
           const proofCalldata = result.calldata.map(item =>
@@ -358,17 +375,25 @@ export const Game = () => {
             ],
           });
 
+          setProcessingStatus({
+            title: "SUBMITTING PROOF",
+            explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
+            message: "Transaction submitted, waiting for confirmation",
+          });
+
           // Wait for transaction
           await account.waitForTransaction(txResult.transaction_hash, {
             retryInterval: 100,
             successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
           });
 
+          setProcessingStatus(null);
           toast.success("Proof submitted successfully!");
         }
 
       } catch (error) {
         console.error("[Game] ❌ Error generating/submitting proof:", error);
+        setProcessingStatus(null);
         toast.error(`Failed to submit proof: ${error instanceof Error ? error.message : String(error)}`);
         hasSubmittedProofRef.current = false; // Allow retry on error
       } finally {
@@ -431,6 +456,9 @@ export const Game = () => {
     try {
       setProcessingStatus({
         title: "SUBMITTING CONDITION CHOICE",
+        explanation: choice 
+          ? "You are submitting that your hand fulfills the condition. This will be verified later with a zero-knowledge proof."
+          : "You are submitting that your hand does not fulfill the condition. The game will proceed to the challenge phase.",
         message: "Please sign the transaction in your wallet",
       });
 
@@ -445,7 +473,10 @@ export const Game = () => {
 
       setProcessingStatus({
         title: "SUBMITTING CONDITION CHOICE",
-        message: "Transaction submitted, waiting for confirmation...",
+        explanation: choice 
+          ? "You are submitting that your hand fulfills the condition. This will be verified later with a zero-knowledge proof."
+          : "You are submitting that your hand does not fulfill the condition. The game will proceed to the challenge phase.",
+        message: "Transaction submitted, waiting for confirmation",
       });
 
       // Wait for transaction
@@ -469,6 +500,9 @@ export const Game = () => {
     try {
       setProcessingStatus({
         title: "SUBMITTING CHALLENGE CHOICE",
+        explanation: choice
+          ? "You are choosing to believe the opponent's claim. If they are telling the truth, the round continues. If they are lying, you may gain an advantage."
+          : "You are choosing to challenge the opponent's claim. If they cannot prove their claim with a valid zero-knowledge proof, you will win the round.",
         message: "Please sign the transaction in your wallet",
       });
 
@@ -483,7 +517,10 @@ export const Game = () => {
 
       setProcessingStatus({
         title: "SUBMITTING CHALLENGE CHOICE",
-        message: "Transaction submitted, waiting for confirmation...",
+        explanation: choice
+          ? "You are choosing to believe the opponent's claim. If they are telling the truth, the round continues. If they are lying, you may gain an advantage."
+          : "You are choosing to challenge the opponent's claim. If they cannot prove their claim with a valid zero-knowledge proof, you will win the round.",
+        message: "Transaction submitted, waiting for confirmation",
       });
 
       // Wait for transaction
@@ -589,6 +626,7 @@ export const Game = () => {
         isOpen={processingStatus !== null}
         title={processingStatus?.title || ""}
         message={processingStatus?.message || ""}
+        explanation={processingStatus?.explanation}
       />
     </div>
   );

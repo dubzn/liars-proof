@@ -4,12 +4,14 @@ interface ProcessingModalProps {
   isOpen: boolean;
   title: string;
   message: string;
+  explanation?: string;
 }
 
 export const ProcessingModal = ({
   isOpen,
   title,
   message,
+  explanation,
 }: ProcessingModalProps) => {
   if (!isOpen) return null;
 
@@ -19,6 +21,12 @@ export const ProcessingModal = ({
         <div className="processing-modal-header">
           <h2 className="processing-modal-title">{title}</h2>
         </div>
+        
+        {explanation && (
+          <div className="processing-modal-explanation">
+            <p className="processing-modal-explanation-text">{explanation}</p>
+          </div>
+        )}
         
         <div className="processing-modal-content">
           <div className="processing-modal-spinner">
