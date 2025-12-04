@@ -341,7 +341,7 @@ sequenceDiagram
     participant OwnerWallet
     participant ZStarknet
 
-    User->>Frontend: Click "👤 PLAY AS GUEST"
+    User->>Frontend: Click "PLAY AS GUEST"
 
     alt Guest Wallet Exists
         Frontend->>LocalStorage: Check for saved wallet
