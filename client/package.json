@@ -27,6 +27,7 @@
   "dependencies": {
     "@aztec/bb.js": "=0.87.4-starknet.1",
     "@cartridge/connector": "^0.10.7",
+    "@cartridge/controller": "^0.11.3",
     "@cartridge/presets": "^0.5.4",
     "@dojoengine/core": "1.8.5",
     "@dojoengine/create-burner": "^1.7.0-preview.3",

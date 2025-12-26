@@ -121,38 +121,13 @@ const fetchPrizesMetadata = async (
 const fetchTokenUsdPrice = async (
   tokenAddress: string,
 ): Promise<string | null> => {
-  try {
-    const swap = await getSwapQuote(
-      100n * 10n ** 18n,
-      tokenAddress,
-      USDC_ADDRESS,
-    );
-    const price = (swap.total / 1e6 / 100).toString();
-    return price;
-  } catch (error) {
-    console.error(`Failed to fetch price for ${tokenAddress}:`, error);
-    return null;
-  }
+  return "0";
 };
 
 const fetchAllPrices = async (
   tokenAddresses: string[],
 ): Promise<Map<string, string>> => {
-  const pricePromises = tokenAddresses.map((address) =>
-    fetchTokenUsdPrice(address),
-  );
-
-  const prices = await Promise.allSettled(pricePromises);
-
-  const priceMap = new Map<string, string>();
-  tokenAddresses.forEach((address, index) => {
-    const result = prices[index];
-    if (result.status === "fulfilled" && result.value) {
-      priceMap.set(address.toLowerCase(), result.value);
-    }
-  });
-
-  return priceMap;
+  return new Map<string, string>();
 };
 
 // ============================================================================

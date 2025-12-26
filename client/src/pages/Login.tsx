@@ -8,6 +8,7 @@ import {
 } from "@/utils/retryTransaction";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
+import { lookupAddresses } from "@cartridge/controller";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
 import { JoinGameModal } from "@/components/login/JoinGameModal";
 import { ProcessingModal } from "@/components/login/ProcessingModal";
@@ -17,8 +18,6 @@ import "./Login.css";
 
 const GAME_CONTRACT_ADDRESS =
   import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
-const DEFAULT_PLAYER_NAME = "";
-const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
   const { account, isConnecting, isConnected, connect, disconnect } =
@@ -27,7 +26,8 @@ export const Login = () => {
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [playerName, setPlayerName] = useState<string>(DEFAULT_PLAYER_NAME);
+  const [username, setUsername] = useState<string | null>(null);
+  const [isLoadingUsername, setIsLoadingUsername] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<{
     title: string;
     message: string;
@@ -37,20 +37,36 @@ export const Login = () => {
   const isJoiningGameRef = useRef(false); // Ref to track join state synchronously
   const audioRef = useRef<HTMLAudioElement | null>(null); // Ref for background music
 
-  // Load player name from localStorage on mount
+  // Fetch username from Controller when account is connected
   useEffect(() => {
-    const savedName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
-    if (savedName) {
-      setPlayerName(savedName);
-    }
-  }, []);
+    const fetchUsername = async () => {
+      if (!account || !isConnected) {
+        setUsername(null);
+        return;
+      }
 
-  // Save player name to localStorage when it changes
-  useEffect(() => {
-    if (playerName && playerName !== DEFAULT_PLAYER_NAME) {
-      localStorage.setItem(PLAYER_NAME_STORAGE_KEY, playerName);
-    }
-  }, [playerName]);
+      setIsLoadingUsername(true);
+      try {
+        const addressMap = await lookupAddresses([account.address]);
+        const fetchedUsername = addressMap.get(account.address);
+        
+        if (fetchedUsername) {
+          console.log("[Login] Username from Controller:", fetchedUsername);
+          setUsername(fetchedUsername);
+        } else {
+          console.log("[Login] No username found for address:", account.address);
+          setUsername(null);
+        }
+      } catch (error) {
+        console.error("[Login] Error fetching username:", error);
+        setUsername(null);
+      } finally {
+        setIsLoadingUsername(false);
+      }
+    };
+
+    fetchUsername();
+  }, [account, isConnected]);
 
   // Initialize background music (will start after user interaction)
   useEffect(() => {
@@ -172,9 +188,8 @@ export const Login = () => {
         GAME_CONTRACT_ADDRESS,
       );
 
-      // Convert playerName to ByteArray
-      // If empty, use "ZStarknet" as fallback
-      const nameToUse = playerName.trim() || "ZStarknet";
+      // Use username from Controller, fallback to "ZStarknet" if not available
+      const nameToUse = username || "ZStarknet";
 
       // Show processing modal - preparing transaction
       setProcessingStatus({
@@ -375,8 +390,8 @@ export const Login = () => {
     setIsJoiningGame(true);
 
     try {
-      // If empty, use "ZStarknet" as fallback
-      const nameToUse = playerName.trim() || "ZStarknet";
+      // Use username from Controller, fallback to "ZStarknet" if not available
+      const nameToUse = username || "ZStarknet";
       console.log(
         "[Login] Joining game with ID:",
         gameId,
@@ -509,20 +524,19 @@ export const Login = () => {
           {account ? (
             <div className="login-connected-section">
               <div className="login-buttons-container">
-                {/* Player name input - above buttons */}
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  className="login-player-name-input"
-                  placeholder="ENTER PLAYER NAME"
-                  maxLength={50}
-                />
+                {/* Display username from Controller */}
+                {isLoadingUsername ? (
+                  <div className="login-username-display">Loading username...</div>
+                ) : username ? (
+                  <div className="login-username-display">Playing as: {username}</div>
+                ) : (
+                  <div className="login-username-display">Playing as: ZStarknet</div>
+                )}
                 <Button
                   onClick={handleCreateGame}
                   className="login-button"
                   variant="default"
-                  disabled={isCreatingGame}
+                  disabled={isCreatingGame || isLoadingUsername}
                 >
                   {isCreatingGame ? "Creating..." : "CREATE GAME"}
                 </Button>
