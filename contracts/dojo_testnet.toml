@@ -16,16 +16,15 @@ telegram = "https://t.me/dojoengine"
 default = "liars_proof3"
 
 [env]
-rpc_url = "https://ztarknet-madara.d.karnot.xyz"
+rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
 # Default account for katana with seed = 0
-account_address = "0x36384edae13bf2f9fbe6644969aaed9e53966b5d5c7a03504ee62fd5208373f"
-private_key = "0x602173531f2954ec7b0d6bde44c8bba9dee84266efe0a61559386f9df88a8b7"
-# world_address = "0x026d5777eccca1861a23303ee0ba48c0e8349e849d0377a21c3801ef1d0f8cef"
+account_address = "0x053c80dd051d0a515ba87dc8a3a32d56dc792e30d046ced89c6a537364e3435e"
+private_key = "0x07222e994e5fd0379d6224d8e7412c01c2008b993fb6b81f3f8dca5465d9123d"
 
 [writers]
 "liars_proof3" = ["liars_proof3-game_system"]
 
 [init_call_args]
 "liars_proof3-game_system" = [
-    "0x0255aa663e5057a4afa98df5a662d233e489fe264b2f4a2086254327c02daee5",
+    "0x062cedd79678b10b3c3f336f1ee2ed7b67b9f05a264169145d19e5b5fccf8152",
 ]

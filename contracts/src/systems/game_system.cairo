@@ -215,7 +215,7 @@ pub mod game_system {
 
             if full_proof_with_hints.len() > 0 {
                 let verifier_dispatcher = VerifierDispatcher {
-                    contract_address: 0x007a51ee9e1278cb5379c105cfae0dad6245d363517402dd4eba78bdd672a907
+                    contract_address: 0x062cedd79678b10b3c3f336f1ee2ed7b67b9f05a264169145d19e5b5fccf8152
                         .try_into()
                         .unwrap(),
                 };

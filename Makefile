@@ -1,5 +1,5 @@
-URL=https://ztarknet-madara.d.karnot.xyz
-ACCOUNT_NAME=ztarknet
+URL=https://api.cartridge.gg/x/starknet/sepolia
+ACCOUNT_NAME=liars-proof-sepolia
 ACCOUNT_CLASS_HASH=0x01484c93b9d6cf61614d698ed069b3c6992c32549194fc3465258c2194734189
 FEE_TOKEN_ADDRESS=0x1ad102b4c4b3e40a51b6fb8a446275d600555bd63a95cdceed3e5cef8a6bc1d
 

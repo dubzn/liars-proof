@@ -1,7 +1,8 @@
-source mi_entorno/bin/activate
+sncast declare --contract-name UltraStarknetZKHonkVerifier --url https://api.cartridge.gg/x/starknet/sepolia
 
-deactivate
-sncast call \
-    --contract-address 0x07efb9a2915d94d90bdf6df392bc3244c0dd1d9beb79c0f9a5d34ae99e888094 \
-    --function "verify_ultra_starknet_zk_honk_proof" \
-    --calldata $(cat calldata.txt)
+sncast --account liars-proof-sepolia \
+deploy \
+--url https://api.cartridge.gg/x/starknet/sepolia \
+--class-hash 0x21ca8867f3e5ff0318ccfb8102c1b303f0d74bdedf8c564dba2786b1b52e6c0
+
+Contract Address: 0x062cedd79678b10b3c3f336f1ee2ed7b67b9f05a264169145d19e5b5fccf8152
