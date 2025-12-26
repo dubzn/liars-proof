@@ -267,13 +267,53 @@ export const Game = () => {
     submitCommitment();
   }, [account, game, gameId, playerHand, currentPhase]);
 
+  // Capture snapshot when entering ResultPhase (BEFORE round resolution)
+  useEffect(() => {
+    if (!game || currentPhase !== "ResultPhase") {
+      return;
+    }
+
+    // Reset proofSubmittedRef when entering a new ResultPhase (new round)
+    // This ensures we can submit proof again for the new round
+    const snapshotRound = roundSnapshotRef.current?.round || 0;
+    if (snapshotRound !== currentRound) {
+      console.log("[Game] 🔄 Resetting proofSubmittedRef for new round:", {
+        snapshotRound,
+        currentRound,
+      });
+      proofSubmittedRef.current = false;
+    }
+
+    // Capture snapshot as soon as we enter ResultPhase (only if we don't have one for this round)
+    if (!roundSnapshotRef.current || roundSnapshotRef.current.round !== currentRound) {
+      roundSnapshotRef.current = {
+        round: currentRound,
+        player_1_score: Number(game.player_1_score),
+        player_2_score: Number(game.player_2_score),
+        player_1_lives: Number(game.player_1_lives),
+        player_2_lives: Number(game.player_2_lives),
+        player_1_condition_choice: parseBoolean(game.player_1_condition_choice),
+        player_2_condition_choice: parseBoolean(game.player_2_condition_choice),
+        player_1_challenge_choice: parseBoolean(game.player_1_challenge_choice),
+        player_2_challenge_choice: parseBoolean(game.player_2_challenge_choice),
+        player_1_proof_valid: null,
+        player_2_proof_valid: null,
+      };
+
+      console.log("[Game] 📸 Snapshot captured when entering ResultPhase:", {
+        round: currentRound,
+        player1_score: roundSnapshotRef.current.player_1_score,
+        player2_score: roundSnapshotRef.current.player_2_score,
+      });
+    }
+  }, [game, currentPhase, currentRound]);
+
   // AUTOMATIC: Submit proof when entering ResultPhase
   useEffect(() => {
     if (
       !account ||
       !game ||
       currentPhase !== "ResultPhase" ||
-      proofSubmittedRef.current ||
       playerHand.length !== 3 ||
       !condition
     ) {
@@ -285,30 +325,19 @@ export const Game = () => {
       ? player1ProofSubmitted
       : player2ProofSubmitted;
 
+    // If proof already submitted on-chain, mark ref as submitted
     if (currentProofSubmitted) {
       proofSubmittedRef.current = true;
       return;
     }
 
+    // If we've already attempted to submit for this round, don't try again
+    if (proofSubmittedRef.current) {
+      return;
+    }
+
     const submitProof = async () => {
       proofSubmittedRef.current = true;
-
-      // Capture snapshot BEFORE submitting proof
-      if (!roundSnapshotRef.current) {
-        roundSnapshotRef.current = {
-          round: currentRound,
-          player_1_score: Number(game.player_1_score),
-          player_2_score: Number(game.player_2_score),
-          player_1_lives: Number(game.player_1_lives),
-          player_2_lives: Number(game.player_2_lives),
-          player_1_condition_choice: parseBoolean(game.player_1_condition_choice),
-          player_2_condition_choice: parseBoolean(game.player_2_condition_choice),
-          player_1_challenge_choice: parseBoolean(game.player_1_challenge_choice),
-          player_2_challenge_choice: parseBoolean(game.player_2_challenge_choice),
-          player_1_proof_valid: null,
-          player_2_proof_valid: null,
-        };
-      }
 
       try {
         setProcessingStatus({
@@ -392,7 +421,7 @@ export const Game = () => {
     player2ProofSubmitted,
   ]);
 
-  // Update snapshot with proof validities
+  // Update snapshot with proof validities as they become available
   useEffect(() => {
     if (!roundSnapshotRef.current) return;
 
@@ -404,65 +433,74 @@ export const Game = () => {
     }
   }, [player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid]);
 
-  // Detect round resolution and show result modal
+  // TRIGGER: Show RoundResultModal when transitioning from ResultPhase to ConditionPhase
+  // This happens when the round is resolved and we move to the next round
   useEffect(() => {
-    if (!game || !roundSnapshotRef.current || showRoundResultModal) {
-      return;
+    if (!game) return;
+
+    // Detect transition from ResultPhase to ConditionPhase
+    const wasResultPhase = previousPhaseRef.current === "ResultPhase";
+    const isConditionPhase = currentPhase === "ConditionPhase";
+    const phaseTransitioned = wasResultPhase && isConditionPhase;
+
+    // Also check if we're entering ConditionPhase and we have a snapshot from ResultPhase
+    const hasSnapshot = roundSnapshotRef.current !== null;
+    const snapshotRound = roundSnapshotRef.current?.round || 0;
+    const roundMatches = snapshotRound === currentRound - 1 || snapshotRound === currentRound;
+
+    if (phaseTransitioned && hasSnapshot && roundMatches && !showRoundResultModal) {
+      const snapshot = roundSnapshotRef.current;
+
+      // Wait for both proof validities to be available
+      if (
+        snapshot.player_1_proof_valid === null ||
+        snapshot.player_2_proof_valid === null
+      ) {
+        console.log("[Game] ⏳ Waiting for proof validities before showing result modal");
+        return;
+      }
+
+      // Check if we've already shown the result for this round
+      if (roundResultShownRef.current === snapshot.round) {
+        console.log("[Game] ✅ Already shown result for round", snapshot.round);
+        return;
+      }
+
+      console.log("[Game] 🎯 Showing RoundResultModal - transitioned from ResultPhase to ConditionPhase");
+
+      // Calculate results based on snapshot (state before resolution)
+      const player1Lied =
+        snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
+      const player2Lied =
+        snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
+      const player1Believed = snapshot.player_1_challenge_choice === true;
+      const player2Believed = snapshot.player_2_challenge_choice === true;
+
+      // Calculate changes by comparing snapshot (before) with current state (after)
+      setRoundResultData({
+        player1Lied,
+        player2Lied,
+        player1Believed,
+        player2Believed,
+        player1ScoreChange: Number(game.player_1_score) - snapshot.player_1_score,
+        player2ScoreChange: Number(game.player_2_score) - snapshot.player_2_score,
+        player1LivesChange: Number(game.player_1_lives) - snapshot.player_1_lives,
+        player2LivesChange: Number(game.player_2_lives) - snapshot.player_2_lives,
+        player1NewScore: Number(game.player_1_score),
+        player2NewScore: Number(game.player_2_score),
+        player1NewLives: Number(game.player_1_lives),
+        player2NewLives: Number(game.player_2_lives),
+      });
+
+      setShowRoundResultModal(true);
+      roundResultShownRef.current = snapshot.round;
     }
 
-    const snapshot = roundSnapshotRef.current;
-    const roundResolved = currentRound > snapshot.round;
-    const scoresChanged =
-      Number(game.player_1_score) !== snapshot.player_1_score ||
-      Number(game.player_2_score) !== snapshot.player_2_score;
-    const livesChanged =
-      Number(game.player_1_lives) !== snapshot.player_1_lives ||
-      Number(game.player_2_lives) !== snapshot.player_2_lives;
-
-    if (!roundResolved && !scoresChanged && !livesChanged) {
-      return;
-    }
-
-    // Wait for both proof validities
-    if (
-      snapshot.player_1_proof_valid === null ||
-      snapshot.player_2_proof_valid === null
-    ) {
-      return;
-    }
-
-    // Check if already shown for this round
-    if (roundResultShownRef.current === snapshot.round) {
-      return;
-    }
-
-    // Calculate results
-    const player1Lied =
-      snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
-    const player2Lied =
-      snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
-    const player1Believed = snapshot.player_1_challenge_choice === true;
-    const player2Believed = snapshot.player_2_challenge_choice === true;
-
-    setRoundResultData({
-      player1Lied,
-      player2Lied,
-      player1Believed,
-      player2Believed,
-      player1ScoreChange: Number(game.player_1_score) - snapshot.player_1_score,
-      player2ScoreChange: Number(game.player_2_score) - snapshot.player_2_score,
-      player1LivesChange: Number(game.player_1_lives) - snapshot.player_1_lives,
-      player2LivesChange: Number(game.player_2_lives) - snapshot.player_2_lives,
-      player1NewScore: Number(game.player_1_score),
-      player2NewScore: Number(game.player_2_score),
-      player1NewLives: Number(game.player_1_lives),
-      player2NewLives: Number(game.player_2_lives),
-    });
-
-    setShowRoundResultModal(true);
-    roundResultShownRef.current = snapshot.round;
+    // Update previous phase ref
+    previousPhaseRef.current = currentPhase;
   }, [
     game,
+    currentPhase,
     currentRound,
     showRoundResultModal,
     player1ProofSubmitted,
@@ -471,18 +509,24 @@ export const Game = () => {
     player2ProofValid,
   ]);
 
-  // Reset snapshot when starting new round
+  // Reset snapshot when modal is closed and we're in ConditionPhase (new round started)
   useEffect(() => {
     if (
       currentPhase === "ConditionPhase" &&
-      roundResultShownRef.current !== null &&
-      !showRoundResultModal
+      !showRoundResultModal &&
+      roundResultShownRef.current !== null
     ) {
+      // Reset for next round - the round has advanced
       if (roundResultShownRef.current < currentRound) {
+        console.log("[Game] 🔄 Resetting snapshot and refs for new round:", {
+          shownRound: roundResultShownRef.current,
+          currentRound,
+        });
         roundSnapshotRef.current = null;
         roundResultShownRef.current = null;
         proofSubmittedRef.current = false;
         commitmentSubmittedRef.current = false;
+        previousPhaseRef.current = currentPhase;
       }
     }
   }, [currentPhase, currentRound, showRoundResultModal]);
@@ -559,8 +603,10 @@ export const Game = () => {
   );
 
   const handleRoundResultContinue = useCallback(() => {
+    console.log("[Game] 🔄 Closing RoundResultModal and resetting for next round");
     setShowRoundResultModal(false);
     setRoundResultData(null);
+    // Note: Refs will be reset when entering new ResultPhase or ConditionPhase
   }, []);
 
   // Extract game data
