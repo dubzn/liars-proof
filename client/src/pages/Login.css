@@ -225,7 +225,7 @@
   border: none !important;
   border-radius: 0.5rem !important;
   color: white !important;
-  font-size: clamp(1rem, 2.5vw, 2.5rem) !important;
+  font-size: clamp(0.75rem, 2.0vw, 2.0rem) !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.15em !important;

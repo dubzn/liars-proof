@@ -18,7 +18,7 @@ const DEFAULT_PLAYER_NAME = "";
 const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
-  const { account, connector, isConnecting, isAvailable, isGuestMode, isCartridgeMode, connect, connectWithCartridge, connectAsGuest, disconnect } = useStarknetKit();
+  const { account, isConnecting, isGuestMode, isCartridgeMode, connectWithCartridge, connectAsGuest, disconnect } = useStarknetKit();
   const { ensureDeployed } = useGuestWallet();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -286,18 +286,6 @@ export const Login = () => {
     }
   };
 
-  const handleConnect = async () => {
-    if (!account && !isConnecting) {
-      try {
-        console.log("[Login] Connecting wallet...");
-        await connect();
-      } catch (error) {
-        console.error("[Login] Error connecting wallet:", error);
-        toast.error("Failed to connect wallet");
-      }
-    }
-  };
-
   const handleConnectWithCartridge = async () => {
     if (!account && !isConnecting) {
       try {
@@ -540,18 +528,7 @@ export const Login = () => {
                 <>
                   🎮 CARTRIDGE CONNECTED
                 </>
-              ) : (
-                <>
-                  {connector?.icon
-                    ? typeof connector.icon === "string"
-                      ? <img src={connector.icon} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
-                      : typeof connector.icon === "object" && connector.icon.light
-                        ? <img src={connector.icon.light} alt="" style={{ width: 20, height: 20, objectFit: "contain", marginRight: 6 }} />
-                        : null
-                    : null}
-                  READY CONNECTED
-                </>
-              )}
+              ) : null}
             </span>
             <button
               onClick={handleDisconnect}
@@ -601,18 +578,6 @@ export const Login = () => {
             </div>
           ) : (
             <div className="login-disconnected-section">
-              <Button
-                onClick={handleConnect}
-                className="login-button"
-                variant="default"
-                disabled={!isAvailable || isConnecting}
-              >
-                {isConnecting
-                  ? "Connecting..."
-                  : !isAvailable
-                    ? "Wallet not available"
-                    : "CONNECT WITH READY"}
-              </Button>
               {!isConnecting && (
                 <Button
                   onClick={handleConnectWithCartridge}
@@ -620,10 +585,13 @@ export const Login = () => {
                   variant="default"
                   disabled={isConnecting}
                   style={{
-                    background: "linear-gradient(135deg, rgb(99, 102, 241) 0%, rgb(67, 56, 202) 100%)",
+                    background: "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5em",
                   }}
                 >
-                  CONNECT WITH CARTRIDGE
+                  CONNECT WITH CONTROLLER
                 </Button>
               )}
               {!isConnecting && (
@@ -632,22 +600,15 @@ export const Login = () => {
                 className="login-button"
                 variant="default"
                 disabled={isConnecting}
-                style={{
-                  background: "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
-                }}
+
               >
                 PLAY AS GUEST
               </Button>
               )}
               <p className="login-wallet-support-text">
                 Guest mode creates a temporary wallet funded automatically<br />
-                Connect with Ready Wallet or Cartridge Controller on ZStarknet
+                Connect with Cartridge Controller on ZStarknet
               </p>
-              {!isAvailable && (
-                <p className="login-error-message">
-                  Please install Ready Wallet or use Cartridge Controller
-                </p>
-              )}
             </div>
           )}
         </div>

@@ -1,21 +1,17 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { AccountInterface } from "starknet";
-import { InjectedConnector } from "starknetkit/injected";
+import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { RpcProvider } from "starknet";
-import Controller from "@cartridge/controller";
 import { setupGuestWallet, loadGuestWallet, hasGuestWallet } from "@/utils/guestWallet";
 
 interface StarknetKitContextType {
   account: AccountInterface | null;
-  connector: InjectedConnector | null;
   isConnecting: boolean;
   isGuestMode: boolean;
   isCartridgeMode: boolean;
-  connect: () => Promise<void>;
   connectWithCartridge: () => Promise<void>;
   connectAsGuest: () => Promise<void>;
   disconnect: () => Promise<void>;
-  isAvailable: boolean;
 }
 
 const StarknetKitContext = createContext<StarknetKitContextType | undefined>(undefined);
@@ -33,128 +29,57 @@ interface StarknetKitProviderProps {
 }
 
 export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
-  const [account, setAccount] = useState<AccountInterface | null>(null);
-  const [connector, setConnector] = useState<InjectedConnector | null>(null);
-  const [controller, setController] = useState<Controller | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(false);
+  const { account: starknetAccount, status, isConnected } = useAccount();
+  const { connect: connectStarknet, connectors } = useConnect();
+  const { disconnect: disconnectStarknet } = useDisconnect();
+  
+  const [guestAccount, setGuestAccount] = useState<AccountInterface | null>(null);
   const [isGuestMode, setIsGuestMode] = useState(false);
-  const [isCartridgeMode, setIsCartridgeMode] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  // Initialize connector for Argent/Ready
+  // Determine which account to use
+  const account = isGuestMode ? guestAccount : (starknetAccount as AccountInterface | null);
+  const isCartridgeMode = Boolean(isConnected && !isGuestMode);
+
+  // Try to restore guest wallet on mount
   useEffect(() => {
-    const initConnector = async () => {
-      try {
-        const argentConnector = new InjectedConnector({
-          options: {
-            id: "argentX",
-            name: "Ready Wallet (formerly Argent)",
-          },
-        });
-
-        const available = argentConnector.available();
-        setIsAvailable(available);
-        setConnector(argentConnector);
-
-        // Try to restore guest wallet first
-        if (hasGuestWallet()) {
-          try {
-            console.log("[StarknetKit] Restoring guest wallet...");
-            const provider = new RpcProvider({
-              nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
-            });
-            const walletData = loadGuestWallet();
-            if (walletData) {
-              const { account: guestAccount } = await setupGuestWallet(provider);
-              setAccount(guestAccount);
-              setIsGuestMode(true);
-              console.log("[StarknetKit] Guest wallet restored");
-              return;
-            }
-          } catch (error) {
-            console.log("[StarknetKit] No guest wallet to restore:", error);
+    const restoreGuestWallet = async () => {
+      if (hasGuestWallet() && !isGuestMode && !isConnected) {
+        try {
+          console.log("[StarknetKit] Restoring guest wallet...");
+          const provider = new RpcProvider({
+            nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
+          });
+          const walletData = loadGuestWallet();
+          if (walletData) {
+            const { account: guestAccount } = await setupGuestWallet(provider);
+            setGuestAccount(guestAccount);
+            setIsGuestMode(true);
+            console.log("[StarknetKit] Guest wallet restored");
           }
+        } catch (error) {
+          console.log("[StarknetKit] No guest wallet to restore:", error);
         }
-
-        // Try to restore wallet connection if available
-        if (available) {
-          try {
-            const provider = new RpcProvider({
-              nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
-            });
-            const ready = await argentConnector.ready();
-            if (ready) {
-              const connectedAccount = await argentConnector.account(provider);
-              if (connectedAccount) {
-                setAccount(connectedAccount);
-                setIsGuestMode(false);
-              }
-            }
-          } catch (error) {
-            console.log("[StarknetKit] No existing connection:", error);
-          }
-        }
-      } catch (error) {
-        console.error("[StarknetKit] Error initializing connector:", error);
       }
     };
 
-    initConnector();
+    restoreGuestWallet();
   }, []);
-
-  const connect = async () => {
-    if (!connector || !isAvailable) {
-      console.error("[StarknetKit] Connector not available");
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      console.log("[StarknetKit] Connecting...");
-      const connectorData = await connector.connect();
-
-      console.log("[StarknetKit] Connected:", connectorData);
-
-      // Get the account using the provider
-      const provider = new RpcProvider({
-        nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
-      });
-
-      const connectedAccount = await connector.account(provider);
-      setAccount(connectedAccount);
-      console.log("[StarknetKit] Account set:", connectedAccount.address);
-    } catch (error) {
-      console.error("[StarknetKit] Error connecting:", error);
-      throw error;
-    } finally {
-      setIsConnecting(false);
-    }
-  };
 
   const connectWithCartridge = async () => {
     setIsConnecting(true);
     try {
       console.log("[StarknetKit] Connecting with Cartridge Controller...");
-
-      // Initialize Cartridge Controller
-      const cartridgeController = new Controller({
-        chainId: import.meta.env.VITE_ZN_CHAIN_ID || "0x534e5f5345504f4c4941", // Sepolia testnet
-        rpcUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
-      });
-
-      // Connect to Cartridge Controller
-      const cartridgeAccount = await cartridgeController.connect();
       
-      if (!cartridgeAccount) {
-        throw new Error("Failed to connect with Cartridge Controller");
+      if (connectors.length === 0) {
+        throw new Error("No connectors available");
       }
+
+      // Use the first connector (ControllerConnector)
+      await connectStarknet({ connector: connectors[0] });
       
-      setController(cartridgeController);
-      // WalletAccount from Cartridge is compatible with AccountInterface
-      setAccount(cartridgeAccount as AccountInterface);
-      setIsCartridgeMode(true);
       setIsGuestMode(false);
-      console.log("[StarknetKit] Cartridge Controller connected:", cartridgeAccount.address);
+      console.log("[StarknetKit] Cartridge Controller connected");
     } catch (error) {
       console.error("[StarknetKit] Error connecting with Cartridge:", error);
       throw error;
@@ -174,9 +99,8 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
 
       const { account: guestAccount, walletData } = await setupGuestWallet(provider);
 
-      setAccount(guestAccount);
+      setGuestAccount(guestAccount);
       setIsGuestMode(true);
-      setIsCartridgeMode(false);
       console.log("[StarknetKit] Guest account connected:", walletData.address);
     } catch (error) {
       console.error("[StarknetKit] Error connecting as guest:", error);
@@ -192,42 +116,37 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
 
       if (isGuestMode) {
         // For guest mode, just clear the state but keep wallet in localStorage
-        // This allows users to reconnect to the same guest wallet later
         setIsGuestMode(false);
-      } else if (isCartridgeMode && controller) {
-        // For Cartridge Controller, disconnect
-        await controller.disconnect();
-        setController(null);
-        setIsCartridgeMode(false);
-      } else if (connector) {
-        // For wallet connections, disconnect the connector
-        await connector.disconnect();
+        setGuestAccount(null);
+      } else {
+        // For Cartridge Controller, use starknet-react's disconnect
+        await disconnectStarknet();
       }
 
-      setAccount(null);
       console.log("[StarknetKit] Disconnected");
     } catch (error) {
       console.error("[StarknetKit] Error disconnecting:", error);
     }
   };
 
+  // Update isConnecting based on status
+  useEffect(() => {
+    setIsConnecting(status === 'connecting' || status === 'reconnecting');
+  }, [status]);
+
   return (
     <StarknetKitContext.Provider
       value={{
         account,
-        connector,
         isConnecting,
         isGuestMode,
         isCartridgeMode,
-        connect,
         connectWithCartridge,
         connectAsGuest,
         disconnect,
-        isAvailable,
       }}
     >
       {children}
     </StarknetKitContext.Provider>
   );
 }
-

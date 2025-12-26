@@ -1,6 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
+import StarknetProvider from "./store/starknetProvider";
 import { StarknetKitProvider } from "./context/starknetkit";
 import { DojoSdkProviderInitialized } from "./context/dojo";
 import { Login } from "./pages/Login";
@@ -12,17 +13,19 @@ function App() {
   return (
     <>
       <QueryClientProvider client={queryClient}>
-        <StarknetKitProvider>
-          <DojoSdkProviderInitialized>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/game/:game_id" element={<Game />} />
-                <Route path="/proof" element={<ProofPage />} />
-              </Routes>
-            </Router>
-          </DojoSdkProviderInitialized>
-        </StarknetKitProvider>
+        <StarknetProvider>
+          <StarknetKitProvider>
+            <DojoSdkProviderInitialized>
+              <Router>
+                <Routes>
+                  <Route path="/" element={<Login />} />
+                  <Route path="/game/:game_id" element={<Game />} />
+                  <Route path="/proof" element={<ProofPage />} />
+                </Routes>
+              </Router>
+            </DojoSdkProviderInitialized>
+          </StarknetKitProvider>
+        </StarknetProvider>
       </QueryClientProvider>
       <Toaster position="top-center" richColors />
     </>
