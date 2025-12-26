@@ -2,10 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
-import {
-  retryTransaction,
-  checkTransactionSuccess,
-} from "@/utils/retryTransaction";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { lookupAddresses } from "@cartridge/controller";
@@ -220,33 +216,21 @@ export const Login = () => {
         message: "Submitting transaction ...",
       });
 
-      // Execute the create function with retry logic
-      const receipt = await retryTransaction(
-        async () => {
-          const result = await account.execute({
-            contractAddress: GAME_CONTRACT_ADDRESS,
-            entrypoint: "create",
-            calldata: serializedByteArray,
-          });
+      // Execute the create function
+      const result = await account.execute({
+        contractAddress: GAME_CONTRACT_ADDRESS,
+        entrypoint: "create",
+        calldata: serializedByteArray,
+      });
 
-          console.log("[Login] Transaction hash:", result.transaction_hash);
+      console.log("[Login] Transaction hash:", result.transaction_hash);
 
-          // Wait for transaction to be accepted
-          const txReceipt = await account.waitForTransaction(
-            result.transaction_hash,
-            {
-              retryInterval: 100,
-              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-            },
-          );
-
-          // Verify transaction actually succeeded
-          checkTransactionSuccess(txReceipt);
-
-          return txReceipt;
-        },
+      // Wait for transaction to be accepted
+      const receipt = await account.waitForTransaction(
+        result.transaction_hash,
         {
-          maxAttempts: 20,
+          retryInterval: 100,
+          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
         },
       );
 
@@ -422,33 +406,20 @@ export const Login = () => {
         message: "Submitting transaction ...",
       });
 
-      // Execute the join function with retry logic
-      await retryTransaction(
-        async () => {
-          const result = await account.execute({
-            contractAddress: GAME_CONTRACT_ADDRESS,
-            entrypoint: "join",
-            calldata: [gameId.toString(), ...serializedByteArray],
-          });
+      // Execute the join function
+      const result = await account.execute({
+        contractAddress: GAME_CONTRACT_ADDRESS,
+        entrypoint: "join",
+        calldata: [gameId.toString(), ...serializedByteArray],
+      });
 
-          console.log("[Login] Transaction hash:", result.transaction_hash);
+      console.log("[Login] Transaction hash:", result.transaction_hash);
 
-          // Wait for transaction to be accepted
-          const receipt = await account.waitForTransaction(
-            result.transaction_hash,
-            {
-              retryInterval: 100,
-              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-            },
-          );
-
-          // Verify transaction actually succeeded
-          checkTransactionSuccess(receipt);
-        },
-        {
-          maxAttempts: 20,
-        },
-      );
+      // Wait for transaction to be accepted
+      await account.waitForTransaction(result.transaction_hash, {
+        retryInterval: 100,
+        successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+      });
 
       console.log("[Login] ✅ Successfully joined game:", gameId);
       setProcessingStatus(null); // Close modal
