@@ -18,7 +18,7 @@ const DEFAULT_PLAYER_NAME = "";
 const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
-  const { account, connector, isConnecting, isAvailable, isGuestMode, connect, connectAsGuest, disconnect } = useStarknetKit();
+  const { account, connector, isConnecting, isAvailable, isGuestMode, isCartridgeMode, connect, connectWithCartridge, connectAsGuest, disconnect } = useStarknetKit();
   const { ensureDeployed } = useGuestWallet();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -298,6 +298,19 @@ export const Login = () => {
     }
   };
 
+  const handleConnectWithCartridge = async () => {
+    if (!account && !isConnecting) {
+      try {
+        console.log("[Login] Connecting with Cartridge Controller...");
+        await connectWithCartridge();
+        toast.success("Connected with Cartridge Controller!");
+      } catch (error) {
+        console.error("[Login] Error connecting with Cartridge:", error);
+        toast.error("Failed to connect with Cartridge Controller");
+      }
+    }
+  };
+
   const handleConnectAsGuest = async () => {
     if (!account && !isConnecting) {
       try {
@@ -523,6 +536,10 @@ export const Login = () => {
                 <>
                   GUEST MODE
                 </>
+              ) : isCartridgeMode ? (
+                <>
+                  🎮 CARTRIDGE CONNECTED
+                </>
               ) : (
                 <>
                   {connector?.icon
@@ -594,8 +611,21 @@ export const Login = () => {
                   ? "Connecting..."
                   : !isAvailable
                     ? "Wallet not available"
-                    : "CONNECT WALLET"}
+                    : "CONNECT WITH READY"}
               </Button>
+              {!isConnecting && (
+                <Button
+                  onClick={handleConnectWithCartridge}
+                  className="login-button"
+                  variant="default"
+                  disabled={isConnecting}
+                  style={{
+                    background: "linear-gradient(135deg, rgb(99, 102, 241) 0%, rgb(67, 56, 202) 100%)",
+                  }}
+                >
+                  CONNECT WITH CARTRIDGE
+                </Button>
+              )}
               {!isConnecting && (
               <Button
                 onClick={handleConnectAsGuest}
@@ -611,11 +641,11 @@ export const Login = () => {
               )}
               <p className="login-wallet-support-text">
                 Guest mode creates a temporary wallet funded automatically<br />
-                Only Ready wallet on the ZStarknet network is supported 
+                Connect with Ready Wallet or Cartridge Controller on ZStarknet
               </p>
               {!isAvailable && (
                 <p className="login-error-message">
-                  Please install Ready Wallet
+                  Please install Ready Wallet or use Cartridge Controller
                 </p>
               )}
             </div>

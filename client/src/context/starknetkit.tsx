@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { AccountInterface } from "starknet";
 import { InjectedConnector } from "starknetkit/injected";
 import { RpcProvider } from "starknet";
+import Controller from "@cartridge/controller";
 import { setupGuestWallet, loadGuestWallet, hasGuestWallet } from "@/utils/guestWallet";
 
 interface StarknetKitContextType {
@@ -9,7 +10,9 @@ interface StarknetKitContextType {
   connector: InjectedConnector | null;
   isConnecting: boolean;
   isGuestMode: boolean;
+  isCartridgeMode: boolean;
   connect: () => Promise<void>;
+  connectWithCartridge: () => Promise<void>;
   connectAsGuest: () => Promise<void>;
   disconnect: () => Promise<void>;
   isAvailable: boolean;
@@ -32,9 +35,11 @@ interface StarknetKitProviderProps {
 export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
   const [account, setAccount] = useState<AccountInterface | null>(null);
   const [connector, setConnector] = useState<InjectedConnector | null>(null);
+  const [controller, setController] = useState<Controller | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isCartridgeMode, setIsCartridgeMode] = useState(false);
 
   // Initialize connector for Argent/Ready
   useEffect(() => {
@@ -126,6 +131,38 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
     }
   };
 
+  const connectWithCartridge = async () => {
+    setIsConnecting(true);
+    try {
+      console.log("[StarknetKit] Connecting with Cartridge Controller...");
+
+      // Initialize Cartridge Controller
+      const cartridgeController = new Controller({
+        chainId: import.meta.env.VITE_ZN_CHAIN_ID || "0x534e5f5345504f4c4941", // Sepolia testnet
+        rpcUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL,
+      });
+
+      // Connect to Cartridge Controller
+      const cartridgeAccount = await cartridgeController.connect();
+      
+      if (!cartridgeAccount) {
+        throw new Error("Failed to connect with Cartridge Controller");
+      }
+      
+      setController(cartridgeController);
+      // WalletAccount from Cartridge is compatible with AccountInterface
+      setAccount(cartridgeAccount as AccountInterface);
+      setIsCartridgeMode(true);
+      setIsGuestMode(false);
+      console.log("[StarknetKit] Cartridge Controller connected:", cartridgeAccount.address);
+    } catch (error) {
+      console.error("[StarknetKit] Error connecting with Cartridge:", error);
+      throw error;
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   const connectAsGuest = async () => {
     setIsConnecting(true);
     try {
@@ -139,6 +176,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
 
       setAccount(guestAccount);
       setIsGuestMode(true);
+      setIsCartridgeMode(false);
       console.log("[StarknetKit] Guest account connected:", walletData.address);
     } catch (error) {
       console.error("[StarknetKit] Error connecting as guest:", error);
@@ -156,6 +194,11 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
         // For guest mode, just clear the state but keep wallet in localStorage
         // This allows users to reconnect to the same guest wallet later
         setIsGuestMode(false);
+      } else if (isCartridgeMode && controller) {
+        // For Cartridge Controller, disconnect
+        await controller.disconnect();
+        setController(null);
+        setIsCartridgeMode(false);
       } else if (connector) {
         // For wallet connections, disconnect the connector
         await connector.disconnect();
@@ -175,7 +218,9 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
         connector,
         isConnecting,
         isGuestMode,
+        isCartridgeMode,
         connect,
+        connectWithCartridge,
         connectAsGuest,
         disconnect,
         isAvailable,
