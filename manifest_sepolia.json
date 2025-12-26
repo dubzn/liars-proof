@@ -33,10 +33,10 @@
   },
   "contracts": [
     {
-      "address": "0x61bbad1a75c35f967434893465a43744b935c9bceb9ccf2a894e77e864868d5",
-      "class_hash": "0x1fb9a3267fc0ecc2ac3744e5793b7560770f203cd88b82b28038a60fb6087e2",
+      "address": "0x6973354f6a4ee66139a1cdb2a40166b2689fd9c84ac030f71ca5a23b36cd261",
+      "class_hash": "0x12c9a346e9916d59fd722a479b9133617d03eb68b5cbaae9af2842720c417dc",
       "init_calldata": [
-        "0x0255aa663e5057a4afa98df5a662d233e489fe264b2f4a2086254327c02daee5"
+        "0x062cedd79678b10b3c3f336f1ee2ed7b67b9f05a264169145d19e5b5fccf8152"
       ],
       "tag": "liars_proof3-game_system",
       "selector": "0x2fc2136df45f5590da20c9530506fad4619f003e9476986b417052438d6fe3",
