@@ -71,5 +71,9 @@ export const getCardFullName = (value: number, suit: number): string => {
       suitName = "Unknown";
   }
 
-  return `${valueName} of ${suitName}`;
+  if (value === 11 || value === 12 || value === 13) {
+    return `${valueName} of ${suitName} (10)`;
+  }
+
+  return `${valueName} of ${suitName} (${value})`;
 };
