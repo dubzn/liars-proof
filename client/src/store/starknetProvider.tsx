@@ -115,7 +115,7 @@ export default function StarknetProvider({ children }: PropsWithChildren) {
       provider={provider}
       connectors={[controller as unknown as Connector]}
       explorer={voyager}
-      autoConnect={false}
+      autoConnect
     >
       {children}
     </StarknetConfig>
