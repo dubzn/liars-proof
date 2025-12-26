@@ -30,21 +30,6 @@
   filter: blur(6px);
 }
 
-.game-wallet-message {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0a0a1a;
-}
-
-.game-wallet-message-text {
-  color: white;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
 
 .game-info-container {
   position: absolute;

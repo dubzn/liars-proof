@@ -58,17 +58,6 @@
   z-index: 10;
 }
 
-.game-logo {
-  position: absolute;
-  bottom: 2rem;
-  left: 2rem;
-  height: auto;
-  width: auto;
-  max-width: 40%;
-  max-height: 20%;
-  object-fit: contain;
-  z-index: 10;
-}
 
 .login-connected-section,
 .login-disconnected-section {
@@ -123,82 +112,15 @@
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.5rem;
   color: white;
-  font-size: clamp(0.875rem, 1.5vw, 1.25rem);
-  font-weight: 600;
+  font-size: clamp(0.75rem, 2.0vw, 2.0rem) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
   text-align: center;
   font-family: "BebasNeue", Arial, sans-serif;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
   margin-bottom: 0.5rem;
 }
 
-.login-player-name-input {
-  width: 100%;
-  padding: clamp(0.5rem, 1vw, 1.5rem) clamp(1rem, 2vw, 1.75rem) !important;
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  border: none !important;
-  border-radius: 0.5rem !important;
-  color: white !important;
-  font-size: clamp(1rem, 2.5vw, 2.5rem) !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.15em !important;
-  font-family: "BebasNeue", Arial, sans-serif !important;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5) !important;
-  transition: all 0.3s ease !important;
-  line-height: 1.5 !important;
-  cursor: text !important;
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-
-.login-player-name-input::after {
-  content: "|";
-  position: absolute;
-  left: clamp(2rem, 4vw, 3.5rem);
-  top: 50%;
-  transform: translateY(-50%);
-  color: white;
-  font-size: clamp(1rem, 2.5vw, 2.5rem);
-  font-weight: 700;
-  animation: blinkCursor 1s infinite;
-  pointer-events: none;
-  opacity: 0;
-}
-
-.login-player-name-input:placeholder-shown::after {
-  opacity: 1;
-}
-
-.login-player-name-input:focus::after,
-.login-player-name-input:not(:placeholder-shown)::after {
-  opacity: 0;
-}
-
-@keyframes blinkCursor {
-  0%, 50% {
-    opacity: 1;
-  }
-  51%, 100% {
-    opacity: 0;
-  }
-}
-
-.login-player-name-input:focus {
-  outline: none;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.7) !important;
-  background-color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.login-player-name-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-.login-player-name-input:not(:placeholder-shown) {
-  text-transform: uppercase;
-}
 
 .login-logout-button {
   padding: 0.9rem 1rem;
@@ -274,21 +196,6 @@
   cursor: not-allowed !important;
 }
 
-.login-redirect-message {
-  color: #9ca3af; /* gray-400 */
-  font-size: 0.875rem;
-  text-align: center;
-  margin-top: 0.5rem;
-  font-family: Arial, sans-serif;
-}
-
-.login-error-message {
-  color: #ef4444;
-  font-size: 0.875rem;
-  text-align: center;
-  margin-top: 0.5rem;
-  font-family: Arial, sans-serif;
-}
 
 .login-footer {
   position: absolute;
