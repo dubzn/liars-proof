@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import type { AccountInterface } from "starknet";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 
@@ -10,7 +16,9 @@ interface StarknetKitContextType {
   disconnect: () => Promise<void>;
 }
 
-const StarknetKitContext = createContext<StarknetKitContextType | undefined>(undefined);
+const StarknetKitContext = createContext<StarknetKitContextType | undefined>(
+  undefined,
+);
 
 export function useStarknetKit() {
   const context = useContext(StarknetKitContext);
@@ -28,7 +36,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
   const { account, status, isConnected } = useAccount();
   const { connect: connectStarknet, connectors } = useConnect();
   const { disconnect: disconnectStarknet } = useDisconnect();
-  
+
   const [isConnecting, setIsConnecting] = useState(false);
 
   const connect = async () => {
@@ -56,7 +64,7 @@ export function StarknetKitProvider({ children }: StarknetKitProviderProps) {
   };
 
   useEffect(() => {
-    setIsConnecting(status === 'connecting' || status === 'reconnecting');
+    setIsConnecting(status === "connecting" || status === "reconnecting");
   }, [status]);
 
   return (

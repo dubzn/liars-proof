@@ -23,10 +23,10 @@ export const useGameCall = () => {
         // Example: Call a read-only function
         // Note: This is a placeholder - adjust based on your contract's callable functions
         const world = setupWorld(sdk.provider);
-        
+
         // If your contract has a callable read function, use it here
         // const result = await world.game.getGame(gameId);
-        
+
         console.log("Call executed for game:", gameId);
       } catch (error) {
         console.error("Error calling contract:", error);
@@ -34,7 +34,7 @@ export const useGameCall = () => {
         setLoading(false);
       }
     },
-    [sdk, account]
+    [sdk, account],
   );
 
   return {
@@ -42,4 +42,3 @@ export const useGameCall = () => {
     loading,
   };
 };
-

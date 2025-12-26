@@ -46,7 +46,7 @@ export const useGameSubscription = (gameId: number) => {
       const gameData = entity.models[NAMESPACE]["Game"] as Game;
       setGame(gameData);
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -82,4 +82,3 @@ export const useGameSubscription = (gameId: number) => {
     game,
   };
 };
-

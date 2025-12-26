@@ -51,9 +51,9 @@ export const PlayerHandCards = ({
         const arcAngle = (index - 1) * 0.3; // Arc angle in radians
         const xOffset = Math.sin(arcAngle) * radius;
         const yOffset = -Math.abs(Math.cos(arcAngle) - 1) * radius * 0.1; // Minimal vertical offset
-        
+
         const cardName = getCardFullName(card.value, card.suit);
-        
+
         return (
           <div
             key={index}
@@ -76,4 +76,3 @@ export const PlayerHandCards = ({
     </div>
   );
 };
-

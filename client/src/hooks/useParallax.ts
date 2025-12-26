@@ -34,4 +34,3 @@ export const useParallax = (intensity: number = 20): ParallaxOffset => {
 
   return offset;
 };
-

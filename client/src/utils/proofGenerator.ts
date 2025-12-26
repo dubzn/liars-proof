@@ -21,20 +21,20 @@ let vk: Uint8Array | null = null;
  * This should be called once at application startup
  */
 export async function initializeWasm(): Promise<void> {
-	if (wasmInitialized) {
-		return;
-	}
+  if (wasmInitialized) {
+    return;
+  }
 
-	try {
-		await Promise.all([initACVM(fetch(acvm)), initNoirC(fetch(noirc))]);
-		console.log("WASM modules initialized successfully");
-		wasmInitialized = true;
-	} catch (error) {
-		console.error("Failed to initialize WASM modules:", error);
-		throw new Error(
-			`WASM initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-		);
-	}
+  try {
+    await Promise.all([initACVM(fetch(acvm)), initNoirC(fetch(noirc))]);
+    console.log("WASM modules initialized successfully");
+    wasmInitialized = true;
+  } catch (error) {
+    console.error("Failed to initialize WASM modules:", error);
+    throw new Error(
+      `WASM initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /**
@@ -42,19 +42,19 @@ export async function initializeWasm(): Promise<void> {
  * This should be called once at application startup
  */
 export async function initializeVerificationKey(): Promise<void> {
-	if (vk) {
-		return;
-	}
+  if (vk) {
+    return;
+  }
 
-	try {
-		vk = await loadVerificationKey(vkUrl);
-		console.log("Verification key loaded successfully");
-	} catch (error) {
-		console.error("Failed to load verification key:", error);
-		throw new Error(
-			`Verification key loading failed: ${error instanceof Error ? error.message : String(error)}`,
-		);
-	}
+  try {
+    vk = await loadVerificationKey(vkUrl);
+    console.log("Verification key loaded successfully");
+  } catch (error) {
+    console.error("Failed to load verification key:", error);
+    throw new Error(
+      `Verification key loading failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /**
@@ -62,10 +62,10 @@ export async function initializeVerificationKey(): Promise<void> {
  * Call this once at application startup
  */
 export async function initializeProofSystem(): Promise<void> {
-	await initializeWasm();
-	await initializeVerificationKey();
-	await initGaraga();
-	console.log("Proof system initialized successfully");
+  await initializeWasm();
+  await initializeVerificationKey();
+  await initGaraga();
+  console.log("Proof system initialized successfully");
 }
 
 /**
@@ -96,74 +96,74 @@ export async function initializeProofSystem(): Promise<void> {
  * // Use result.calldata for Starknet contract call
  */
 export async function generateProofAndCalldata(
-	input: ProofInput,
+  input: ProofInput,
 ): Promise<ProofGenerationResult> {
-	// Ensure WASM is initialized
-	if (!wasmInitialized) {
-		throw new Error(
-			"WASM not initialized. Call initializeProofSystem() first.",
-		);
-	}
+  // Ensure WASM is initialized
+  if (!wasmInitialized) {
+    throw new Error(
+      "WASM not initialized. Call initializeProofSystem() first.",
+    );
+  }
 
-	// Ensure VK is loaded
-	if (!vk) {
-		throw new Error(
-			"Verification key not loaded. Call initializeProofSystem() first.",
-		);
-	}
+  // Ensure VK is loaded
+  if (!vk) {
+    throw new Error(
+      "Verification key not loaded. Call initializeProofSystem() first.",
+    );
+  }
 
-	try {
-		// Step 1: Generate witness
-		console.log("Generating witness...");
-		const noir = new Noir({
-			bytecode,
-			abi: abi as never,
-			debug_symbols: "",
-			file_map: {} as DebugFileMap,
-		});
+  try {
+    // Step 1: Generate witness
+    console.log("Generating witness...");
+    const noir = new Noir({
+      bytecode,
+      abi: abi as never,
+      debug_symbols: "",
+      file_map: {} as DebugFileMap,
+    });
 
-		const execResult = await noir.execute(input);
-		console.log("Witness generated:", execResult);
+    const execResult = await noir.execute(input);
+    console.log("Witness generated:", execResult);
 
-		// Step 2: Generate proof with UltraHonk backend
-		console.log("Generating proof...");
-		const honk = new UltraHonkBackend(bytecode, { threads: 1 });
+    // Step 2: Generate proof with UltraHonk backend
+    console.log("Generating proof...");
+    const honk = new UltraHonkBackend(bytecode, { threads: 1 });
 
-		const proof = await honk.generateProof(execResult.witness, {
-			starknetZK: true,
-		});
+    const proof = await honk.generateProof(execResult.witness, {
+      starknetZK: true,
+    });
 
-		// Clean up backend
-		honk.destroy();
-		console.log("Proof generated:", proof);
+    // Clean up backend
+    honk.destroy();
+    console.log("Proof generated:", proof);
 
-		// Step 3: Prepare calldata for Starknet
-		console.log("Preparing calldata...");
-		const callData = getZKHonkCallData(
-			proof.proof,
-			flattenFieldsAsArray(proof.publicInputs),
-			vk,
-			1, // HonkFlavor.STARKNET
-		);
+    // Step 3: Prepare calldata for Starknet
+    console.log("Preparing calldata...");
+    const callData = getZKHonkCallData(
+      proof.proof,
+      flattenFieldsAsArray(proof.publicInputs),
+      vk,
+      1, // HonkFlavor.STARKNET
+    );
 
-		console.log("Calldata prepared:", callData);
+    console.log("Calldata prepared:", callData);
 
-		return {
-			calldata: callData,
-			proof: proof.proof,
-			publicInputs: proof.publicInputs,
-		};
-	} catch (error) {
-		// console.error("Proof generation failed:", error);
-		// throw new Error(
-		// 	`Proof generation failed: ${error instanceof Error ? error.message : String(error)}`,
-		// );
-		return {
-			calldata: [],
-			proof: new Uint8Array(0),
-			publicInputs: [],
-		};
-	}
+    return {
+      calldata: callData,
+      proof: proof.proof,
+      publicInputs: proof.publicInputs,
+    };
+  } catch (error) {
+    // console.error("Proof generation failed:", error);
+    // throw new Error(
+    // 	`Proof generation failed: ${error instanceof Error ? error.message : String(error)}`,
+    // );
+    return {
+      calldata: [],
+      proof: new Uint8Array(0),
+      publicInputs: [],
+    };
+  }
 }
 
 /**
@@ -171,19 +171,19 @@ export async function generateProofAndCalldata(
  * This is primarily for testing or when reprocessing existing proofs
  */
 export function generateCalldata(
-	proof: Uint8Array,
-	publicInputs: string[],
+  proof: Uint8Array,
+  publicInputs: string[],
 ): string[] {
-	if (!vk) {
-		throw new Error(
-			"Verification key not loaded. Call initializeProofSystem() first.",
-		);
-	}
+  if (!vk) {
+    throw new Error(
+      "Verification key not loaded. Call initializeProofSystem() first.",
+    );
+  }
 
-	return getZKHonkCallData(
-		proof,
-		flattenFieldsAsArray(publicInputs),
-		vk,
-		1, // HonkFlavor.STARKNET
-	);
+  return getZKHonkCallData(
+    proof,
+    flattenFieldsAsArray(publicInputs),
+    vk,
+    1, // HonkFlavor.STARKNET
+  );
 }

@@ -8,9 +8,7 @@ export const NAMESPACE = "liars_proof3";
 
 // Default chain is ZN_SEPOLIA (custom ZStarknet network)
 export const DEFAULT_CHAIN = import.meta.env.VITE_DEFAULT_CHAIN;
-export const DEFAULT_CHAIN_ID = shortString.encodeShortString(
-  DEFAULT_CHAIN,
-);
+export const DEFAULT_CHAIN_ID = shortString.encodeShortString(DEFAULT_CHAIN);
 
 // Manifests keyed by chain id (we only use ZN_SEPOLIA pointing to the sepolia manifest for now)
 export const manifests = {
@@ -47,5 +45,3 @@ export const getContractAddress = (
 
   return contract!.address;
 };
-
-

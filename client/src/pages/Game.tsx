@@ -7,7 +7,10 @@ import { useGameWatcher } from "@/hooks/useGameWatcher";
 import { useParallax } from "@/hooks/useParallax";
 import { useConditionGraphQL } from "@/hooks/useConditionGraphQL";
 import { useRoundProofGraphQL } from "@/hooks/useRoundProofGraphQL";
-import { retryTransaction, checkTransactionSuccess } from "@/utils/retryTransaction";
+import {
+  retryTransaction,
+  checkTransactionSuccess,
+} from "@/utils/retryTransaction";
 import { GameInfo } from "@/components/game/GameInfo";
 import { GameRules } from "@/components/game/GameRules";
 import { GamePhasePanel } from "@/components/game/GamePhasePanel";
@@ -17,13 +20,17 @@ import { ProcessingModal } from "@/components/login/ProcessingModal";
 import { RoundResultModal } from "@/components/game/RoundResultModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { calculateHandCommitment, type Card } from "@/utils/handCommitment";
-import { generateProofAndCalldata, initializeProofSystem } from "@/utils/proofGenerator";
+import {
+  generateProofAndCalldata,
+  initializeProofSystem,
+} from "@/utils/proofGenerator";
 import { savePlayerHand, loadPlayerHand } from "@/utils/playerHandStorage";
 import type { ProofInput } from "@/types/proof";
 import { toast } from "sonner";
 import "./Game.css";
 
-const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
+const GAME_CONTRACT_ADDRESS =
+  import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
 // Helper to get game state variant
 const getGameStateVariant = (state: any): string => {
@@ -31,7 +38,8 @@ const getGameStateVariant = (state: any): string => {
   if (typeof state === "string") return state;
   if (state.variant) return state.variant;
   if (state.WaitingForPlayers !== undefined) return "WaitingForPlayers";
-  if (state.WaitingForHandCommitments !== undefined) return "WaitingForHandCommitments";
+  if (state.WaitingForHandCommitments !== undefined)
+    return "WaitingForHandCommitments";
   if (state.ConditionPhase !== undefined) return "ConditionPhase";
   if (state.ChallengePhase !== undefined) return "ChallengePhase";
   if (state.ResultPhase !== undefined) return "ResultPhase";
@@ -93,7 +101,7 @@ export const Game = () => {
     explanation?: string;
   } | null>(null);
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
-  
+
   // Round result modal state
   const [showRoundResultModal, setShowRoundResultModal] = useState(false);
   const [roundResultData, setRoundResultData] = useState<{
@@ -114,10 +122,10 @@ export const Game = () => {
   // Refs to prevent duplicate operations
   const hasSubmittedProofRef = useRef(false);
   const handGeneratedRef = useRef(false);
-  
+
   // Snapshot of game state BEFORE round resolution (captured before submitting proof)
   const roundSnapshotRef = useRef<RoundResultSnapshot | null>(null);
-  
+
   // Track if we've already shown the result modal for this round
   const roundResultShownRef = useRef<number | null>(null);
 
@@ -129,7 +137,9 @@ export const Game = () => {
   const { condition } = useConditionGraphQL(conditionId);
 
   // Get current game state
-  const currentGameState = game ? getGameStateVariant(game.state) : "WaitingForHandCommitments";
+  const currentGameState = game
+    ? getGameStateVariant(game.state)
+    : "WaitingForHandCommitments";
   const currentRound = game ? Number(game.round) : 0;
   const isResultPhase = currentGameState === "ResultPhase";
 
@@ -146,7 +156,7 @@ export const Game = () => {
     currentRound,
     player1Address,
     player2Address,
-    isResultPhase
+    isResultPhase,
   );
 
   // Determine if current player is player_1 or player_2
@@ -201,16 +211,36 @@ export const Game = () => {
   }, [gameId, account?.address]);
 
   // Check commitment status
-  const player1CommitmentSubmitted = game ? Boolean(game.player_1_hand_commitment && game.player_1_hand_commitment !== "0x0" && game.player_1_hand_commitment !== "0") : false;
-  const player2CommitmentSubmitted = game ? Boolean(game.player_2_hand_commitment && game.player_2_hand_commitment !== "0x0" && game.player_2_hand_commitment !== "0") : false;
+  const player1CommitmentSubmitted = game
+    ? Boolean(
+        game.player_1_hand_commitment &&
+          game.player_1_hand_commitment !== "0x0" &&
+          game.player_1_hand_commitment !== "0",
+      )
+    : false;
+  const player2CommitmentSubmitted = game
+    ? Boolean(
+        game.player_2_hand_commitment &&
+          game.player_2_hand_commitment !== "0x0" &&
+          game.player_2_hand_commitment !== "0",
+      )
+    : false;
 
   // Handle hand commitment submission (manual trigger via button)
   const handleSubmitCommitment = useCallback(async () => {
-    if (!account || !game || hasSubmittedCommitment || isSubmittingCommitment || playerHand.length !== 3) {
+    if (
+      !account ||
+      !game ||
+      hasSubmittedCommitment ||
+      isSubmittingCommitment ||
+      playerHand.length !== 3
+    ) {
       return;
     }
 
-    const currentPlayerCommitmentSubmitted = isPlayer1 ? player1CommitmentSubmitted : player2CommitmentSubmitted;
+    const currentPlayerCommitmentSubmitted = isPlayer1
+      ? player1CommitmentSubmitted
+      : player2CommitmentSubmitted;
     if (currentPlayerCommitmentSubmitted) {
       setHasSubmittedCommitment(true);
       return;
@@ -225,7 +255,8 @@ export const Game = () => {
     try {
       setProcessingStatus({
         title: "SUBMITTING HAND COMMITMENT",
-        explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
+        explanation:
+          "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
         message: "Preparing transaction...",
       });
 
@@ -239,7 +270,8 @@ export const Game = () => {
 
       setProcessingStatus({
         title: "SUBMITTING HAND COMMITMENT",
-        explanation: "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
+        explanation:
+          "Committing your hand cards to start the game. Your cards will remain hidden until the end.",
         message: "Transaction submitted, waiting for confirmation ...",
       });
 
@@ -247,19 +279,25 @@ export const Game = () => {
       await retryTransaction(
         async () => {
           const result = await account.execute(submitHandCommitmentCall);
-          console.log("[Game] Hand commitment tx hash:", result.transaction_hash);
+          console.log(
+            "[Game] Hand commitment tx hash:",
+            result.transaction_hash,
+          );
 
-          const receipt = await account.waitForTransaction(result.transaction_hash, {
-            retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-          });
+          const receipt = await account.waitForTransaction(
+            result.transaction_hash,
+            {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            },
+          );
 
           // Verify transaction actually succeeded
           checkTransactionSuccess(receipt);
         },
         {
           maxAttempts: 20,
-        }
+        },
       );
 
       setProcessingStatus(null);
@@ -268,7 +306,9 @@ export const Game = () => {
     } catch (error) {
       console.error("[Game] ❌ Error submitting hand commitment:", error);
       setProcessingStatus(null);
-      toast.error(`Failed to submit hand commitment: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to submit hand commitment: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       setIsSubmittingCommitment(false);
     }
@@ -288,40 +328,61 @@ export const Game = () => {
   // This will be used later to compare with the state after round resolution
 
   // Helper to capture game state snapshot
-  const captureGameSnapshot = useCallback((game: any): RoundResultSnapshot | null => {
-    if (!game) return null;
+  const captureGameSnapshot = useCallback(
+    (game: any): RoundResultSnapshot | null => {
+      if (!game) return null;
 
-    const player1ConditionChoice = game.player_1_condition_submitted
-      ? (game.player_1_condition_choice === true || String(game.player_1_condition_choice) === "true" || Number(game.player_1_condition_choice) === 1 || String(game.player_1_condition_choice) === "1")
-      : null;
-    const player2ConditionChoice = game.player_2_condition_submitted
-      ? (game.player_2_condition_choice === true || String(game.player_2_condition_choice) === "true" || Number(game.player_2_condition_choice) === 1 || String(game.player_2_condition_choice) === "1")
-      : null;
-    const player1ChallengeChoice = game.player_1_challenge_submitted
-      ? (game.player_1_challenge_choice === true || String(game.player_1_challenge_choice) === "true" || Number(game.player_1_challenge_choice) === 1 || String(game.player_1_challenge_choice) === "1")
-      : null;
-    const player2ChallengeChoice = game.player_2_challenge_submitted
-      ? (game.player_2_challenge_choice === true || String(game.player_2_challenge_choice) === "true" || Number(game.player_2_challenge_choice) === 1 || String(game.player_2_challenge_choice) === "1")
-      : null;
+      const player1ConditionChoice = game.player_1_condition_submitted
+        ? game.player_1_condition_choice === true ||
+          String(game.player_1_condition_choice) === "true" ||
+          Number(game.player_1_condition_choice) === 1 ||
+          String(game.player_1_condition_choice) === "1"
+        : null;
+      const player2ConditionChoice = game.player_2_condition_submitted
+        ? game.player_2_condition_choice === true ||
+          String(game.player_2_condition_choice) === "true" ||
+          Number(game.player_2_condition_choice) === 1 ||
+          String(game.player_2_condition_choice) === "1"
+        : null;
+      const player1ChallengeChoice = game.player_1_challenge_submitted
+        ? game.player_1_challenge_choice === true ||
+          String(game.player_1_challenge_choice) === "true" ||
+          Number(game.player_1_challenge_choice) === 1 ||
+          String(game.player_1_challenge_choice) === "1"
+        : null;
+      const player2ChallengeChoice = game.player_2_challenge_submitted
+        ? game.player_2_challenge_choice === true ||
+          String(game.player_2_challenge_choice) === "true" ||
+          Number(game.player_2_challenge_choice) === 1 ||
+          String(game.player_2_challenge_choice) === "1"
+        : null;
 
-    return {
-      player_1_score: Number(game.player_1_score),
-      player_2_score: Number(game.player_2_score),
-      player_1_lives: Number(game.player_1_lives),
-      player_2_lives: Number(game.player_2_lives),
-      round: Number(game.round),
-      player_1_condition_choice: player1ConditionChoice,
-      player_2_condition_choice: player2ConditionChoice,
-      player_1_challenge_choice: player1ChallengeChoice,
-      player_2_challenge_choice: player2ChallengeChoice,
-      player_1_proof_valid: null, // Will be updated when we know the proof validity
-      player_2_proof_valid: null,
-    };
-  }, []);
+      return {
+        player_1_score: Number(game.player_1_score),
+        player_2_score: Number(game.player_2_score),
+        player_1_lives: Number(game.player_1_lives),
+        player_2_lives: Number(game.player_2_lives),
+        round: Number(game.round),
+        player_1_condition_choice: player1ConditionChoice,
+        player_2_condition_choice: player2ConditionChoice,
+        player_1_challenge_choice: player1ChallengeChoice,
+        player_2_challenge_choice: player2ChallengeChoice,
+        player_1_proof_valid: null, // Will be updated when we know the proof validity
+        player_2_proof_valid: null,
+      };
+    },
+    [],
+  );
 
   // Handle proof submission (manual trigger via button)
   const handleSubmitProof = useCallback(async () => {
-    if (!account || !game || isSubmittingProof || hasSubmittedProofRef.current || playerHand.length !== 3) {
+    if (
+      !account ||
+      !game ||
+      isSubmittingProof ||
+      hasSubmittedProofRef.current ||
+      playerHand.length !== 3
+    ) {
       return;
     }
 
@@ -330,7 +391,9 @@ export const Game = () => {
     }
 
     const isPlayer1Local = account.address === game.player_1;
-    const handCommitment = isPlayer1Local ? game.player_1_hand_commitment : game.player_2_hand_commitment;
+    const handCommitment = isPlayer1Local
+      ? game.player_1_hand_commitment
+      : game.player_2_hand_commitment;
 
     if (!handCommitment) {
       console.error("[Game] No hand commitment found");
@@ -363,7 +426,8 @@ export const Game = () => {
 
       setProcessingStatus({
         title: "SUBMITTING PROOF",
-        explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
+        explanation:
+          "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
         message: "Generating proof...",
       });
 
@@ -395,13 +459,20 @@ export const Game = () => {
 
       const result = await generateProofAndCalldata(proofInput);
 
-      const proofCalldata = result.calldata.length === 0
-        ? [gameId.toString(), 0]
-        : [gameId.toString(), ...result.calldata.map(item => typeof item === 'bigint' ? item.toString() : String(item))];
+      const proofCalldata =
+        result.calldata.length === 0
+          ? [gameId.toString(), 0]
+          : [
+              gameId.toString(),
+              ...result.calldata.map((item) =>
+                typeof item === "bigint" ? item.toString() : String(item),
+              ),
+            ];
 
       setProcessingStatus({
         title: "SUBMITTING PROOF",
-        explanation: "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
+        explanation:
+          "Generating a zero-knowledge proof to verify that your hand meets the condition you claimed. This proof proves your claim without revealing your actual cards.",
         message: "Transaction submitted, waiting for confirmation ...",
       });
 
@@ -416,17 +487,20 @@ export const Game = () => {
 
           console.log("[Game] Proof tx hash:", txResult.transaction_hash);
 
-          const receipt = await account.waitForTransaction(txResult.transaction_hash, {
-            retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-          });
+          const receipt = await account.waitForTransaction(
+            txResult.transaction_hash,
+            {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            },
+          );
 
           // Verify transaction actually succeeded
           checkTransactionSuccess(receipt);
         },
         {
           maxAttempts: 20,
-        }
+        },
       );
 
       setProcessingStatus(null);
@@ -434,12 +508,23 @@ export const Game = () => {
     } catch (error) {
       console.error("[Game] ❌ Error generating/submitting proof:", error);
       setProcessingStatus(null);
-      toast.error(`Failed to submit proof: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to submit proof: ${error instanceof Error ? error.message : String(error)}`,
+      );
       hasSubmittedProofRef.current = false;
     } finally {
       setIsSubmittingProof(false);
     }
-  }, [account, game, gameId, playerHand, isSubmittingProof, condition, currentGameState, captureGameSnapshot]);
+  }, [
+    account,
+    game,
+    gameId,
+    playerHand,
+    isSubmittingProof,
+    condition,
+    currentGameState,
+    captureGameSnapshot,
+  ]);
 
   // Update snapshot with proof validities when proofs are submitted
   useEffect(() => {
@@ -447,15 +532,23 @@ export const Game = () => {
 
     let updated = false;
     // Update proof validities as they become available
-    if (player1ProofSubmitted && roundSnapshotRef.current.player_1_proof_valid === null) {
-      roundSnapshotRef.current.player_1_proof_valid = player1ProofValid === true;
+    if (
+      player1ProofSubmitted &&
+      roundSnapshotRef.current.player_1_proof_valid === null
+    ) {
+      roundSnapshotRef.current.player_1_proof_valid =
+        player1ProofValid === true;
       updated = true;
     }
-    if (player2ProofSubmitted && roundSnapshotRef.current.player_2_proof_valid === null) {
-      roundSnapshotRef.current.player_2_proof_valid = player2ProofValid === true;
+    if (
+      player2ProofSubmitted &&
+      roundSnapshotRef.current.player_2_proof_valid === null
+    ) {
+      roundSnapshotRef.current.player_2_proof_valid =
+        player2ProofValid === true;
       updated = true;
     }
-    
+
     if (updated) {
       console.log("[Game] 🔄 Snapshot updated with proof validities:", {
         player1_proof_valid: roundSnapshotRef.current.player_1_proof_valid,
@@ -464,7 +557,12 @@ export const Game = () => {
         player2ProofSubmitted,
       });
     }
-  }, [player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid]);
+  }, [
+    player1ProofSubmitted,
+    player1ProofValid,
+    player2ProofSubmitted,
+    player2ProofValid,
+  ]);
 
   // Detect when round is resolved: state changes from ResultPhase to ConditionPhase/GameOver
   // This happens when BOTH proofs are submitted and the round is resolved
@@ -514,12 +612,13 @@ export const Game = () => {
 
     // KEY: When state changes from ResultPhase to ConditionPhase or GameOver,
     // it means both proofs were submitted and the round was resolved
-    const roundWasResolved = 
-      (currentGameState === "ConditionPhase" || currentGameState === "GameOver") &&
+    const roundWasResolved =
+      (currentGameState === "ConditionPhase" ||
+        currentGameState === "GameOver") &&
       snapshotRound < currentRound;
 
     // Also check if scores/lives changed (in case we're still in ResultPhase but round was resolved)
-    const scoresChanged = 
+    const scoresChanged =
       Number(game.player_1_score) !== snapshot.player_1_score ||
       Number(game.player_2_score) !== snapshot.player_2_score;
     const livesChanged =
@@ -536,14 +635,17 @@ export const Game = () => {
     if (roundWasResolved || scoresChanged || livesChanged) {
       // Wait for both proof validities to be known
       // If they're not available yet, we'll wait for the next update
-      if (snapshot.player_1_proof_valid === null || snapshot.player_2_proof_valid === null) {
+      if (
+        snapshot.player_1_proof_valid === null ||
+        snapshot.player_2_proof_valid === null
+      ) {
         console.log("[Game] ⏳ Waiting for proof validities:", {
           player1_proof_valid: snapshot.player_1_proof_valid,
           player2_proof_valid: snapshot.player_2_proof_valid,
           player1ProofSubmitted,
           player2ProofSubmitted,
         });
-        
+
         // Try to update them if proofs are submitted
         if (player1ProofSubmitted && snapshot.player_1_proof_valid === null) {
           snapshot.player_1_proof_valid = player1ProofValid === true;
@@ -551,9 +653,12 @@ export const Game = () => {
         if (player2ProofSubmitted && snapshot.player_2_proof_valid === null) {
           snapshot.player_2_proof_valid = player2ProofValid === true;
         }
-        
+
         // If still null, wait for next update
-        if (snapshot.player_1_proof_valid === null || snapshot.player_2_proof_valid === null) {
+        if (
+          snapshot.player_1_proof_valid === null ||
+          snapshot.player_2_proof_valid === null
+        ) {
           console.log("[Game] ⏳ Still waiting for proof validities");
           return;
         }
@@ -565,18 +670,24 @@ export const Game = () => {
       // A player lies when their claim doesn't match the proof result:
       // - Claims to meet condition (true) but proof is invalid (false) -> lying
       // - Claims to NOT meet condition (false) but proof is valid (true) -> lying
-      const player1Lied = snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
-      const player2Lied = snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
+      const player1Lied =
+        snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
+      const player2Lied =
+        snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
 
       // Calculate who believed using snapshot data
       const player1Believed = snapshot.player_1_challenge_choice === true;
       const player2Believed = snapshot.player_2_challenge_choice === true;
 
       // Calculate changes
-      const player1ScoreChange = Number(game.player_1_score) - snapshot.player_1_score;
-      const player2ScoreChange = Number(game.player_2_score) - snapshot.player_2_score;
-      const player1LivesChange = Number(game.player_1_lives) - snapshot.player_1_lives;
-      const player2LivesChange = Number(game.player_2_lives) - snapshot.player_2_lives;
+      const player1ScoreChange =
+        Number(game.player_1_score) - snapshot.player_1_score;
+      const player2ScoreChange =
+        Number(game.player_2_score) - snapshot.player_2_score;
+      const player1LivesChange =
+        Number(game.player_1_lives) - snapshot.player_1_lives;
+      const player2LivesChange =
+        Number(game.player_2_lives) - snapshot.player_2_lives;
 
       console.log("[Game] 📈 Results calculated:", {
         player1Lied,
@@ -622,7 +733,10 @@ export const Game = () => {
   // Reset snapshot when new round starts (but only after showing the result)
   useEffect(() => {
     // Reset when we enter ConditionPhase and we've already shown the result
-    if (currentGameState === "ConditionPhase" && roundResultShownRef.current !== null) {
+    if (
+      currentGameState === "ConditionPhase" &&
+      roundResultShownRef.current !== null
+    ) {
       // Only reset if we've shown the result and we're in a new round
       if (roundResultShownRef.current < currentRound || !showRoundResultModal) {
         roundSnapshotRef.current = null;
@@ -634,57 +748,102 @@ export const Game = () => {
 
   // Get player data
   const gameIdNumber = gameId || (game ? Number(game.id) : 0);
-  const hasPlayer2 = game && game.player_2_name && String(game.player_2_name).trim() !== "";
+  const hasPlayer2 =
+    game && game.player_2_name && String(game.player_2_name).trim() !== "";
   const player2Name = hasPlayer2 ? String(game.player_2_name) : "";
-  const player1Name = game ? String(game.player_1_name || "Player 1") : "Player 1";
-  
+  const player1Name = game
+    ? String(game.player_1_name || "Player 1")
+    : "Player 1";
+
   // Get final scores and lives for GameOver modal
   const player1Score = game ? Number(game.player_1_score) : 0;
   const player2Score = game ? Number(game.player_2_score) : 0;
   const player1Lives = game ? Number(game.player_1_lives) : 0;
   const player2Lives = game ? Number(game.player_2_lives) : 0;
-  
+
   // Determine winner based on game rules (matching contract logic):
   // - If player_1_lives == 0, player_2 wins
   // - If player_2_lives == 0, player_1 wins
   // - If player_1_score >= 50, player_1 wins
   // - Otherwise, player_2 wins (player_2_score >= 50)
   const isGameOver = currentGameState === "GameOver";
-  const isPlayer1Winner = isGameOver && (
-    player1Lives === 0 ? false :
-    player2Lives === 0 ? true :
-    player1Score >= 50 ? true :
-    false // player_2_score >= 50
-  );
-  const winnerName = isGameOver && hasPlayer2 ? (isPlayer1Winner ? player1Name : player2Name) : "";
+  const isPlayer1Winner =
+    isGameOver &&
+    (player1Lives === 0
+      ? false
+      : player2Lives === 0
+        ? true
+        : player1Score >= 50
+          ? true
+          : false); // player_2_score >= 50
+  const winnerName =
+    isGameOver && hasPlayer2
+      ? isPlayer1Winner
+        ? player1Name
+        : player2Name
+      : "";
 
-  const hasSubmittedCondition = game && isPlayer1
+  const hasSubmittedCondition =
+    game && isPlayer1
+      ? Boolean(game.player_1_condition_submitted)
+      : game
+        ? Boolean(game.player_2_condition_submitted)
+        : false;
+
+  const hasSubmittedChallenge =
+    game && isPlayer1
+      ? Boolean(game.player_1_challenge_submitted)
+      : game
+        ? Boolean(game.player_2_challenge_submitted)
+        : false;
+
+  const player1ConditionSubmitted = game
     ? Boolean(game.player_1_condition_submitted)
-    : game ? Boolean(game.player_2_condition_submitted) : false;
+    : false;
+  const player1ConditionChoice =
+    game && game.player_1_condition_submitted
+      ? game.player_1_condition_choice === true ||
+        String(game.player_1_condition_choice) === "true" ||
+        Number(game.player_1_condition_choice) === 1 ||
+        String(game.player_1_condition_choice) === "1"
+      : null;
+  const player2ConditionSubmitted = game
+    ? Boolean(game.player_2_condition_submitted)
+    : false;
+  const player2ConditionChoice =
+    game && game.player_2_condition_submitted
+      ? game.player_2_condition_choice === true ||
+        String(game.player_2_condition_choice) === "true" ||
+        Number(game.player_2_condition_choice) === 1 ||
+        String(game.player_2_condition_choice) === "1"
+      : null;
 
-  const hasSubmittedChallenge = game && isPlayer1
+  const player1ChallengeSubmitted = game
     ? Boolean(game.player_1_challenge_submitted)
-    : game ? Boolean(game.player_2_challenge_submitted) : false;
+    : false;
+  const player1ChallengeChoice =
+    game && game.player_1_challenge_submitted
+      ? game.player_1_challenge_choice === true ||
+        String(game.player_1_challenge_choice) === "true" ||
+        Number(game.player_1_challenge_choice) === 1 ||
+        String(game.player_1_challenge_choice) === "1"
+      : null;
+  const player2ChallengeSubmitted = game
+    ? Boolean(game.player_2_challenge_submitted)
+    : false;
+  const player2ChallengeChoice =
+    game && game.player_2_challenge_submitted
+      ? game.player_2_challenge_choice === true ||
+        String(game.player_2_challenge_choice) === "true" ||
+        Number(game.player_2_challenge_choice) === 1 ||
+        String(game.player_2_challenge_choice) === "1"
+      : null;
 
-  const player1ConditionSubmitted = game ? Boolean(game.player_1_condition_submitted) : false;
-  const player1ConditionChoice = game && game.player_1_condition_submitted
-    ? (game.player_1_condition_choice === true || String(game.player_1_condition_choice) === "true" || Number(game.player_1_condition_choice) === 1 || String(game.player_1_condition_choice) === "1")
-    : null;
-  const player2ConditionSubmitted = game ? Boolean(game.player_2_condition_submitted) : false;
-  const player2ConditionChoice = game && game.player_2_condition_submitted
-    ? (game.player_2_condition_choice === true || String(game.player_2_condition_choice) === "true" || Number(game.player_2_condition_choice) === 1 || String(game.player_2_condition_choice) === "1")
-    : null;
-
-  const player1ChallengeSubmitted = game ? Boolean(game.player_1_challenge_submitted) : false;
-  const player1ChallengeChoice = game && game.player_1_challenge_submitted
-    ? (game.player_1_challenge_choice === true || String(game.player_1_challenge_choice) === "true" || Number(game.player_1_challenge_choice) === 1 || String(game.player_1_challenge_choice) === "1")
-    : null;
-  const player2ChallengeSubmitted = game ? Boolean(game.player_2_challenge_submitted) : false;
-  const player2ChallengeChoice = game && game.player_2_challenge_submitted
-    ? (game.player_2_challenge_choice === true || String(game.player_2_challenge_choice) === "true" || Number(game.player_2_challenge_choice) === 1 || String(game.player_2_challenge_choice) === "1")
-    : null;
-
-  const currentPhase = currentGameState as "WaitingForHandCommitments" | "ConditionPhase" | "ChallengePhase" | "ResultPhase";
+  const currentPhase = currentGameState as
+    | "WaitingForHandCommitments"
+    | "ConditionPhase"
+    | "ChallengePhase"
+    | "ResultPhase";
 
   const handleConditionChoice = async (choice: boolean) => {
     if (!account) return;
@@ -704,25 +863,28 @@ export const Game = () => {
           const result = await account.execute({
             contractAddress: GAME_CONTRACT_ADDRESS,
             entrypoint: "submit_condition_choice",
-            calldata: [
-              gameId.toString(),
-              choice ? "1" : "0",
-            ],
+            calldata: [gameId.toString(), choice ? "1" : "0"],
           });
 
-          console.log("[Game] Condition choice tx hash:", result.transaction_hash);
+          console.log(
+            "[Game] Condition choice tx hash:",
+            result.transaction_hash,
+          );
 
-          const receipt = await account.waitForTransaction(result.transaction_hash, {
-            retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-          });
+          const receipt = await account.waitForTransaction(
+            result.transaction_hash,
+            {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            },
+          );
 
           // Verify transaction actually succeeded
           checkTransactionSuccess(receipt);
         },
         {
           maxAttempts: 20,
-        }
+        },
       );
 
       setProcessingStatus(null);
@@ -730,7 +892,9 @@ export const Game = () => {
     } catch (error) {
       console.error("[Game] ❌ Error submitting condition choice:", error);
       setProcessingStatus(null);
-      toast.error(`Failed to submit condition choice: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to submit condition choice: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   };
 
@@ -752,25 +916,28 @@ export const Game = () => {
           const result = await account.execute({
             contractAddress: GAME_CONTRACT_ADDRESS,
             entrypoint: "submit_challenge_choice",
-            calldata: [
-              gameId.toString(),
-              choice ? "1" : "0",
-            ],
+            calldata: [gameId.toString(), choice ? "1" : "0"],
           });
 
-          console.log("[Game] Challenge choice tx hash:", result.transaction_hash);
+          console.log(
+            "[Game] Challenge choice tx hash:",
+            result.transaction_hash,
+          );
 
-          const receipt = await account.waitForTransaction(result.transaction_hash, {
-            retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-          });
+          const receipt = await account.waitForTransaction(
+            result.transaction_hash,
+            {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            },
+          );
 
           // Verify transaction actually succeeded
           checkTransactionSuccess(receipt);
         },
         {
           maxAttempts: 20,
-        }
+        },
       );
 
       setProcessingStatus(null);
@@ -778,7 +945,9 @@ export const Game = () => {
     } catch (error) {
       console.error("[Game] ❌ Error submitting challenge choice:", error);
       setProcessingStatus(null);
-      toast.error(`Failed to submit challenge choice: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to submit challenge choice: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   };
 
@@ -818,16 +987,12 @@ export const Game = () => {
       )}
 
       <div className={`game-table ${isHoveringCards ? "blurred" : ""}`}>
-        <img
-          src="/images/table.png"
-          alt="Table"
-          className="game-table-image"
-        />
+        <img src="/images/table.png" alt="Table" className="game-table-image" />
       </div>
 
-      <img 
-        src="/logo.png" 
-        alt="LIARS PROOF" 
+      <img
+        src="/logo.png"
+        alt="LIARS PROOF"
         className={`game-logo ${isRulesExpanded ? "hidden" : ""}`}
       />
 

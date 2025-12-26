@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
-import { retryTransaction, checkTransactionSuccess } from "@/utils/retryTransaction";
+import {
+  retryTransaction,
+  checkTransactionSuccess,
+} from "@/utils/retryTransaction";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
 import { CharacterCarousel } from "@/components/login/CharacterCarousel";
@@ -12,12 +15,14 @@ import { VolumeControl } from "@/components/audio/VolumeControl";
 import { useParallax } from "@/hooks/useParallax";
 import "./Login.css";
 
-const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
+const GAME_CONTRACT_ADDRESS =
+  import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 const DEFAULT_PLAYER_NAME = "";
 const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
-  const { account, isConnecting, isConnected, connect, disconnect } = useStarknetKit();
+  const { account, isConnecting, isConnected, connect, disconnect } =
+    useStarknetKit();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
@@ -51,14 +56,14 @@ export const Login = () => {
   useEffect(() => {
     const audio = new Audio("/sounds/login.mp3");
     audio.loop = true;
-    
+
     audio.volume = 0; // Start at 0 for fade in
     audioRef.current = audio;
 
     // Function to start audio with fade in
     const startAudio = () => {
       if (!audioRef.current) return;
-      
+
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -71,19 +76,25 @@ export const Login = () => {
                 if (fadeInInterval) clearInterval(fadeInInterval);
                 return;
               }
-              
+
               // Check if volume was changed externally (by VolumeControl)
-              const currentSavedVolume = localStorage.getItem("liars_proof_volume");
-              const currentTargetVolume = currentSavedVolume ? parseFloat(currentSavedVolume) : 0.15;
-              
+              const currentSavedVolume =
+                localStorage.getItem("liars_proof_volume");
+              const currentTargetVolume = currentSavedVolume
+                ? parseFloat(currentSavedVolume)
+                : 0.15;
+
               // If volume is already at or above target, stop fading
               if (audioRef.current.volume >= currentTargetVolume) {
                 if (fadeInInterval) clearInterval(fadeInInterval);
                 return;
               }
-              
+
               // Continue fading to current target volume
-              audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, currentTargetVolume);
+              audioRef.current.volume = Math.min(
+                audioRef.current.volume + 0.05,
+                currentTargetVolume,
+              );
             }, 100);
           })
           .catch(() => {
@@ -103,8 +114,12 @@ export const Login = () => {
 
     // Listen for first user interaction
     document.addEventListener("click", handleFirstInteraction, { once: true });
-    document.addEventListener("keydown", handleFirstInteraction, { once: true });
-    document.addEventListener("touchstart", handleFirstInteraction, { once: true });
+    document.addEventListener("keydown", handleFirstInteraction, {
+      once: true,
+    });
+    document.addEventListener("touchstart", handleFirstInteraction, {
+      once: true,
+    });
 
     return () => {
       if (audioRef.current) {
@@ -142,7 +157,9 @@ export const Login = () => {
   const createGame = async () => {
     // Double check: prevent multiple simultaneous executions using ref for synchronous check
     if (!account || isCreatingGame || isCreatingGameRef.current) {
-      console.log("[Login] ⚠️ Cannot create game: account missing or already creating");
+      console.log(
+        "[Login] ⚠️ Cannot create game: account missing or already creating",
+      );
       return;
     }
 
@@ -150,7 +167,10 @@ export const Login = () => {
     isCreatingGameRef.current = true;
     setIsCreatingGame(true);
     try {
-      console.log("[Login] Creating game with contract:", GAME_CONTRACT_ADDRESS);
+      console.log(
+        "[Login] Creating game with contract:",
+        GAME_CONTRACT_ADDRESS,
+      );
 
       // Convert playerName to ByteArray
       // If empty, use "ZStarknet" as fallback
@@ -197,10 +217,13 @@ export const Login = () => {
           console.log("[Login] Transaction hash:", result.transaction_hash);
 
           // Wait for transaction to be accepted
-          const txReceipt = await account.waitForTransaction(result.transaction_hash, {
-            retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-          });
+          const txReceipt = await account.waitForTransaction(
+            result.transaction_hash,
+            {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            },
+          );
 
           // Verify transaction actually succeeded
           checkTransactionSuccess(txReceipt);
@@ -209,24 +232,30 @@ export const Login = () => {
         },
         {
           maxAttempts: 20,
-        }
+        },
       );
 
       console.log("[Login] Transaction receipt:", receipt);
 
-      const gameCreatedEventHash = "0x1a2f334228cee715f1f0f54053bb6b5eac54fa336e0bc1aacf7516decb0471d";
+      const gameCreatedEventHash =
+        "0x1a2f334228cee715f1f0f54053bb6b5eac54fa336e0bc1aacf7516decb0471d";
       const receiptWithEvents = receipt as any;
-      if (receiptWithEvents.events && Array.isArray(receiptWithEvents.events) && receiptWithEvents.events.length > 0) {
+      if (
+        receiptWithEvents.events &&
+        Array.isArray(receiptWithEvents.events) &&
+        receiptWithEvents.events.length > 0
+      ) {
         for (let i = 0; i < receiptWithEvents.events.length; i++) {
           const event = receiptWithEvents.events[i];
-          
+
           // Check if this event has the GameCreated hash in its keys
           // The event hash is usually in keys[0] or could be in any key position
           if (event.keys && Array.isArray(event.keys)) {
-            const hasGameCreatedHash = event.keys.some((key: string) => 
-              key.toLowerCase() === gameCreatedEventHash.toLowerCase()
+            const hasGameCreatedHash = event.keys.some(
+              (key: string) =>
+                key.toLowerCase() === gameCreatedEventHash.toLowerCase(),
             );
-            
+
             if (hasGameCreatedHash) {
               console.log("[Login] ✅ Found GameCreated event!");
               console.log("[Login] Event #", i, ":", {
@@ -236,11 +265,11 @@ export const Login = () => {
                 keys_length: event.keys.length,
                 data_length: event.data?.length,
               });
-              
+
               // Extract game_id from data[3] as specified by user
               if (event.data && event.data.length > 3) {
                 const gameId = Number(num.toBigInt(event.data[3]));
-                
+
                 if (gameId > 0) {
                   console.log("[Login] 🎮 Game created! Game ID:", gameId);
                   setProcessingStatus(null); // Close modal
@@ -248,26 +277,35 @@ export const Login = () => {
                   fadeOutAndNavigate(`/game/${gameId}`);
                   return;
                 } else {
-                  console.log("[Login] ⚠️ Invalid game_id extracted from data[3]:", gameId);
+                  console.log(
+                    "[Login] ⚠️ Invalid game_id extracted from data[3]:",
+                    gameId,
+                  );
                 }
               } else {
-                console.log("[Login] ⚠️ Event data doesn't have enough elements (need at least 4, got:", event.data?.length, ")");
+                console.log(
+                  "[Login] ⚠️ Event data doesn't have enough elements (need at least 4, got:",
+                  event.data?.length,
+                  ")",
+                );
               }
             }
           }
         }
-        
+
         console.log("[Login] ⚠️ GameCreated event not found in receipt events");
       }
-      console.log("[Login] Could not extract game_id from events, checking transaction...");
+      console.log(
+        "[Login] Could not extract game_id from events, checking transaction...",
+      );
       setProcessingStatus(null); // Close modal
       toast.success("Game creation transaction submitted!");
-      
-      
     } catch (error) {
       console.error("[Login] Error creating game:", error);
       setProcessingStatus(null); // Close modal on error
-      toast.error(`Failed to create game: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to create game: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       // Reset both state and ref
       isCreatingGameRef.current = false;
@@ -302,15 +340,17 @@ export const Login = () => {
   const handleCreateGame = async () => {
     // Prevent multiple clicks
     if (isCreatingGame) {
-      console.log("[Login] ⚠️ Game creation already in progress, ignoring click");
+      console.log(
+        "[Login] ⚠️ Game creation already in progress, ignoring click",
+      );
       return;
     }
-    
+
     if (!account) {
       toast.error("Please connect your wallet first");
       return;
     }
-    
+
     await createGame();
   };
 
@@ -337,7 +377,12 @@ export const Login = () => {
     try {
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
-      console.log("[Login] Joining game with ID:", gameId, "and name:", nameToUse);
+      console.log(
+        "[Login] Joining game with ID:",
+        gameId,
+        "and name:",
+        nameToUse,
+      );
 
       // Show processing modal - preparing transaction
       setProcessingStatus({
@@ -374,17 +419,20 @@ export const Login = () => {
           console.log("[Login] Transaction hash:", result.transaction_hash);
 
           // Wait for transaction to be accepted
-          const receipt = await account.waitForTransaction(result.transaction_hash, {
-            retryInterval: 100,
-            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-          });
+          const receipt = await account.waitForTransaction(
+            result.transaction_hash,
+            {
+              retryInterval: 100,
+              successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+            },
+          );
 
           // Verify transaction actually succeeded
           checkTransactionSuccess(receipt);
         },
         {
           maxAttempts: 20,
-        }
+        },
       );
 
       console.log("[Login] ✅ Successfully joined game:", gameId);
@@ -394,7 +442,9 @@ export const Login = () => {
     } catch (error) {
       console.error("[Login] Error joining game:", error);
       setProcessingStatus(null); // Close modal on error
-      toast.error(`Failed to join game: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to join game: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error; // Re-throw to let modal handle it
     } finally {
       // Reset both state and ref
@@ -415,8 +465,8 @@ export const Login = () => {
 
   return (
     <div className="login-container">
-      <div 
-        className="login-background" 
+      <div
+        className="login-background"
         style={{
           transform: `translate(${backgroundParallax.x}px, ${backgroundParallax.y}px)`,
         }}
@@ -425,11 +475,17 @@ export const Login = () => {
         {/* Connected status and logout button - absolute top left */}
         {account && (
           <div className="login-wallet-status-container">
-            
-            <span className="login-connected-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              className="login-connected-text"
+              style={{ display: "flex", alignItems: "center", gap: 8 }}
+            >
               {isConnected && (
                 <>
-                  <img src="/images/icons/controller.png" alt="Controller" />
+                  <img
+                    src="/images/icons/cartridge.png"
+                    alt="Controller"
+                    style={{ width: "3%", height: "auto" }}
+                  />
                   <span>CONTROLLER CONNECTED</span>
                 </>
               )}
@@ -443,7 +499,7 @@ export const Login = () => {
             </button>
           </div>
         )}
-        
+
         {/* Logo - absolute bottom left */}
         <img src="/logo.png" alt="LIARS PROOF" className="login-logo" />
         <div className="login-volume-container">
@@ -452,17 +508,16 @@ export const Login = () => {
         <div className="login-left-panel">
           {account ? (
             <div className="login-connected-section">
-              
               <div className="login-buttons-container">
                 {/* Player name input - above buttons */}
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                className="login-player-name-input"
-                placeholder="ENTER PLAYER NAME"
-                maxLength={50}
-              />
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="login-player-name-input"
+                  placeholder="ENTER PLAYER NAME"
+                  maxLength={50}
+                />
                 <Button
                   onClick={handleCreateGame}
                   className="login-button"
@@ -488,7 +543,8 @@ export const Login = () => {
                 variant="default"
                 disabled={isConnecting}
                 style={{
-                  background: "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
+                  background:
+                    "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
                   display: "flex",
                   alignItems: "center",
                   gap: "0.5em",
@@ -502,12 +558,12 @@ export const Login = () => {
             </div>
           )}
         </div>
-        
+
         <div className="login-right-panel">
           <CharacterCarousel />
         </div>
       </div>
-      
+
       {/* Footer */}
       <div className="login-footer">
         <p className="login-footer-text">
@@ -531,4 +587,3 @@ export const Login = () => {
     </div>
   );
 };
-

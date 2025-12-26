@@ -1,15 +1,16 @@
 import "./GameCards.css";
-import { getCardImagePath, getCardDisplayValue, getCardDisplaySuit } from "@/utils/cardUtils";
+import {
+  getCardImagePath,
+  getCardDisplayValue,
+  getCardDisplaySuit,
+} from "@/utils/cardUtils";
 
 interface GameCardsProps {
   cards: Array<{ suit: number; value: number }>;
   parallaxOffset: { x: number; y: number };
 }
 
-export const GameCards = ({
-  cards,
-  parallaxOffset,
-}: GameCardsProps) => {
+export const GameCards = ({ cards, parallaxOffset }: GameCardsProps) => {
   return (
     <div
       className="game-cards"
@@ -35,4 +36,3 @@ export const GameCards = ({
     </div>
   );
 };
-

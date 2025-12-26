@@ -12,33 +12,54 @@ const getStorageKey = (gameId: number, userAddress: string): string => {
 /**
  * Save player hand to localStorage
  */
-export const savePlayerHand = (gameId: number, userAddress: string, hand: Card[]): void => {
+export const savePlayerHand = (
+  gameId: number,
+  userAddress: string,
+  hand: Card[],
+): void => {
   try {
     const key = getStorageKey(gameId, userAddress);
     const data = JSON.stringify(hand);
     localStorage.setItem(key, data);
-    console.log(`[playerHandStorage] 💾 Saved hand for game ${gameId}, address ${userAddress}:`, hand);
+    console.log(
+      `[playerHandStorage] 💾 Saved hand for game ${gameId}, address ${userAddress}:`,
+      hand,
+    );
   } catch (error) {
-    console.error("[playerHandStorage] ❌ Error saving hand to localStorage:", error);
+    console.error(
+      "[playerHandStorage] ❌ Error saving hand to localStorage:",
+      error,
+    );
   }
 };
 
 /**
  * Load player hand from localStorage
  */
-export const loadPlayerHand = (gameId: number, userAddress: string): Card[] | null => {
+export const loadPlayerHand = (
+  gameId: number,
+  userAddress: string,
+): Card[] | null => {
   try {
     const key = getStorageKey(gameId, userAddress);
     const data = localStorage.getItem(key);
     if (!data) {
-      console.log(`[playerHandStorage] 📭 No saved hand found for game ${gameId}, address ${userAddress}`);
+      console.log(
+        `[playerHandStorage] 📭 No saved hand found for game ${gameId}, address ${userAddress}`,
+      );
       return null;
     }
     const hand = JSON.parse(data) as Card[];
-    console.log(`[playerHandStorage] 📖 Loaded hand for game ${gameId}, address ${userAddress}:`, hand);
+    console.log(
+      `[playerHandStorage] 📖 Loaded hand for game ${gameId}, address ${userAddress}:`,
+      hand,
+    );
     return hand;
   } catch (error) {
-    console.error("[playerHandStorage] ❌ Error loading hand from localStorage:", error);
+    console.error(
+      "[playerHandStorage] ❌ Error loading hand from localStorage:",
+      error,
+    );
     return null;
   }
 };
@@ -58,9 +79,13 @@ export const clearPlayerHand = (gameId: number, userAddress: string): void => {
   try {
     const key = getStorageKey(gameId, userAddress);
     localStorage.removeItem(key);
-    console.log(`[playerHandStorage] 🗑️ Cleared hand for game ${gameId}, address ${userAddress}`);
+    console.log(
+      `[playerHandStorage] 🗑️ Cleared hand for game ${gameId}, address ${userAddress}`,
+    );
   } catch (error) {
-    console.error("[playerHandStorage] ❌ Error clearing hand from localStorage:", error);
+    console.error(
+      "[playerHandStorage] ❌ Error clearing hand from localStorage:",
+      error,
+    );
   }
 };
-

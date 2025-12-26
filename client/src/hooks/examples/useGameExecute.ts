@@ -22,12 +22,12 @@ export const useGameExecute = () => {
       setLoading(true);
       try {
         const world = setupWorld(sdk.provider);
-        
+
         const result = await world.game.create(account, playerName);
-        
+
         toast.success("Game created successfully!");
         console.log("Transaction result:", result);
-        
+
         return result;
       } catch (error) {
         console.error("Error executing transaction:", error);
@@ -37,7 +37,7 @@ export const useGameExecute = () => {
         setLoading(false);
       }
     },
-    [sdk, account]
+    [sdk, account],
   );
 
   const executeJoinGame = useCallback(
@@ -50,12 +50,12 @@ export const useGameExecute = () => {
       setLoading(true);
       try {
         const world = setupWorld(sdk.provider);
-        
+
         const result = await world.game.join(account, gameId, playerName);
-        
+
         toast.success("Joined game successfully!");
         console.log("Transaction result:", result);
-        
+
         return result;
       } catch (error) {
         console.error("Error executing transaction:", error);
@@ -65,7 +65,7 @@ export const useGameExecute = () => {
         setLoading(false);
       }
     },
-    [sdk, account]
+    [sdk, account],
   );
 
   const executeSubmitConditionChoice = useCallback(
@@ -78,12 +78,16 @@ export const useGameExecute = () => {
       setLoading(true);
       try {
         const world = setupWorld(sdk.provider);
-        
-        const result = await world.game.submitConditionChoice(account, gameId, choice);
-        
+
+        const result = await world.game.submitConditionChoice(
+          account,
+          gameId,
+          choice,
+        );
+
         toast.success("Condition choice submitted!");
         console.log("Transaction result:", result);
-        
+
         return result;
       } catch (error) {
         console.error("Error executing transaction:", error);
@@ -93,7 +97,7 @@ export const useGameExecute = () => {
         setLoading(false);
       }
     },
-    [sdk, account]
+    [sdk, account],
   );
 
   const executeSubmitChallengeChoice = useCallback(
@@ -106,12 +110,16 @@ export const useGameExecute = () => {
       setLoading(true);
       try {
         const world = setupWorld(sdk.provider);
-        
-        const result = await world.game.submitChallengeChoice(account, gameId, choice);
-        
+
+        const result = await world.game.submitChallengeChoice(
+          account,
+          gameId,
+          choice,
+        );
+
         toast.success("Challenge choice submitted!");
         console.log("Transaction result:", result);
-        
+
         return result;
       } catch (error) {
         console.error("Error executing transaction:", error);
@@ -121,7 +129,7 @@ export const useGameExecute = () => {
         setLoading(false);
       }
     },
-    [sdk, account]
+    [sdk, account],
   );
 
   return {
@@ -132,4 +140,3 @@ export const useGameExecute = () => {
     loading,
   };
 };
-

@@ -45,7 +45,9 @@ const packCard = (value: number, suit: number): bigint => {
  * @param hand Array of 3 cards [card1, card2, card3]
  * @returns Poseidon hash as a bigint (u256)
  */
-export const calculateHandCommitment = async (hand: Card[]): Promise<bigint> => {
+export const calculateHandCommitment = async (
+  hand: Card[],
+): Promise<bigint> => {
   if (hand.length !== 3) {
     throw new Error("Hand must contain exactly 3 cards");
   }

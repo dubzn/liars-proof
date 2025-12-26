@@ -1,6 +1,6 @@
 /**
  * Utility functions for card handling
- * 
+ *
  * Card values: A=1, 2-10, J=11, Q=12, K=13
  * Card suits: CLUBS=1, SPADES=2, DIAMONDS=3, HEARTS=4
  */
@@ -73,4 +73,3 @@ export const getCardFullName = (value: number, suit: number): string => {
 
   return `${valueName} of ${suitName}`;
 };
-

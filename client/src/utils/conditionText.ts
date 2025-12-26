@@ -70,7 +70,7 @@ export const generateConditionText = (
   quantity: number,
   comparator: number,
   value: number,
-  suit: number
+  suit: number,
 ): string => {
   switch (condition) {
     case CONDITION_CARDS_SUM_COMPARATOR_THAN_X:
@@ -133,4 +133,3 @@ export const generateConditionText = (
       return "Unknown condition";
   }
 };
-

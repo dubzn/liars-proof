@@ -61,13 +61,18 @@ export const useConditionGraphQL = (conditionId: number) => {
           const conditionData = edges[0].node;
           setCondition(conditionData as Condition);
         } else {
-          console.log(`[useConditionGraphQL] ⚠️ No condition found with ID ${conditionId}`);
+          console.log(
+            `[useConditionGraphQL] ⚠️ No condition found with ID ${conditionId}`,
+          );
           setCondition(null);
         }
 
         setIsLoading(false);
       } catch (err) {
-        console.error(`[useConditionGraphQL] ❌ Error fetching condition ${conditionId}:`, err);
+        console.error(
+          `[useConditionGraphQL] ❌ Error fetching condition ${conditionId}:`,
+          err,
+        );
         setError(err as Error);
         setIsLoading(false);
       }
@@ -84,4 +89,3 @@ export const useConditionGraphQL = (conditionId: number) => {
 
   return { condition, isLoading, error };
 };
-

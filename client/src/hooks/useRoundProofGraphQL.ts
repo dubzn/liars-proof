@@ -19,7 +19,7 @@ export const useRoundProofGraphQL = (
   round: number,
   player1Address: string | undefined,
   player2Address: string | undefined,
-  shouldPoll: boolean = false
+  shouldPoll: boolean = false,
 ) => {
   const [proofs, setProofs] = useState<RoundProofData>({
     player1Proof: null,
@@ -78,10 +78,12 @@ export const useRoundProofGraphQL = (
           throw new Error(player1Result.errors[0].message);
         }
 
-        const player1Edges = player1Result.data?.liarsProof3RoundProofModels?.edges;
-        const player1Proof = player1Edges && player1Edges.length > 0
-          ? (player1Edges[0].node as RoundProof)
-          : null;
+        const player1Edges =
+          player1Result.data?.liarsProof3RoundProofModels?.edges;
+        const player1Proof =
+          player1Edges && player1Edges.length > 0
+            ? (player1Edges[0].node as RoundProof)
+            : null;
 
         // Fetch player 2 proof if player2Address is provided
         let player2Proof: RoundProof | null = null;
@@ -118,10 +120,12 @@ export const useRoundProofGraphQL = (
 
           if (player2Response.ok) {
             const player2Result = await player2Response.json();
-            const player2Edges = player2Result.data?.liarsProof3RoundProofModels?.edges;
-            player2Proof = player2Edges && player2Edges.length > 0
-              ? (player2Edges[0].node as RoundProof)
-              : null;
+            const player2Edges =
+              player2Result.data?.liarsProof3RoundProofModels?.edges;
+            player2Proof =
+              player2Edges && player2Edges.length > 0
+                ? (player2Edges[0].node as RoundProof)
+                : null;
           }
         }
 
@@ -132,7 +136,10 @@ export const useRoundProofGraphQL = (
 
         setIsLoading(false);
       } catch (err) {
-        console.error(`[useRoundProofGraphQL] ❌ Error fetching proofs for game ${gameId}, round ${round}:`, err);
+        console.error(
+          `[useRoundProofGraphQL] ❌ Error fetching proofs for game ${gameId}, round ${round}:`,
+          err,
+        );
         setError(err as Error);
         setIsLoading(false);
       }

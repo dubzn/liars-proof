@@ -1,17 +1,28 @@
-import { Account, RpcProvider, ec, stark, type AccountInterface, CallData, hash, cairo } from "starknet";
+import {
+  Account,
+  RpcProvider,
+  ec,
+  stark,
+  type AccountInterface,
+  CallData,
+  hash,
+  cairo,
+} from "starknet";
 import { retryTransaction, checkTransactionSuccess } from "./retryTransaction";
 
 const GUEST_WALLET_STORAGE_KEY = "liars_proof_guest_wallet";
 
 // Owner wallet configuration for funding guest wallets
 const OWNER_WALLET_ADDRESS = import.meta.env.VITE_OWNER_WALLET_ADDRESS || "";
-const OWNER_WALLET_PRIVATE_KEY = import.meta.env.VITE_OWNER_WALLET_PRIVATE_KEY || "";
+const OWNER_WALLET_PRIVATE_KEY =
+  import.meta.env.VITE_OWNER_WALLET_PRIVATE_KEY || "";
 
 // ETH contract address on Starknet
 const ETH_TOKEN_ADDRESS = import.meta.env.VITE_ZN_FEE_TOKEN_ADDRESS || "";
 
 // Amount to fund guest wallets (0.0001 ETH in wei)
-const FUNDING_AMOUNT = import.meta.env.VITE_FUNDING_AMOUNT || "100000000000000000";
+const FUNDING_AMOUNT =
+  import.meta.env.VITE_FUNDING_AMOUNT || "100000000000000000";
 
 // OpenZeppelin Account contract class hash
 // IMPORTANT: This class hash must exist on your network (ZStarknet)
@@ -20,7 +31,8 @@ const FUNDING_AMOUNT = import.meta.env.VITE_FUNDING_AMOUNT || "10000000000000000
 // - Starknet Sepolia: 0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f
 // - Starknet Mainnet: 0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f
 // - For ZStarknet: You need to find the deployed OZ account class hash
-const OZ_ACCOUNT_CLASS_HASH = "0x01484c93b9d6cf61614d698ed069b3c6992c32549194fc3465258c2194734189";
+const OZ_ACCOUNT_CLASS_HASH =
+  "0x01484c93b9d6cf61614d698ed069b3c6992c32549194fc3465258c2194734189";
 
 interface GuestWalletData {
   privateKey: string;
@@ -74,7 +86,10 @@ export function generateGuestWallet(): GuestWalletData {
 export function saveGuestWallet(walletData: GuestWalletData): void {
   try {
     localStorage.setItem(GUEST_WALLET_STORAGE_KEY, JSON.stringify(walletData));
-    console.log("[GuestWallet] Wallet saved to localStorage:", walletData.address);
+    console.log(
+      "[GuestWallet] Wallet saved to localStorage:",
+      walletData.address,
+    );
   } catch (error) {
     console.error("[GuestWallet] Error saving wallet to localStorage:", error);
     throw new Error("Failed to save guest wallet");
@@ -91,10 +106,16 @@ export function loadGuestWallet(): GuestWalletData | null {
       return null;
     }
     const walletData = JSON.parse(stored) as GuestWalletData;
-    console.log("[GuestWallet] Wallet loaded from localStorage:", walletData.address);
+    console.log(
+      "[GuestWallet] Wallet loaded from localStorage:",
+      walletData.address,
+    );
     return walletData;
   } catch (error) {
-    console.error("[GuestWallet] Error loading wallet from localStorage:", error);
+    console.error(
+      "[GuestWallet] Error loading wallet from localStorage:",
+      error,
+    );
     return null;
   }
 }
@@ -107,7 +128,10 @@ export function deleteGuestWallet(): void {
     localStorage.removeItem(GUEST_WALLET_STORAGE_KEY);
     console.log("[GuestWallet] Wallet deleted from localStorage");
   } catch (error) {
-    console.error("[GuestWallet] Error deleting wallet from localStorage:", error);
+    console.error(
+      "[GuestWallet] Error deleting wallet from localStorage:",
+      error,
+    );
   }
 }
 
@@ -147,13 +171,19 @@ export async function fundGuestWallet(
     const result = await retryTransaction(
       async () => {
         const txResult = await ownerAccount.execute(transferCall);
-        console.log("[GuestWallet] Transfer tx hash:", txResult.transaction_hash);
+        console.log(
+          "[GuestWallet] Transfer tx hash:",
+          txResult.transaction_hash,
+        );
 
         // Wait for transaction confirmation
-        const receipt = await ownerAccount.waitForTransaction(txResult.transaction_hash, {
-          retryInterval: 1000,
-          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
-        });
+        const receipt = await ownerAccount.waitForTransaction(
+          txResult.transaction_hash,
+          {
+            retryInterval: 1000,
+            successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+          },
+        );
 
         // Verify transaction actually succeeded
         checkTransactionSuccess(receipt);
@@ -162,7 +192,7 @@ export async function fundGuestWallet(
       },
       {
         maxAttempts: 20,
-      }
+      },
     );
 
     console.log("[GuestWallet] Funding completed successfully!");
@@ -205,7 +235,10 @@ export async function setupGuestWallet(
     let walletData = loadGuestWallet();
 
     if (walletData) {
-      console.log("[GuestWallet] Using existing guest wallet:", walletData.address);
+      console.log(
+        "[GuestWallet] Using existing guest wallet:",
+        walletData.address,
+      );
       const account = createGuestAccount(walletData, provider);
       return { account, walletData };
     }
@@ -230,7 +263,10 @@ export async function setupGuestWallet(
     console.log("[GuestWallet] Deploying account after funding...");
     await deployGuestAccount(account, walletData);
 
-    console.log("[GuestWallet] Guest wallet setup complete:", walletData.address);
+    console.log(
+      "[GuestWallet] Guest wallet setup complete:",
+      walletData.address,
+    );
     return { account, walletData };
   } catch (error) {
     console.error("[GuestWallet] Error setting up guest wallet:", error);
@@ -248,7 +284,10 @@ export function hasGuestWallet(): boolean {
 /**
  * Check if an account contract is deployed at the given address
  */
-export async function isAccountDeployed(provider: RpcProvider, address: string): Promise<boolean> {
+export async function isAccountDeployed(
+  provider: RpcProvider,
+  address: string,
+): Promise<boolean> {
   try {
     await provider.getClassHashAt(address);
     return true;
@@ -266,7 +305,10 @@ export async function deployGuestAccount(
   walletData: GuestWalletData,
 ): Promise<{ transaction_hash: string; contract_address: string }> {
   try {
-    console.log("[GuestWallet] Deploying account contract at:", account.address);
+    console.log(
+      "[GuestWallet] Deploying account contract at:",
+      account.address,
+    );
 
     // Wait 2 seconds before deploying to ensure funding is settled
     console.log("[GuestWallet] Waiting 2 seconds before deployment...");
@@ -284,11 +326,19 @@ export async function deployGuestAccount(
     const { transaction_hash, contract_address } = await retryTransaction(
       async () => {
         const deployResult = await account.deployAccount(deployAccountPayload);
-        console.log("[GuestWallet] Account deployment tx:", deployResult.transaction_hash);
-        console.log("[GuestWallet] Account deployed at:", deployResult.contract_address);
+        console.log(
+          "[GuestWallet] Account deployment tx:",
+          deployResult.transaction_hash,
+        );
+        console.log(
+          "[GuestWallet] Account deployed at:",
+          deployResult.contract_address,
+        );
 
         // Wait for the transaction to be accepted
-        const receipt = await account.waitForTransaction(deployResult.transaction_hash);
+        const receipt = await account.waitForTransaction(
+          deployResult.transaction_hash,
+        );
 
         // Verify transaction actually succeeded
         checkTransactionSuccess(receipt);
@@ -298,7 +348,7 @@ export async function deployGuestAccount(
       },
       {
         maxAttempts: 20,
-      }
+      },
     );
 
     // Wait 2 seconds after deployment

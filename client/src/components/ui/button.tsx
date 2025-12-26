@@ -60,7 +60,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const combinedStyle =
       !disabled &&
-      (variant === "secondary" || variant === "default" || variant === "muted") &&
+      (variant === "secondary" ||
+        variant === "default" ||
+        variant === "muted") &&
       !className?.includes("login-button")
         ? {
             boxShadow:

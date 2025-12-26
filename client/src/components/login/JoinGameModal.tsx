@@ -9,7 +9,11 @@ interface JoinGameModalProps {
   onJoin: (gameId: number) => Promise<void>;
 }
 
-export const JoinGameModal = ({ isOpen, onClose, onJoin }: JoinGameModalProps) => {
+export const JoinGameModal = ({
+  isOpen,
+  onClose,
+  onJoin,
+}: JoinGameModalProps) => {
   const [gameIdInput, setGameIdInput] = useState("");
   const [gameId, setGameId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +71,7 @@ export const JoinGameModal = ({ isOpen, onClose, onJoin }: JoinGameModalProps) =
             ×
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="join-game-modal-form">
           <div className="join-game-modal-input-group">
             <label htmlFor="gameId" className="join-game-modal-label">
@@ -86,9 +90,7 @@ export const JoinGameModal = ({ isOpen, onClose, onJoin }: JoinGameModalProps) =
             />
           </div>
 
-          {error && (
-            <p className="join-game-modal-error">{error}</p>
-          )}
+          {error && <p className="join-game-modal-error">{error}</p>}
 
           <div className="join-game-modal-actions">
             <Button
@@ -114,4 +116,3 @@ export const JoinGameModal = ({ isOpen, onClose, onJoin }: JoinGameModalProps) =
     </div>
   );
 };
-

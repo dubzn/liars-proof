@@ -83,7 +83,10 @@ export const useGameGraphQL = (gameId: number) => {
 
         setIsLoading(false);
       } catch (err) {
-        console.error(`[useGameGraphQL] ❌ Error fetching game ${gameId}:`, err);
+        console.error(
+          `[useGameGraphQL] ❌ Error fetching game ${gameId}:`,
+          err,
+        );
         setError(err as Error);
         setIsLoading(false);
       }

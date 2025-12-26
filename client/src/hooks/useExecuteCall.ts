@@ -82,7 +82,7 @@ export const useExecuteCall = () => {
           },
           {
             maxAttempts: 20,
-          }
+          },
         );
 
         receipt = result;

@@ -37,27 +37,35 @@ export const GameOverModal = ({
     <div className="game-over-overlay">
       <div className="game-over-modal">
         <h2 className="game-over-title">GAME OVER</h2>
-        
+
         <div className="game-over-content">
           {/* Winner Section */}
           <div className="game-over-winner-section">
             <div className="game-over-winner-label">WINNER</div>
-            <div className={`game-over-winner-name ${isPlayer1Winner ? "player1" : "player2"}`}>
+            <div
+              className={`game-over-winner-name ${isPlayer1Winner ? "player1" : "player2"}`}
+            >
               {winnerName}
             </div>
           </div>
 
           {/* Final Scores */}
           <div className="game-over-scores">
-            <div className={`game-over-player-result ${isPlayer1Winner ? "winner" : "loser"}`}>
+            <div
+              className={`game-over-player-result ${isPlayer1Winner ? "winner" : "loser"}`}
+            >
               <div className="game-over-player-header">
                 <span className="game-over-player-name">{player1Name}</span>
-                {isPlayer1Winner && <span className="game-over-winner-badge">WINNER</span>}
+                {isPlayer1Winner && (
+                  <span className="game-over-winner-badge">WINNER</span>
+                )}
               </div>
               <div className="game-over-player-stats">
                 <div className="game-over-stat">
                   <span className="game-over-stat-label">Final Score:</span>
-                  <span className="game-over-stat-value">{player1Score} / 50</span>
+                  <span className="game-over-stat-value">
+                    {player1Score} / 50
+                  </span>
                 </div>
                 <div className="game-over-stat">
                   <span className="game-over-stat-label">Lives:</span>
@@ -66,15 +74,21 @@ export const GameOverModal = ({
               </div>
             </div>
 
-            <div className={`game-over-player-result ${!isPlayer1Winner ? "winner" : "loser"}`}>
+            <div
+              className={`game-over-player-result ${!isPlayer1Winner ? "winner" : "loser"}`}
+            >
               <div className="game-over-player-header">
                 <span className="game-over-player-name">{player2Name}</span>
-                {!isPlayer1Winner && <span className="game-over-winner-badge">WINNER</span>}
+                {!isPlayer1Winner && (
+                  <span className="game-over-winner-badge">WINNER</span>
+                )}
               </div>
               <div className="game-over-player-stats">
                 <div className="game-over-stat">
                   <span className="game-over-stat-label">Final Score:</span>
-                  <span className="game-over-stat-value">{player2Score} / 50</span>
+                  <span className="game-over-stat-value">
+                    {player2Score} / 50
+                  </span>
                 </div>
                 <div className="game-over-stat">
                   <span className="game-over-stat-label">Lives:</span>
@@ -99,4 +113,3 @@ export const GameOverModal = ({
     </div>
   );
 };
-

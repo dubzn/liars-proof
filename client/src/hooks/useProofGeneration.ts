@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
-	ProofGenerationState,
-	ProofGenerationStatus,
-	ProofInput,
+  ProofGenerationState,
+  ProofGenerationStatus,
+  ProofInput,
 } from "../types/proof";
 import {
-	generateProofAndCalldata,
-	initializeProofSystem,
+  generateProofAndCalldata,
+  initializeProofSystem,
 } from "../utils/proofGenerator";
 
 /**
@@ -42,90 +42,90 @@ import {
  * };
  */
 export function useProofGeneration() {
-	const [state, setState] = useState<ProofGenerationState>({
-		status: "idle" as ProofGenerationStatus,
-	});
+  const [state, setState] = useState<ProofGenerationState>({
+    status: "idle" as ProofGenerationStatus,
+  });
 
-	// Initialize proof system on mount
-	useEffect(() => {
-		const initialize = async () => {
-			try {
-				setState({
-					status: "initializing_wasm" as ProofGenerationStatus,
-				});
-				await initializeProofSystem();
-				setState({
-					status: "idle" as ProofGenerationStatus,
-				});
-			} catch (error) {
-				setState({
-					status: "error" as ProofGenerationStatus,
-					error:
-						error instanceof Error
-							? error.message
-							: "Failed to initialize proof system",
-				});
-			}
-		};
+  // Initialize proof system on mount
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        setState({
+          status: "initializing_wasm" as ProofGenerationStatus,
+        });
+        await initializeProofSystem();
+        setState({
+          status: "idle" as ProofGenerationStatus,
+        });
+      } catch (error) {
+        setState({
+          status: "error" as ProofGenerationStatus,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to initialize proof system",
+        });
+      }
+    };
 
-		initialize();
-	}, []);
+    initialize();
+  }, []);
 
-	const generateProof = useCallback(async (input: ProofInput) => {
-		try {
-			// Generate witness
-			setState({
-				status: "generating_witness" as ProofGenerationStatus,
-				progress: 25,
-			});
+  const generateProof = useCallback(async (input: ProofInput) => {
+    try {
+      // Generate witness
+      setState({
+        status: "generating_witness" as ProofGenerationStatus,
+        progress: 25,
+      });
 
-			// Generate proof
-			setState({
-				status: "generating_proof" as ProofGenerationStatus,
-				progress: 50,
-			});
+      // Generate proof
+      setState({
+        status: "generating_proof" as ProofGenerationStatus,
+        progress: 50,
+      });
 
-			// Prepare calldata
-			setState({
-				status: "preparing_calldata" as ProofGenerationStatus,
-				progress: 75,
-			});
+      // Prepare calldata
+      setState({
+        status: "preparing_calldata" as ProofGenerationStatus,
+        progress: 75,
+      });
 
-			const result = await generateProofAndCalldata(input);
+      const result = await generateProofAndCalldata(input);
 
-			setState({
-				status: "complete" as ProofGenerationStatus,
-				progress: 100,
-				result,
-			});
+      setState({
+        status: "complete" as ProofGenerationStatus,
+        progress: 100,
+        result,
+      });
 
-			return result;
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "Unknown error occurred";
-			setState({
-				status: "error" as ProofGenerationStatus,
-				error: errorMessage,
-			});
-			throw error;
-		}
-	}, []);
+      return result;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      setState({
+        status: "error" as ProofGenerationStatus,
+        error: errorMessage,
+      });
+      throw error;
+    }
+  }, []);
 
-	const reset = useCallback(() => {
-		setState({
-			status: "idle" as ProofGenerationStatus,
-		});
-	}, []);
+  const reset = useCallback(() => {
+    setState({
+      status: "idle" as ProofGenerationStatus,
+    });
+  }, []);
 
-	return {
-		generateProof,
-		state,
-		reset,
-		isLoading:
-			state.status !== "idle" &&
-			state.status !== "complete" &&
-			state.status !== "error",
-		isError: state.status === "error",
-		isSuccess: state.status === "complete",
-	};
+  return {
+    generateProof,
+    state,
+    reset,
+    isLoading:
+      state.status !== "idle" &&
+      state.status !== "complete" &&
+      state.status !== "error",
+    isError: state.status === "error",
+    isSuccess: state.status === "complete",
+  };
 }

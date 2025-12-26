@@ -15,7 +15,9 @@ interface RetryOptions {
  * Check if a transaction receipt indicates success
  * Throws an error if the transaction failed
  */
-export function checkTransactionSuccess(txReceipt: GetTransactionReceiptResponse): void {
+export function checkTransactionSuccess(
+  txReceipt: GetTransactionReceiptResponse,
+): void {
   // Check if receipt has execution_status (SuccessfulTransactionReceiptResponse)
   if ("execution_status" in txReceipt) {
     if (txReceipt.execution_status !== "SUCCEEDED") {
@@ -30,7 +32,7 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
   maxAttempts: 5,
   delayMs: 3000,
   exponentialBackoff: false,
-  onRetry: () => { },
+  onRetry: () => {},
 };
 
 /**
@@ -88,7 +90,9 @@ export async function retryTransaction<T>(
  * Retry a transaction with wait for confirmation
  * Useful for Starknet transactions that need waitForTransaction
  */
-export async function retryTransactionWithConfirmation<T extends { transaction_hash: string }>(
+export async function retryTransactionWithConfirmation<
+  T extends { transaction_hash: string },
+>(
   executeFn: () => Promise<T>,
   waitFn: (txHash: string) => Promise<void>,
   options: RetryOptions = {},

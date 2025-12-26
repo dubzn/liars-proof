@@ -54,7 +54,7 @@ export const useGameQuery = (gameId: number) => {
       const gameData = entity.models[NAMESPACE]["Game"] as Game;
       setGame(gameData);
     },
-    []
+    [],
   );
 
   // Subscribe to model updates
@@ -130,4 +130,3 @@ export const useGameQuery = (gameId: number) => {
     queryGame,
   };
 };
-

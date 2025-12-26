@@ -45,18 +45,15 @@ export const useGameModels = (gameId: number) => {
   }, [gameId]);
 
   // Build query for Condition model (using condition_id from game)
-  const buildConditionQuery = useCallback(
-    (conditionId: number) => {
-      const model = ModelsMapping.Condition;
-      const key = `0x${conditionId.toString(16).padStart(16, "0")}`;
-      const clauses = new ClauseBuilder().keys([model], [key], "FixedLen");
-      return new ToriiQueryBuilder()
-        .withClause(clauses.build())
-        .includeHashedKeys()
-        .withLimit(1);
-    },
-    []
-  );
+  const buildConditionQuery = useCallback((conditionId: number) => {
+    const model = ModelsMapping.Condition;
+    const key = `0x${conditionId.toString(16).padStart(16, "0")}`;
+    const clauses = new ClauseBuilder().keys([model], [key], "FixedLen");
+    return new ToriiQueryBuilder()
+      .withClause(clauses.build())
+      .includeHashedKeys()
+      .withLimit(1);
+  }, []);
 
   // Build query for PlayerConditionChoice
   const buildPlayerConditionChoiceQuery = useCallback(
@@ -67,14 +64,14 @@ export const useGameModels = (gameId: number) => {
       const clauses = new ClauseBuilder().keys(
         [model],
         [gameKey, roundKey, player],
-        "FixedLen"
+        "FixedLen",
       );
       return new ToriiQueryBuilder()
         .withClause(clauses.build())
         .includeHashedKeys()
         .withLimit(1);
     },
-    [gameId]
+    [gameId],
   );
 
   // Build query for PlayerChallengeChoice
@@ -86,14 +83,14 @@ export const useGameModels = (gameId: number) => {
       const clauses = new ClauseBuilder().keys(
         [model],
         [gameKey, roundKey, player],
-        "FixedLen"
+        "FixedLen",
       );
       return new ToriiQueryBuilder()
         .withClause(clauses.build())
         .includeHashedKeys()
         .withLimit(1);
     },
-    [gameId]
+    [gameId],
   );
 
   // Build query for RoundProof
@@ -105,14 +102,14 @@ export const useGameModels = (gameId: number) => {
       const clauses = new ClauseBuilder().keys(
         [model],
         [gameKey, roundKey, player],
-        "FixedLen"
+        "FixedLen",
       );
       return new ToriiQueryBuilder()
         .withClause(clauses.build())
         .includeHashedKeys()
         .withLimit(1);
     },
-    [gameId]
+    [gameId],
   );
 
   // Subscribe to Game model
@@ -182,8 +179,7 @@ export const useGameModels = (gameId: number) => {
             >) => {
               if (error || !data || data.length === 0) return;
               const entity = data[0];
-              if (!entity.models[NAMESPACE]?.["PlayerConditionChoice"])
-                return;
+              if (!entity.models[NAMESPACE]?.["PlayerConditionChoice"]) return;
               const choice = entity.models[NAMESPACE][
                 "PlayerConditionChoice"
               ] as PlayerConditionChoice;
@@ -206,8 +202,7 @@ export const useGameModels = (gameId: number) => {
             >) => {
               if (error || !data || data.length === 0) return;
               const entity = data[0];
-              if (!entity.models[NAMESPACE]?.["PlayerChallengeChoice"])
-                return;
+              if (!entity.models[NAMESPACE]?.["PlayerChallengeChoice"]) return;
               const choice = entity.models[NAMESPACE][
                 "PlayerChallengeChoice"
               ] as PlayerChallengeChoice;
@@ -231,7 +226,9 @@ export const useGameModels = (gameId: number) => {
               if (error || !data || data.length === 0) return;
               const entity = data[0];
               if (!entity.models[NAMESPACE]?.["RoundProof"]) return;
-              const proof = entity.models[NAMESPACE]["RoundProof"] as RoundProof;
+              const proof = entity.models[NAMESPACE][
+                "RoundProof"
+              ] as RoundProof;
               setRoundProof(proof);
             },
           });
@@ -262,7 +259,14 @@ export const useGameModels = (gameId: number) => {
       });
       subscriptionsRef.current = [];
     };
-  }, [sdk, buildGameQuery, buildConditionQuery, buildPlayerConditionChoiceQuery, buildPlayerChallengeChoiceQuery, buildRoundProofQuery]);
+  }, [
+    sdk,
+    buildGameQuery,
+    buildConditionQuery,
+    buildPlayerConditionChoiceQuery,
+    buildPlayerChallengeChoiceQuery,
+    buildRoundProofQuery,
+  ]);
 
   return {
     game,
@@ -272,4 +276,3 @@ export const useGameModels = (gameId: number) => {
     roundProof,
   };
 };
-

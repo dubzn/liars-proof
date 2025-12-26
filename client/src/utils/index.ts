@@ -1,10 +1,10 @@
 // Export proof generation utilities
 export {
-	generateProofAndCalldata,
-	generateCalldata,
-	initializeProofSystem,
-	initializeWasm,
-	initializeVerificationKey,
+  generateProofAndCalldata,
+  generateCalldata,
+  initializeProofSystem,
+  initializeWasm,
+  initializeVerificationKey,
 } from "./proofGenerator";
 
 // Export proof helpers

@@ -1,11 +1,17 @@
 import { type PropsWithChildren } from "react";
 import type { Chain } from "@starknet-react/chains";
-import { Connector, jsonRpcProvider, StarknetConfig, voyager } from "@starknet-react/core";
+import {
+  Connector,
+  jsonRpcProvider,
+  StarknetConfig,
+  voyager,
+} from "@starknet-react/core";
 import ControllerConnector from "@cartridge/connector/controller";
 import { constants, num } from "starknet";
 import { SessionPolicies } from "@cartridge/presets";
 
-const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
+const GAME_CONTRACT_ADDRESS =
+  import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
 // Define session policies for the game contract
 const policies: SessionPolicies = {
@@ -51,7 +57,9 @@ const policies: SessionPolicies = {
 const controller = new ControllerConnector({
   chains: [
     {
-      rpcUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL || "https://api.cartridge.gg/x/starknet/sepolia",
+      rpcUrl:
+        import.meta.env.VITE_ZN_SEPOLIA_RPC_URL ||
+        "https://api.cartridge.gg/x/starknet/sepolia",
     },
   ],
   defaultChainId: constants.StarknetChainId.SN_SEPOLIA,
@@ -66,27 +74,37 @@ const sepolia: Chain = {
   network: "sepolia",
   rpcUrls: {
     default: {
-      http: [import.meta.env.VITE_ZN_SEPOLIA_RPC_URL || "https://api.cartridge.gg/x/starknet/sepolia"],
+      http: [
+        import.meta.env.VITE_ZN_SEPOLIA_RPC_URL ||
+          "https://api.cartridge.gg/x/starknet/sepolia",
+      ],
     },
     public: {
-      http: [import.meta.env.VITE_ZN_SEPOLIA_RPC_URL || "https://api.cartridge.gg/x/starknet/sepolia"],
+      http: [
+        import.meta.env.VITE_ZN_SEPOLIA_RPC_URL ||
+          "https://api.cartridge.gg/x/starknet/sepolia",
+      ],
     },
-  },  nativeCurrency: {
+  },
+  nativeCurrency: {
     name: "Starknet",
     symbol: "STRK",
     decimals: 18,
-    address: "0x04718f5a0Fc34cC1AF16A1cdee98fFB20C31f5cD61D6Ab07201858f4287c938D",
+    address:
+      "0x04718f5a0Fc34cC1AF16A1cdee98fFB20C31f5cD61D6Ab07201858f4287c938D",
   },
   paymasterRpcUrls: {
     avnu: {
-       http: ["http://localhost:5050"],
+      http: ["http://localhost:5050"],
     },
   },
 };
 
 const provider = jsonRpcProvider({
-  rpc: () => ({ 
-    nodeUrl: import.meta.env.VITE_ZN_SEPOLIA_RPC_URL || "https://api.cartridge.gg/x/starknet/sepolia" 
+  rpc: () => ({
+    nodeUrl:
+      import.meta.env.VITE_ZN_SEPOLIA_RPC_URL ||
+      "https://api.cartridge.gg/x/starknet/sepolia",
   }),
 });
 
@@ -103,4 +121,3 @@ export default function StarknetProvider({ children }: PropsWithChildren) {
     </StarknetConfig>
   );
 }
-

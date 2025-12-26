@@ -21,13 +21,13 @@ export const ProcessingModal = ({
         <div className="processing-modal-header">
           <h2 className="processing-modal-title">{title}</h2>
         </div>
-        
+
         {explanation && (
           <div className="processing-modal-explanation">
             <p className="processing-modal-explanation-text">{explanation}</p>
           </div>
         )}
-        
+
         <div className="processing-modal-content">
           <div className="processing-modal-spinner">
             <div className="spinner"></div>
@@ -38,4 +38,3 @@ export const ProcessingModal = ({
     </div>
   );
 };
-

@@ -12,39 +12,41 @@ interface RuleSectionProps {
   children: React.ReactNode;
 }
 
-const RuleSection = ({ title, isExpanded, onToggle, children }: RuleSectionProps) => {
+const RuleSection = ({
+  title,
+  isExpanded,
+  onToggle,
+  children,
+}: RuleSectionProps) => {
   return (
     <div className="game-rules-section">
-      <div
-        className="game-rules-section-header"
-        onClick={onToggle}
-      >
+      <div className="game-rules-section-header" onClick={onToggle}>
         <span className="game-rules-section-title">{title}</span>
         <span className="game-rules-section-toggle">
           {isExpanded ? "-" : "+"}
         </span>
       </div>
       {isExpanded && (
-        <div className="game-rules-section-content">
-          {children}
-        </div>
+        <div className="game-rules-section-content">{children}</div>
       )}
     </div>
   );
 };
 
 export const GameRules = ({ onExpandChange }: GameRulesProps) => {
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const newState = { ...prev, [section]: !prev[section] };
       return newState;
     });
   };
 
   useEffect(() => {
-    const hasExpanded = Object.values(expandedSections).some(v => v);
+    const hasExpanded = Object.values(expandedSections).some((v) => v);
     onExpandChange?.(hasExpanded);
   }, [expandedSections, onExpandChange]);
 
@@ -60,7 +62,8 @@ export const GameRules = ({ onExpandChange }: GameRulesProps) => {
           onToggle={() => toggleSection("objective")}
         >
           <p className="game-rules-section-text">
-            Be the first player to reach 50 points or reduce the opponent to 0 lives.
+            Be the first player to reach 50 points or reduce the opponent to 0
+            lives.
           </p>
         </RuleSection>
 
@@ -75,7 +78,9 @@ export const GameRules = ({ onExpandChange }: GameRulesProps) => {
             <li>Each player decides if their hand fulfills the condition</li>
             <li>Players then decide whether to believe the opponent's claim</li>
             <li>Players submit zero-knowledge proofs to verify their claims</li>
-            <li>Round results are calculated based on who lied and who believed</li>
+            <li>
+              Round results are calculated based on who lied and who believed
+            </li>
           </ol>
         </RuleSection>
 
@@ -86,19 +91,29 @@ export const GameRules = ({ onExpandChange }: GameRulesProps) => {
         >
           <div className="game-rules-scoring">
             <div className="game-rules-scoring-item">
-              <span className="game-rules-scoring-label">You lie + Opponent doesn't believe:</span>
-              <span className="game-rules-scoring-value">Opponent +20 points, You -1 life</span>
+              <span className="game-rules-scoring-label">
+                You lie + Opponent doesn't believe:
+              </span>
+              <span className="game-rules-scoring-value">
+                Opponent +20 points, You -1 life
+              </span>
             </div>
             <div className="game-rules-scoring-item">
-              <span className="game-rules-scoring-label">You lie + Opponent believes:</span>
+              <span className="game-rules-scoring-label">
+                You lie + Opponent believes:
+              </span>
               <span className="game-rules-scoring-value">You +10 points</span>
             </div>
             <div className="game-rules-scoring-item">
-              <span className="game-rules-scoring-label">You tell truth + Opponent doesn't believe:</span>
+              <span className="game-rules-scoring-label">
+                You tell truth + Opponent doesn't believe:
+              </span>
               <span className="game-rules-scoring-value">Opponent -1 life</span>
             </div>
             <div className="game-rules-scoring-item">
-              <span className="game-rules-scoring-label">You tell truth + Opponent believes:</span>
+              <span className="game-rules-scoring-label">
+                You tell truth + Opponent believes:
+              </span>
               <span className="game-rules-scoring-value">No changes</span>
             </div>
           </div>
@@ -118,4 +133,3 @@ export const GameRules = ({ onExpandChange }: GameRulesProps) => {
     </div>
   );
 };
-
