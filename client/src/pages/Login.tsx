@@ -463,14 +463,13 @@ export const Login = () => {
           <div className="login-wallet-status-container">
             <span
               className="login-connected-text"
-              style={{ display: "flex", alignItems: "center", gap: 8 }}
             >
               {isConnected && (
                 <>
                   <img
                     src="/images/icons/cartridge.png"
                     alt="Controller"
-                    style={{ width: "3%", height: "auto" }}
+                    style={{ height: "clamp(1rem, 2vw, 1.5rem)" }}
                   />
                   <span>CONTROLLER CONNECTED</span>
                 </>
