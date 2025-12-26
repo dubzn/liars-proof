@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useStarknetKit } from "@/context/starknetkit";
-import { useGuestWallet } from "@/hooks/useGuestWallet";
 import { retryTransaction, checkTransactionSuccess } from "@/utils/retryTransaction";
 import { byteArray, num } from "starknet";
 import { toast } from "sonner";
@@ -18,8 +17,7 @@ const DEFAULT_PLAYER_NAME = "";
 const PLAYER_NAME_STORAGE_KEY = "liars_proof_player_name";
 
 export const Login = () => {
-  const { account, isConnecting, isGuestMode, isCartridgeMode, connectWithCartridge, connectAsGuest, disconnect } = useStarknetKit();
-  const { ensureDeployed } = useGuestWallet();
+  const { account, isConnecting, isConnected, connect, disconnect } = useStarknetKit();
   const navigate = useNavigate();
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
@@ -154,15 +152,6 @@ export const Login = () => {
     try {
       console.log("[Login] Creating game with contract:", GAME_CONTRACT_ADDRESS);
 
-      // If guest mode, ensure account is deployed first
-      if (isGuestMode) {
-        setProcessingStatus({
-          title: "DEPLOYING ACCOUNT",
-          message: "Deploying your guest account...",
-        });
-        await ensureDeployed();
-      }
-
       // Convert playerName to ByteArray
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
@@ -286,102 +275,29 @@ export const Login = () => {
     }
   };
 
-  const handleConnectWithCartridge = async () => {
+  const connectingRef = useRef(false);
+
+  const handleConnect = async () => {
     if (!account && !isConnecting) {
       try {
-        console.log("[Login] Connecting with Cartridge Controller...");
-        await connectWithCartridge();
-        toast.success("Connected with Cartridge Controller!");
+        console.log("[Login] Connecting with Controller...");
+        connectingRef.current = true;
+        await connect();
       } catch (error) {
-        console.error("[Login] Error connecting with Cartridge:", error);
-        toast.error("Failed to connect with Cartridge Controller");
+        console.error("[Login] Error connecting:", error);
+        connectingRef.current = false;
+        toast.error("Failed to connect");
       }
     }
   };
 
-  const handleConnectAsGuest = async () => {
-    if (!account && !isConnecting) {
-      try {
-        console.log("[Login] Connecting as guest...");
-        
-        // Check if wallet already exists
-        const existingWallet = localStorage.getItem("liars_proof_guest_wallet");
-        
-        if (existingWallet) {
-          // Wallet exists, just connect
-          setProcessingStatus({
-            title: "CONNECTING GUEST WALLET",
-            message: "Restoring your guest wallet...",
-          });
-          await connectAsGuest();
-          setProcessingStatus(null);
-          toast.success("Guest wallet connected!");
-          return;
-        }
-
-        // New wallet creation flow with progress updates
-        setProcessingStatus({
-          title: "CREATING GUEST WALLET (COULD TAKE A MINUTE)",
-          message: "Connecting to ZStarknet network...",
-        });
-
-        // Start the connection process
-        const connectPromise = connectAsGuest();
-
-        // Update progress messages with timeouts
-        const progressUpdates = [
-          { delay: 6000, message: "Computing wallet address.." },
-          { delay: 10000, message: "Requesting funds from faucet.." },
-          { delay: 16000, message: "Waiting for funding confirmation.." },
-          { delay: 22000, message: "Deploying account contract.." },
-          { delay: 27000, message: "Waiting for deployment confirmation.." },
-        ];
-
-        const timeouts: NodeJS.Timeout[] = [];
-        progressUpdates.forEach(({ delay, message }) => {
-          const timeout = setTimeout(() => {
-            setProcessingStatus((prev) => {
-              if (prev) {
-                return {
-                  title: prev.title,
-                  message: message,
-                };
-              }
-              return prev;
-            });
-          }, delay);
-          timeouts.push(timeout);
-        });
-
-        try {
-          await connectPromise;
-          
-          // Clear all timeouts
-          timeouts.forEach(clearTimeout);
-          
-          // Final success message
-          setProcessingStatus({
-            title: "GUEST WALLET READY",
-            message: "Wallet created and funded successfully!",
-          });
-          
-          // Close modal after a brief delay
-          setTimeout(() => {
-            setProcessingStatus(null);
-            toast.success("Guest wallet created successfully!");
-          }, 1000);
-        } catch (error) {
-          // Clear all timeouts on error
-          timeouts.forEach(clearTimeout);
-          throw error;
-        }
-      } catch (error) {
-        console.error("[Login] Error connecting as guest:", error);
-        setProcessingStatus(null);
-        toast.error("Failed to create guest wallet. Please try again.");
-      }
+  // Show success toast when connection is complete
+  useEffect(() => {
+    if (isConnected && account && connectingRef.current) {
+      toast.success("Connected with Controller!");
+      connectingRef.current = false;
     }
-  };
+  }, [isConnected, account]);
 
   const handleCreateGame = async () => {
     // Prevent multiple clicks
@@ -419,15 +335,6 @@ export const Login = () => {
     setIsJoiningGame(true);
 
     try {
-      // If guest mode, ensure account is deployed first
-      if (isGuestMode) {
-        setProcessingStatus({
-          title: "DEPLOYING ACCOUNT",
-          message: "Deploying your guest account...",
-        });
-        await ensureDeployed();
-      }
-
       // If empty, use "ZStarknet" as fallback
       const nameToUse = playerName.trim() || "ZStarknet";
       console.log("[Login] Joining game with ID:", gameId, "and name:", nameToUse);
@@ -520,15 +427,12 @@ export const Login = () => {
           <div className="login-wallet-status-container">
             
             <span className="login-connected-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {isGuestMode ? (
+              {isConnected && (
                 <>
-                  GUEST MODE
+                  <img src="/images/icons/controller.png" alt="Controller" />
+                  <span>CONTROLLER CONNECTED</span>
                 </>
-              ) : isCartridgeMode ? (
-                <>
-                  🎮 CARTRIDGE CONNECTED
-                </>
-              ) : null}
+              )}
             </span>
             <button
               onClick={handleDisconnect}
@@ -578,36 +482,22 @@ export const Login = () => {
             </div>
           ) : (
             <div className="login-disconnected-section">
-              {!isConnecting && (
-                <Button
-                  onClick={handleConnectWithCartridge}
-                  className="login-button"
-                  variant="default"
-                  disabled={isConnecting}
-                  style={{
-                    background: "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5em",
-                  }}
-                >
-                  CONNECT WITH CONTROLLER
-                </Button>
-              )}
-              {!isConnecting && (
               <Button
-                onClick={handleConnectAsGuest}
+                onClick={handleConnect}
                 className="login-button"
                 variant="default"
                 disabled={isConnecting}
-
+                style={{
+                  background: "linear-gradient(135deg,rgb(242, 165, 59) 0%, rgb(214, 87, 13) 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5em",
+                }}
               >
-                PLAY AS GUEST
+                {isConnecting ? "Connecting..." : "CONNECT WITH CONTROLLER"}
               </Button>
-              )}
               <p className="login-wallet-support-text">
-                Guest mode creates a temporary wallet funded automatically<br />
-                Connect with Cartridge Controller on ZStarknet
+                Connect with Cartridge Controller on Sepolia
               </p>
             </div>
           )}

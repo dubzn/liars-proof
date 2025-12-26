@@ -29,6 +29,7 @@
     "@cartridge/connector": "^0.10.7",
     "@cartridge/presets": "^0.5.4",
     "@dojoengine/core": "1.8.5",
+    "@dojoengine/create-burner": "^1.7.0-preview.3",
     "@dojoengine/sdk": "1.8.7",
     "@dojoengine/torii-client": "1.8.1",
     "@dojoengine/torii-wasm": "1.8.1",

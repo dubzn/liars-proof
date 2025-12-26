@@ -1,10 +1,9 @@
 import { type PropsWithChildren } from "react";
 import type { Chain } from "@starknet-react/chains";
 import { Connector, jsonRpcProvider, StarknetConfig, voyager } from "@starknet-react/core";
-import { ControllerConnector } from "@cartridge/connector";
-import { constants, num, shortString } from "starknet";
+import ControllerConnector from "@cartridge/connector/controller";
+import { constants, num } from "starknet";
 import { SessionPolicies } from "@cartridge/presets";
-import { WalletSessionManager } from "@/components/WalletSessionManager";
 
 const GAME_CONTRACT_ADDRESS = import.meta.env.VITE_ZN_GAME_CONTRACT_ADDRESS || "";
 
@@ -57,6 +56,7 @@ const controller = new ControllerConnector({
   ],
   defaultChainId: constants.StarknetChainId.SN_SEPOLIA,
   policies,
+  signupOptions: ["google", "discord", "webauthn", "password"],
 });
 
 // Define Sepolia chain configuration
@@ -97,9 +97,8 @@ export default function StarknetProvider({ children }: PropsWithChildren) {
       provider={provider}
       connectors={[controller as unknown as Connector]}
       explorer={voyager}
-      autoConnect
+      autoConnect={false}
     >
-      <WalletSessionManager />
       {children}
     </StarknetConfig>
   );

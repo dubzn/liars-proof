@@ -1,4 +1,3 @@
-// Dojo related imports
 import type { SDK } from "@dojoengine/sdk";
 import { DojoSdkProvider } from "@dojoengine/sdk/react";
 import { type PropsWithChildren, useEffect, useState } from "react";
@@ -7,7 +6,6 @@ import { DEFAULT_CHAIN, DEFAULT_CHAIN_ID, dojoConfigs } from "@/config";
 import { setupWorld } from "../bindings/typescript/contracts.gen";
 import type { SchemaType } from "../bindings/typescript/models.gen";
 
-// TODO:: idk xd
 export const appDomain = {
   name: "nums",
   version: "1.0",
