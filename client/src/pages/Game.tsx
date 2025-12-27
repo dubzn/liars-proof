@@ -458,68 +458,92 @@ export const Game = () => {
     }
   }, [player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid]);
 
-  // TRIGGER: Show RoundResultModal when transitioning from ResultPhase to ConditionPhase
+  // TRIGGER: Show RoundResultModal when we're in ConditionPhase and have a snapshot from the previous round
   // This happens when the round is resolved and we move to the next round
+  // Works for both players independently - doesn't depend on previousPhaseRef timing
   useEffect(() => {
     if (!game) return;
 
-    // Detect transition from ResultPhase to ConditionPhase
-    const wasResultPhase = previousPhaseRef.current === "ResultPhase";
+    // We're in ConditionPhase (new round started after ResultPhase)
     const isConditionPhase = currentPhase === "ConditionPhase";
-    const phaseTransitioned = wasResultPhase && isConditionPhase;
+    const snapshot = roundSnapshotRef.current;
+    const hasSnapshot = snapshot !== null;
+    
+    if (!isConditionPhase || !hasSnapshot || showRoundResultModal) {
+      // Update previous phase ref even if we don't show modal
+      previousPhaseRef.current = currentPhase;
+      return;
+    }
 
-    // Also check if we're entering ConditionPhase and we have a snapshot from ResultPhase
-    const hasSnapshot = roundSnapshotRef.current !== null;
-    const snapshotRound = roundSnapshotRef.current?.round || 0;
+    // At this point, snapshot is guaranteed to be non-null
+    const snapshotRound = snapshot.round;
+    
+    // The snapshot should be from the previous round (round was resolved and advanced)
+    // Or from the current round if we just entered ResultPhase
     const roundMatches = snapshotRound === currentRound - 1 || snapshotRound === currentRound;
 
-    if (phaseTransitioned && hasSnapshot && roundMatches && !showRoundResultModal) {
-      const snapshot = roundSnapshotRef.current;
-
-      // Wait for both proof validities to be available
-      if (
-        snapshot.player_1_proof_valid === null ||
-        snapshot.player_2_proof_valid === null
-      ) {
-        console.log("[Game] ⏳ Waiting for proof validities before showing result modal");
-        return;
-      }
-
-      // Check if we've already shown the result for this round
-      if (roundResultShownRef.current === snapshot.round) {
-        console.log("[Game] ✅ Already shown result for round", snapshot.round);
-        return;
-      }
-
-      console.log("[Game] 🎯 Showing RoundResultModal - transitioned from ResultPhase to ConditionPhase");
-
-      // Calculate results based on snapshot (state before resolution)
-      const player1Lied =
-        snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
-      const player2Lied =
-        snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
-      const player1Believed = snapshot.player_1_challenge_choice === true;
-      const player2Believed = snapshot.player_2_challenge_choice === true;
-
-      // Calculate changes by comparing snapshot (before) with current state (after)
-      setRoundResultData({
-        player1Lied,
-        player2Lied,
-        player1Believed,
-        player2Believed,
-        player1ScoreChange: Number(game.player_1_score) - snapshot.player_1_score,
-        player2ScoreChange: Number(game.player_2_score) - snapshot.player_2_score,
-        player1LivesChange: Number(game.player_1_lives) - snapshot.player_1_lives,
-        player2LivesChange: Number(game.player_2_lives) - snapshot.player_2_lives,
-        player1NewScore: Number(game.player_1_score),
-        player2NewScore: Number(game.player_2_score),
-        player1NewLives: Number(game.player_1_lives),
-        player2NewLives: Number(game.player_2_lives),
+    if (!roundMatches) {
+      console.log("[Game] ⏸️ Snapshot round doesn't match:", {
+        snapshotRound,
+        currentRound,
       });
-
-      setShowRoundResultModal(true);
-      roundResultShownRef.current = snapshot.round;
+      previousPhaseRef.current = currentPhase;
+      return;
     }
+
+    // Wait for both proof validities to be available
+    if (
+      snapshot.player_1_proof_valid === null ||
+      snapshot.player_2_proof_valid === null
+    ) {
+      console.log("[Game] ⏳ Waiting for proof validities before showing result modal:", {
+        player1: snapshot.player_1_proof_valid,
+        player2: snapshot.player_2_proof_valid,
+      });
+      previousPhaseRef.current = currentPhase;
+      return;
+    }
+
+    // Check if we've already shown the result for this round
+    if (roundResultShownRef.current === snapshotRound) {
+      console.log("[Game] ✅ Already shown result for round", snapshotRound);
+      previousPhaseRef.current = currentPhase;
+      return;
+    }
+
+    console.log("[Game] 🎯 Showing RoundResultModal - ConditionPhase with valid snapshot:", {
+      snapshotRound,
+      currentRound,
+      player1ProofValid: snapshot.player_1_proof_valid,
+      player2ProofValid: snapshot.player_2_proof_valid,
+    });
+
+    // Calculate results based on snapshot (state before resolution)
+    const player1Lied =
+      snapshot.player_1_condition_choice !== snapshot.player_1_proof_valid;
+    const player2Lied =
+      snapshot.player_2_condition_choice !== snapshot.player_2_proof_valid;
+    const player1Believed = snapshot.player_1_challenge_choice === true;
+    const player2Believed = snapshot.player_2_challenge_choice === true;
+
+    // Calculate changes by comparing snapshot (before) with current state (after)
+    setRoundResultData({
+      player1Lied,
+      player2Lied,
+      player1Believed,
+      player2Believed,
+      player1ScoreChange: Number(game.player_1_score) - snapshot.player_1_score,
+      player2ScoreChange: Number(game.player_2_score) - snapshot.player_2_score,
+      player1LivesChange: Number(game.player_1_lives) - snapshot.player_1_lives,
+      player2LivesChange: Number(game.player_2_lives) - snapshot.player_2_lives,
+      player1NewScore: Number(game.player_1_score),
+      player2NewScore: Number(game.player_2_score),
+      player1NewLives: Number(game.player_1_lives),
+      player2NewLives: Number(game.player_2_lives),
+    });
+
+    setShowRoundResultModal(true);
+    roundResultShownRef.current = snapshotRound;
 
     // Update previous phase ref
     previousPhaseRef.current = currentPhase;
