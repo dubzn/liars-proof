@@ -135,6 +135,7 @@ export const Game = () => {
   const roundResultShownRef = useRef<number | null>(null);
   const previousPhaseRef = useRef<GamePhase | null>(null);
   const previousRoundRef = useRef<number>(0);
+  const lastProofSubmittedRoundRef = useRef<number | null>(null);
 
   // Watch game state
   const { game } = useGameWatcher(gameId);
@@ -203,6 +204,7 @@ export const Game = () => {
     roundResultShownRef.current = null;
     previousPhaseRef.current = null;
     previousRoundRef.current = 0;
+    lastProofSubmittedRoundRef.current = null;
   }, [gameId, account?.address]);
 
   // AUTOMATIC: Submit commitment when entering WaitingForHandCommitments
@@ -325,16 +327,38 @@ export const Game = () => {
       ? player1ProofSubmitted
       : player2ProofSubmitted;
 
-    // If proof already submitted on-chain, mark ref as submitted
-    if (currentProofSubmitted) {
-      proofSubmittedRef.current = true;
-      return;
+    // CRITICAL: Reset proofSubmittedRef if we're in a different round
+    // This MUST happen before checking if proof is already submitted
+    // This ensures we can submit proof for each new round
+    if (lastProofSubmittedRoundRef.current !== currentRound) {
+      console.log("[Game] 🔄 New round detected, resetting proof submission state:", {
+        lastRound: lastProofSubmittedRoundRef.current,
+        currentRound,
+        currentProofSubmitted, // This may be from previous round, so we reset
+      });
+      proofSubmittedRef.current = false;
+      lastProofSubmittedRoundRef.current = currentRound;
+      
+      // If we just reset for a new round, don't check currentProofSubmitted yet
+      // because it might be stale data from the previous round
+      // Instead, proceed to submit (the check will happen in the next render when data is fresh)
+      console.log("[Game] 🚀 Round changed, will attempt proof submission for round", currentRound);
+    } else {
+      // Same round - check if proof already submitted on-chain
+      if (currentProofSubmitted) {
+        console.log("[Game] ✅ Proof already submitted on-chain for round", currentRound);
+        proofSubmittedRef.current = true;
+        return;
+      }
     }
 
     // If we've already attempted to submit for this round, don't try again
     if (proofSubmittedRef.current) {
+      console.log("[Game] ⏸️ Already attempted to submit proof for round", currentRound);
       return;
     }
+
+    console.log("[Game] 🚀 Starting automatic proof submission for round", currentRound);
 
     const submitProof = async () => {
       proofSubmittedRef.current = true;
@@ -419,6 +443,7 @@ export const Game = () => {
     currentRound,
     player1ProofSubmitted,
     player2ProofSubmitted,
+    // Note: lastProofSubmittedRoundRef and proofSubmittedRef are refs, so they don't need to be in deps
   ]);
 
   // Update snapshot with proof validities as they become available
@@ -526,6 +551,7 @@ export const Game = () => {
         roundResultShownRef.current = null;
         proofSubmittedRef.current = false;
         commitmentSubmittedRef.current = false;
+        lastProofSubmittedRoundRef.current = null;
         previousPhaseRef.current = currentPhase;
       }
     }
