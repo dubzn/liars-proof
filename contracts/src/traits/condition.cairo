@@ -1,11 +1,13 @@
 use crate::models::condition::Condition;
 use crate::traits::random::RandomTrait;
 use crate::traits::store::{Store, StoreTrait};
+use starknet::get_block_info;
 
 #[generate_trait]
 pub impl ConditionTraitImpl of ConditionTrait {
     fn create(ref store: Store) -> Condition {
-        let mut random = RandomTrait::create('random');
+        let block_info = get_block_info();
+        let mut random = RandomTrait::create(block_info.block_timestamp.into());
         let condition = random.get_random_number(condition_list().len());
         let quantity = *quantity_list(condition)
             .at(random.get_random_number_zero_indexed(quantity_list(condition).len()));
