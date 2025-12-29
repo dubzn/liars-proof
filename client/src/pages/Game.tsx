@@ -146,6 +146,26 @@ export const Game = () => {
   // Fetch condition and proofs
   const conditionId = game ? Number(game.condition_id) : 0;
   const { condition } = useConditionGraphQL(conditionId);
+  
+  // Track snapshot round in state so hooks can react to changes
+  const [snapshotRoundState, setSnapshotRoundState] = useState<number | null>(null);
+  
+  // Update snapshot round state when snapshot changes
+  useEffect(() => {
+    const snapshotRound = roundSnapshotRef.current?.round;
+    setSnapshotRoundState(snapshotRound ?? null);
+  }, [roundSnapshotRef.current?.round]);
+  
+  // Determine which round to query for proofs
+  // If we're in ConditionPhase and have a snapshot, query the snapshot's round (for showing results)
+  // Otherwise, query currentRound (for submitting proofs in ResultPhase)
+  const proofQueryRound = 
+    (currentPhase === "ConditionPhase" && snapshotRoundState !== null) 
+      ? snapshotRoundState 
+      : currentRound;
+  const shouldPollProofs = currentPhase === "ResultPhase" || 
+    (currentPhase === "ConditionPhase" && snapshotRoundState !== null);
+  
   const {
     player1ProofSubmitted,
     player1ProofValid,
@@ -153,10 +173,10 @@ export const Game = () => {
     player2ProofValid,
   } = useRoundProofGraphQL(
     gameId,
-    currentRound,
+    proofQueryRound,
     game?.player_1,
     game?.player_2,
-    currentPhase === "ResultPhase",
+    shouldPollProofs,
   );
 
   // Initialize proof system
@@ -450,13 +470,35 @@ export const Game = () => {
   useEffect(() => {
     if (!roundSnapshotRef.current) return;
 
+    const snapshotRound = roundSnapshotRef.current.round;
+    // Only update if the proof data is for the snapshot's round
+    if (proofQueryRound !== snapshotRound) {
+      console.log("[Game] ⏸️ Proof query round doesn't match snapshot round:", {
+        proofQueryRound,
+        snapshotRound,
+      });
+      return;
+    }
+
+    console.log("[Game] 🔍 Checking proof validities for snapshot round:", {
+      snapshotRound,
+      player1ProofSubmitted,
+      player1ProofValid,
+      player2ProofSubmitted,
+      player2ProofValid,
+      currentPlayer1Valid: roundSnapshotRef.current.player_1_proof_valid,
+      currentPlayer2Valid: roundSnapshotRef.current.player_2_proof_valid,
+    });
+
     if (player1ProofSubmitted && roundSnapshotRef.current.player_1_proof_valid === null) {
+      console.log("[Game] 📝 Updating snapshot with player1 proof validity:", player1ProofValid);
       roundSnapshotRef.current.player_1_proof_valid = player1ProofValid === true;
     }
     if (player2ProofSubmitted && roundSnapshotRef.current.player_2_proof_valid === null) {
+      console.log("[Game] 📝 Updating snapshot with player2 proof validity:", player2ProofValid);
       roundSnapshotRef.current.player_2_proof_valid = player2ProofValid === true;
     }
-  }, [player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid]);
+  }, [player1ProofSubmitted, player1ProofValid, player2ProofSubmitted, player2ProofValid, proofQueryRound]);
 
   // TRIGGER: Show RoundResultModal when we're in ConditionPhase and have a snapshot from the previous round
   // This happens when the round is resolved and we move to the next round
