@@ -1,7 +1,7 @@
+use starknet::get_block_info;
 use crate::models::condition::Condition;
 use crate::traits::random::RandomTrait;
 use crate::traits::store::{Store, StoreTrait};
-use starknet::get_block_info;
 
 #[generate_trait]
 pub impl ConditionTraitImpl of ConditionTrait {
@@ -100,7 +100,7 @@ fn quantity_list(condition_id: u32) -> Array<u32> {
     } else if condition_id == CONDITION_EXACTLY_X_ODDS {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE {
-        array![1, 2, 3]
+        array![1, 2]
     } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_VALUES {
         array![1, 2, 3]
     } else if condition_id == CONDITION_EXACTLY_X_DISTINCT_SUITS {
@@ -116,7 +116,7 @@ const EQUAL_TO: u32 = 3;
 
 fn comparator_list(condition_id: u32) -> Array<u32> {
     if condition_id == CONDITION_CARDS_SUM_COMPARATOR_THAN_X {
-        array![LESS_THAN, GREATER_THAN, EQUAL_TO]
+        array![LESS_THAN, GREATER_THAN]
     } else if condition_id == CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE {
         array![LESS_THAN, GREATER_THAN, EQUAL_TO]
     } else if condition_id == CONDITION_HIGHEST_CARD_COMPARATOR_THAN_X {
