@@ -132,12 +132,15 @@ export const RoundResultModal = ({
               className={`round-result-section ${showBeliefs ? "visible" : ""}`}
             >
               <div className="round-result-beliefs">
+                <div className="round-result-belief-header">
+                  <span>Challenge Decisions</span>
+                </div>
                 <div className="round-result-belief-item">
                   <span className="round-result-belief-name">
                     {player2Name}
                   </span>
                   <span className="round-result-belief-action">
-                    {player2Believed ? "believed" : "didn't believe"}{" "}
+                    {player2Believed ? "believed" : "challenged"}{" "}
                     {player1Name}
                   </span>
                 </div>
@@ -146,7 +149,7 @@ export const RoundResultModal = ({
                     {player1Name}
                   </span>
                   <span className="round-result-belief-action">
-                    {player1Believed ? "believed" : "didn't believe"}{" "}
+                    {player1Believed ? "believed" : "challenged"}{" "}
                     {player2Name}
                   </span>
                 </div>
@@ -166,6 +169,31 @@ export const RoundResultModal = ({
                       {player1Name}
                     </span>
                   </div>
+                  
+                  {/* Explanation for Player 1 */}
+                  <div className="round-result-explanation">
+                    {player1Lied && !player2Believed && (
+                      <div className="round-result-explanation-text negative">
+                        {player2Name} caught you lying! You lose 1 life. {player2Name} gains 20 points.
+                      </div>
+                    )}
+                    {player1Lied && player2Believed && (
+                      <div className="round-result-explanation-text positive">
+                        You successfully lied! {player2Name} believed you. You gain 10 points.
+                      </div>
+                    )}
+                    {!player1Lied && !player2Believed && (
+                      <div className="round-result-explanation-text positive">
+                        {player2Name} didn't believe you, but you told the truth! {player2Name} loses 1 life.
+                      </div>
+                    )}
+                    {!player1Lied && player2Believed && (
+                      <div className="round-result-explanation-text neutral">
+                        {player2Name} believed you and you told the truth. No changes.
+                      </div>
+                    )}
+                  </div>
+
                   <div className="round-result-player-result-stats">
                     {player1ScoreChange !== 0 && (
                       <div
@@ -209,6 +237,31 @@ export const RoundResultModal = ({
                       {player2Name}
                     </span>
                   </div>
+                  
+                  {/* Explanation for Player 2 */}
+                  <div className="round-result-explanation">
+                    {player2Lied && !player1Believed && (
+                      <div className="round-result-explanation-text negative">
+                        {player1Name} caught you lying! You lose 1 life.
+                      </div>
+                    )}
+                    {player2Lied && player1Believed && (
+                      <div className="round-result-explanation-text positive">
+                        You successfully lied! {player1Name} believed you. +10 points.
+                      </div>
+                    )}
+                    {!player2Lied && !player1Believed && (
+                      <div className="round-result-explanation-text positive">
+                        {player1Name} didn't believe you, but you told the truth! {player1Name} loses 1 life.
+                      </div>
+                    )}
+                    {!player2Lied && player1Believed && (
+                      <div className="round-result-explanation-text neutral">
+                        {player1Name} believed you and you told the truth. No changes.
+                      </div>
+                    )}
+                  </div>
+
                   <div className="round-result-player-result-stats">
                     {player2ScoreChange !== 0 && (
                       <div
