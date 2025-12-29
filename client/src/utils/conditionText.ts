@@ -35,6 +35,15 @@ const getCardValueName = (value: number): string => {
   return value.toString();
 };
 
+// Card values mapping with proper pluralization
+const getCardValueNameWithArticle = (value: number): string => {
+  if (value === 1) return "an Ace";
+  if (value === 11) return "a Jack";
+  if (value === 12) return "a Queen";
+  if (value === 13) return "a King";
+  return `a ${value}`;
+};
+
 // Suit names
 const getSuitName = (suit: number): string => {
   switch (suit) {
@@ -79,45 +88,45 @@ export const generateConditionText = (
     case CONDITION_EXACTLY_X_CARDS_OF_VALUE_Y:
       const valueName = getCardValueName(value);
       if (quantity === 1) {
-        return `You have exactly ${quantity} ${valueName}`;
+        return `You have exactly ${getCardValueNameWithArticle(value)}`;
       }
-      return `You have exactly ${quantity} ${valueName}s`;
+      return `You have exactly ${quantity} cards with value ${valueName}`;
 
     case CONDITION_EXACTLY_X_CARDS_OF_SUIT_Y:
       const suitName = getSuitName(suit);
       if (quantity === 1) {
-        return `You have exactly ${quantity} card of ${suitName}`;
+        return `You have exactly 1 card of ${suitName}`;
       }
       return `You have exactly ${quantity} cards of ${suitName}`;
 
     case CONDITION_EXACTLY_X_PAIRS:
       if (quantity === 1) {
-        return `You have exactly ${quantity} even card`;
+        return `You have exactly 1 even card`;
       }
       return `You have exactly ${quantity} even cards`;
 
     case CONDITION_EXACTLY_X_ODDS:
       if (quantity === 1) {
-        return `You have exactly ${quantity} odd card`;
+        return `You have exactly 1 odd card`;
       }
       return `You have exactly ${quantity} odd cards`;
 
     case CONDITION_EXACTLY_X_COMPARATOR_THAN_SPECIFIC_VALUE:
       const valueName2 = getCardValueName(value);
       if (quantity === 1) {
-        return `You have exactly ${quantity} card ${getComparatorText(comparator)} ${valueName2}`;
+        return `You have exactly 1 card ${getComparatorText(comparator)} ${valueName2}`;
       }
       return `You have exactly ${quantity} cards ${getComparatorText(comparator)} ${valueName2}`;
 
     case CONDITION_EXACTLY_X_DISTINCT_VALUES:
       if (quantity === 1) {
-        return `You have exactly ${quantity} distinct value`;
+        return `You have exactly 1 distinct value`;
       }
       return `You have exactly ${quantity} distinct values`;
 
     case CONDITION_EXACTLY_X_DISTINCT_SUITS:
       if (quantity === 1) {
-        return `You have exactly ${quantity} distinct suit`;
+        return `You have exactly 1 distinct suit`;
       }
       return `You have exactly ${quantity} distinct suits`;
 
